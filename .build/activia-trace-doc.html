@@ -4355,9 +4355,10 @@ Evaluacion (1) ─── (N) ResultadoEvaluacion
 </tr>
 </tbody></table>
 <hr>
-<h2>12. Open questions (a resolver antes de cerrar el PRD)</h2>
+<h2>12. Open questions</h2>
 <blockquote>
 <p>Algunas heredadas de la KB (<a href="../knowledge-base/10_preguntas_abiertas.md">10_preguntas_abiertas.md</a>), otras del PRD.</p>
+<p>⚠️ <strong>Las decisiones de cimiento ya están cerradas</strong> (ver ADR-001/002/006 en <a href="./ARQUITECTURA.md">ARQUITECTURA.md §10</a>). <strong>El resto de estas open questions se definen DURANTE el desarrollo</strong> — no bloquean el arranque. Cada una se resuelve al llegar a su módulo o cuando el área de negocio correspondiente (FINANZAS, coordinación) aporte la definición. Mientras tanto, el desarrollo del esqueleto (tenant + auth + RBAC + estructura académica) puede avanzar sin esperarlas.</p>
 </blockquote>
 <h3>Heredadas de la KB</h3>
 <ul>
@@ -4941,7 +4942,9 @@ Evaluacion (1) ─── (N) ResultadoEvaluacion
 </tr>
 </tbody></table>
 <hr>
-<h2>10. Decisiones de arquitectura pendientes (ADRs a redactar)</h2>
+<h2>10. Decisiones de arquitectura (ADRs)</h2>
+<h3>Decisiones de cimiento — CERRADAS (definidas antes de codear)</h3>
+<p>Estas tres decisiones tocan transversalmente el sistema (cada tabla, cada request, cada módulo académico). Por eso se cerraron <strong>antes</strong> de escribir código: cambiarlas más tarde implica reescribir cimientos.</p>
 <table>
 <thead>
 <tr>
@@ -4951,24 +4954,63 @@ Evaluacion (1) ─── (N) ResultadoEvaluacion
 </tr>
 </thead>
 <tbody><tr>
-<td>ADR-001</td>
-<td>¿Auth propio (email+pass) vs federado con SSO de Moodle?</td>
-<td>Abierto — ligado a <a href="./PRD.md#open-questions">OQ-04</a></td>
+<td><strong>ADR-001</strong></td>
+<td><strong>Auth propio</strong> (email + password + 2FA TOTP, JWT access 15 min + refresh con rotación) para el MVP. <strong>Moodle SSO</strong> se incorpora para ALUMNOS en Fase 2 (<a href="./PRD.md#portal-del-alumno">RF-47</a>).</td>
+<td>✅ <strong>Cerrada</strong></td>
 </tr>
 <tr>
-<td>ADR-002</td>
-<td>Multi-tenancy: row-level (<code>tenant_id</code>) vs database-per-tenant</td>
-<td>Abierto — ligado a <a href="./PRD.md#open-questions">OQ-06</a></td>
+<td><strong>ADR-002</strong></td>
+<td><strong>Multi-tenancy row-level</strong>: una sola base de datos, columna <code>tenant_id</code> en toda tabla, repositories filtran por tenant por defecto. Database-per-tenant se reevaluará solo si un tenant exige aislamiento físico regulatorio.</td>
+<td>✅ <strong>Cerrada</strong></td>
 </tr>
 <tr>
+<td><strong>ADR-006</strong></td>
+<td><strong>Modelo Materia + Dictado</strong>: <code>Materia</code> es la definición única en el catálogo del tenant; <code>Dictado</code> es la instancia de esa materia en una <code>carrera × cohorte</code> concreta. Calificaciones, equipos docentes, encuentros y coloquios cuelgan del <code>Dictado</code>, no de <code>Materia</code>. Resuelve <a href="./PRD.md#12-open-questions-a-resolver-antes-de-cerrar-el-prd">OQ-01</a>.</td>
+<td>✅ <strong>Cerrada</strong></td>
+</tr>
+</tbody></table>
+<p><strong>Fundamento de cada cierre:</strong></p>
+<ul>
+<li><strong>ADR-001 (auth propio)</strong>: no acopla el arranque a la configuración de Moodle de IT; ADMIN y FINANZAS pueden no ser usuarios de Moodle; el equipo controla el flujo completo. El SSO de alumnos llega cuando se construye el portal del alumno (Fase 2).</li>
+<li><strong>ADR-002 (row-level)</strong>: con un solo tenant inicial, DB-per-tenant sería sobre-ingeniería (complejidad de migraciones, backups y pooling sin beneficio). Row-level cubre el aislamiento requerido y es el patrón estándar de SaaS a esta escala.</li>
+<li><strong>ADR-006 (Materia + Dictado)</strong>: una misma materia se dicta en múltiples carreras/cohortes; separar catálogo de instancia evita duplicar definiciones y materializa el requisito de catálogo único con scoping.</li>
+</ul>
+<h3>Decisiones pendientes — SE DEFINEN DURANTE EL DESARROLLO</h3>
+<blockquote>
+<p>⚠️ <strong>Estas decisiones NO bloquean el arranque del desarrollo.</strong> Cada una se resuelve cuando se llega a su módulo correspondiente (columna &quot;Cuándo definir&quot;). Son &quot;habitaciones&quot;, no &quot;cimientos&quot;: aislables, no transversales. El equipo de desarrollo las cierra sobre la marcha, documentando la decisión en este mismo archivo al momento de tomarla. Las que requieren definición de negocio (FINANZAS, semántica de NEXO) deben consultarse con el área correspondiente antes de implementar ese módulo, no antes de arrancar.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>ADR</th>
+<th>Decisión</th>
+<th>Cuándo definir (durante el desarrollo)</th>
+</tr>
+</thead>
+<tbody><tr>
 <td>ADR-003</td>
 <td>Worker propio (asyncio/Celery/ARQ) vs N8N para la cola de comunicaciones</td>
-<td>Abierto</td>
+<td>Al construir el módulo de comunicaciones</td>
 </tr>
 <tr>
 <td>ADR-004</td>
-<td>Impersonation: token de sesión separado vs claim adicional en JWT</td>
-<td>Abierto — afecta a <a href="./PRD.md#auth-roles-y-tenants">RF-05</a></td>
+<td>Impersonation: token de sesión separado vs claim adicional en el JWT</td>
+<td>Al implementar la feature de impersonation</td>
+</tr>
+<tr>
+<td>ADR-005</td>
+<td>Estrategia de versionado de padrón (snapshot completo vs deltas)</td>
+<td>Al construir el módulo de ingesta</td>
+</tr>
+<tr>
+<td>ADR-007</td>
+<td>Fórmula de cálculo de Plus en liquidación (N comisiones, claves de Plus)</td>
+<td>Antes de cerrar el módulo FINANZAS — <strong>requiere definición del área de finanzas</strong></td>
+</tr>
+<tr>
+<td>ADR-008</td>
+<td>Semántica y permisos del rol NEXO</td>
+<td>Al poblar la matriz RBAC de NEXO (es data, no código) — <strong>requiere definición de negocio</strong></td>
 </tr>
 </tbody></table>
 <hr>

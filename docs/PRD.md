@@ -495,9 +495,11 @@ Incluye RF-57 a RF-60.
 
 ---
 
-## 12. Open questions (a resolver antes de cerrar el PRD)
+## 12. Open questions
 
 > Algunas heredadas de la KB ([10_preguntas_abiertas.md](../knowledge-base/10_preguntas_abiertas.md)), otras del PRD.
+>
+> ⚠️ **Las decisiones de cimiento ya están cerradas** (ver ADR-001/002/006 en [ARQUITECTURA.md §10](./ARQUITECTURA.md)). **El resto de estas open questions se definen DURANTE el desarrollo** — no bloquean el arranque. Cada una se resuelve al llegar a su módulo o cuando el área de negocio correspondiente (FINANZAS, coordinación) aporte la definición. Mientras tanto, el desarrollo del esqueleto (tenant + auth + RBAC + estructura académica) puede avanzar sin esperarlas.
 
 ### Heredadas de la KB
 

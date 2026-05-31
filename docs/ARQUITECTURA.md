@@ -279,14 +279,34 @@ activia-trace se integra con **Moodle** (el LMS) a través de su API de Web Serv
 
 ---
 
-## 10. Decisiones de arquitectura pendientes (ADRs a redactar)
+## 10. Decisiones de arquitectura (ADRs)
+
+### Decisiones de cimiento — CERRADAS (definidas antes de codear)
+
+Estas tres decisiones tocan transversalmente el sistema (cada tabla, cada request, cada módulo académico). Por eso se cerraron **antes** de escribir código: cambiarlas más tarde implica reescribir cimientos.
 
 | ADR | Decisión | Estado |
 |-----|----------|--------|
-| ADR-001 | ¿Auth propio (email+pass) vs federado con SSO de Moodle? | Abierto — ligado a [OQ-04](./PRD.md#open-questions) |
-| ADR-002 | Multi-tenancy: row-level (`tenant_id`) vs database-per-tenant | Abierto — ligado a [OQ-06](./PRD.md#open-questions) |
-| ADR-003 | Worker propio (asyncio/Celery/ARQ) vs N8N para la cola de comunicaciones | Abierto |
-| ADR-004 | Impersonation: token de sesión separado vs claim adicional en JWT | Abierto — afecta a [RF-05](./PRD.md#auth-roles-y-tenants) |
+| **ADR-001** | **Auth propio** (email + password + 2FA TOTP, JWT access 15 min + refresh con rotación) para el MVP. **Moodle SSO** se incorpora para ALUMNOS en Fase 2 ([RF-47](./PRD.md#portal-del-alumno)). | ✅ **Cerrada** |
+| **ADR-002** | **Multi-tenancy row-level**: una sola base de datos, columna `tenant_id` en toda tabla, repositories filtran por tenant por defecto. Database-per-tenant se reevaluará solo si un tenant exige aislamiento físico regulatorio. | ✅ **Cerrada** |
+| **ADR-006** | **Modelo Materia + Dictado**: `Materia` es la definición única en el catálogo del tenant; `Dictado` es la instancia de esa materia en una `carrera × cohorte` concreta. Calificaciones, equipos docentes, encuentros y coloquios cuelgan del `Dictado`, no de `Materia`. Resuelve [OQ-01](./PRD.md#12-open-questions-a-resolver-antes-de-cerrar-el-prd). | ✅ **Cerrada** |
+
+**Fundamento de cada cierre:**
+- **ADR-001 (auth propio)**: no acopla el arranque a la configuración de Moodle de IT; ADMIN y FINANZAS pueden no ser usuarios de Moodle; el equipo controla el flujo completo. El SSO de alumnos llega cuando se construye el portal del alumno (Fase 2).
+- **ADR-002 (row-level)**: con un solo tenant inicial, DB-per-tenant sería sobre-ingeniería (complejidad de migraciones, backups y pooling sin beneficio). Row-level cubre el aislamiento requerido y es el patrón estándar de SaaS a esta escala.
+- **ADR-006 (Materia + Dictado)**: una misma materia se dicta en múltiples carreras/cohortes; separar catálogo de instancia evita duplicar definiciones y materializa el requisito de catálogo único con scoping.
+
+### Decisiones pendientes — SE DEFINEN DURANTE EL DESARROLLO
+
+> ⚠️ **Estas decisiones NO bloquean el arranque del desarrollo.** Cada una se resuelve cuando se llega a su módulo correspondiente (columna "Cuándo definir"). Son "habitaciones", no "cimientos": aislables, no transversales. El equipo de desarrollo las cierra sobre la marcha, documentando la decisión en este mismo archivo al momento de tomarla. Las que requieren definición de negocio (FINANZAS, semántica de NEXO) deben consultarse con el área correspondiente antes de implementar ese módulo, no antes de arrancar.
+
+| ADR | Decisión | Cuándo definir (durante el desarrollo) |
+|-----|----------|----------------------------------------|
+| ADR-003 | Worker propio (asyncio/Celery/ARQ) vs N8N para la cola de comunicaciones | Al construir el módulo de comunicaciones |
+| ADR-004 | Impersonation: token de sesión separado vs claim adicional en el JWT | Al implementar la feature de impersonation |
+| ADR-005 | Estrategia de versionado de padrón (snapshot completo vs deltas) | Al construir el módulo de ingesta |
+| ADR-007 | Fórmula de cálculo de Plus en liquidación (N comisiones, claves de Plus) | Antes de cerrar el módulo FINANZAS — **requiere definición del área de finanzas** |
+| ADR-008 | Semántica y permisos del rol NEXO | Al poblar la matriz RBAC de NEXO (es data, no código) — **requiere definición de negocio** |
 
 ---
 
