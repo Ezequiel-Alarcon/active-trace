@@ -11,3 +11,20 @@ Thumbs.db
 .DS_Store
 .vscode/
 .idea/
+
+# Backend Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+backend/.env
+backend/.env.local
+backend/.venv/
+backend/venv/
+backend/.pytest_cache/
+backend/.mypy_cache/
+backend/.ruff_cache/
+backend/*.egg-info/
+backend/dist/
+backend/build/
