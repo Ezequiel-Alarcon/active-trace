@@ -1,4 +1,3 @@
-import os
 from pydantic import ValidationError
 import pytest
 from app.core.config import Settings

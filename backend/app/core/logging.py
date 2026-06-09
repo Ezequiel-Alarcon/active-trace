@@ -23,6 +23,7 @@ class JSONFormatter(logging.Formatter):
 
 def _json_dumps(data: dict) -> str:
     import json
+
     return json.dumps(data, default=str)
 
 

@@ -20,6 +20,9 @@ __pycache__/
 .Python
 backend/.env
 backend/.env.local
+backend/.env.test
+backend/.env.*
+!backend/.env.example
 backend/.venv/
 backend/venv/
 backend/.pytest_cache/
@@ -28,3 +31,5 @@ backend/.ruff_cache/
 backend/*.egg-info/
 backend/dist/
 backend/build/
+backend/.coverage
+backend/htmlcov/

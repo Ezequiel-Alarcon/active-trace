@@ -207,6 +207,7 @@ Multi-tenancy es nativo en activia-trace desde el día 0 ([RF-03](./PRD.md#auth-
 - El `tenant_id` se resuelve del JWT (§5.1) y se inyecta vía dependency. **Los repositories filtran por tenant por defecto** — un query sin scope de tenant es un bug que debe fallar en code review.
 - **Los datos jamás cruzan tenants.** Test obligatorio: un usuario del tenant A nunca puede leer/escribir datos del tenant B.
 - Configuración por tenant ([RNF-23](./PRD.md#multi-tenancy)): idioma, branding, plantillas de mail, catálogo de escalas textuales, flag de aprobación de mails.
+- **Implementación (C-02)**: `app/core/tenancy.py` provee `TenantContext` (dataclass inmutable) + `get_current_tenant_id()` resuelto de un `ContextVar` per-task. `app/repositories/base.py` define `TenantScopedRepository[T]`, el único camino para queries de dominio, con scope `WHERE tenant_id = :t AND deleted_at IS NULL` aplicado por construcción. C-03 reemplaza el dependency placeholder de header por el resolver desde el JWT verificado; el contrato de `TenantContext` no cambia.
 
 ---
 
