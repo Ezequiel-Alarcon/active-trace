@@ -1,7 +1,7 @@
 from collections.abc import AsyncGenerator
 from uuid import UUID
 
-from fastapi import Header
+from fastapi import Header, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import create_engine, create_session_factory
@@ -60,31 +60,23 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
 
 async def tenant_context_dep(
-    x_tenant_id: UUID | None = Header(default=None, alias="X-Tenant-Id"),
+    request: Request,
+    db: AsyncSession = None,  # type: ignore[assignment]
 ) -> TenantContext:
-    """C-02 placeholder dependency: tenant_id from the `X-Tenant-Id` header.
+    """C-03 JWT-driven tenant resolver.
 
-    C-03 will replace this with a JWT-derived resolver. The contract of
-    this dependency is stable: it returns a `TenantContext` and sets it
-    on the per-task ContextVar. Services call `get_current_tenant_id()`
-    to read it.
-
-    If the request is unauthenticated AND no header is present, we raise
-    `TenantContextMissingError` so the request fails fast at the boundary
-    instead of leaking a default tenant into a repository.
+    C-02's `X-Tenant-Id` header placeholder is gone. The resolver reads the
+    bearer token, decodes the access JWT, and sets the `TenantContext`
+    from the `tid` claim. The `X-Tenant-Id` header is ignored.
     """
-    if x_tenant_id is None:
-        # Honor a context that may already be set by a parent dependency
-        # (e.g. when a higher-level dependency or a test fixture set it).
-        try:
-            return get_current_tenant_context()
-        except TenantContextMissingError:
-            raise TenantContextMissingError(
-                "X-Tenant-Id header is required in C-02; C-03 will resolve from JWT"
-            ) from None
-    ctx = TenantContext(tenant_id=x_tenant_id)
-    set_tenant_context(ctx)
-    return ctx
+    from app.auth.deps import _resolve_from_token
+
+    auth = request.headers.get("Authorization")
+    token = None
+    if auth and auth.lower().startswith("bearer "):
+        token = auth.split(" ", 1)[1].strip()
+    current = await _resolve_from_token(db, token)  # type: ignore[arg-type]
+    return TenantContext(tenant_id=current.tenant_id)
 
 
 # RESERVADO para C-04: verificación de permisos

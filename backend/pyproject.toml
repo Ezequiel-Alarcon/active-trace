@@ -17,6 +17,8 @@ dependencies = [
     "argon2-cffi>=25.0.0",
     "python-jose[cryptography]>=3.3.0",
     "cryptography>=43.0.0",
+    "pyotp>=2.9.0",
+    "qrcode[pil]>=8.2",
     "opentelemetry-instrumentation-fastapi>=0.53b0",
     "opentelemetry-api>=1.28.0",
     "opentelemetry-sdk>=1.28.0",
@@ -44,6 +46,9 @@ asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 testpaths = ["tests"]
 filterwarnings = ["ignore::DeprecationWarning"]
+markers = [
+    "no_db: skip autouse fixtures that need a live PostgreSQL connection (e.g. `_apply_schema_once`).",
+]
 
 [tool.ruff]
 target-version = "py313"
