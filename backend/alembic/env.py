@@ -7,11 +7,12 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 
 from app.core.config import get_settings
-from app.core.database import Base
+from app.models import Base  # registers all ORM models on Base.metadata
 
 config = context.config
 settings = get_settings()
-config.set_main_option("database_url", settings.DATABASE_URL)
+# Push the URL into Alembic's config so async_engine_from_config can read it.
+config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
@@ -20,7 +21,7 @@ target_metadata = Base.metadata
 
 
 def run_migrations_offline() -> None:
-    url = config.get_main_option("database_url")
+    url = config.get_main_option("sqlalchemy.url")
     context.configure(
         url=url,
         target_metadata=target_metadata,

@@ -10,7 +10,6 @@ def init_telemetry() -> None:
         from opentelemetry.sdk.trace import TracerProvider
         from opentelemetry.sdk.trace.export import BatchSpanProcessor
         from opentelemetry.sdk.resources import Resource
-        from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 
         resource = Resource.create({"service.name": settings.OTEL_SERVICE_NAME})
         provider = TracerProvider(resource=resource)
@@ -18,7 +17,10 @@ def init_telemetry() -> None:
 
         if settings.OTEL_EXPORTER_OTLP_ENDPOINT:
             from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
-            exporter = OTLPSpanExporter(endpoint=settings.OTEL_EXPORTER_OTLP_ENDPOINT, insecure=True)
+
+            exporter = OTLPSpanExporter(
+                endpoint=settings.OTEL_EXPORTER_OTLP_ENDPOINT, insecure=True
+            )
             provider.add_span_processor(BatchSpanProcessor(exporter))
     except Exception:
         pass
@@ -27,6 +29,7 @@ def init_telemetry() -> None:
 def instrument_app(app):
     try:
         from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+
         FastAPIInstrumentor.instrument_app(app)
     except Exception:
         pass

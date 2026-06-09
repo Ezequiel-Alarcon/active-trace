@@ -3,7 +3,6 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.core.config import get_settings
-from app.core.database import create_engine, create_session_factory
 from app.core.dependencies import get_engine, get_session_factory
 from app.core.logging import configure_logging
 from app.core.observability import init_telemetry, instrument_app
@@ -17,9 +16,9 @@ async def lifespan(app: FastAPI):
     get_engine()
     get_session_factory()
     yield
-    from app.core.database import _async_engine
-    if _async_engine:
-        await _async_engine.dispose()
+    from app.core.dependencies import dispose_engine
+
+    await dispose_engine()
 
 
 settings = get_settings()

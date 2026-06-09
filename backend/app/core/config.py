@@ -1,6 +1,6 @@
 from functools import lru_cache
 
-from pydantic import Field, field_validator
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -18,7 +18,7 @@ class Settings(BaseSettings):
         description="PostgreSQL connection URL for testing",
     )
     SECRET_KEY: str = Field(..., min_length=32, description="JWT signing key")
-    ENCRYPTION_KEY: str = Field(..., min_length=32, max_length=32, description="AES-256 key")
+    ENCRYPTION_KEY: SecretStr = Field(..., description="AES-256 key (32 bytes)")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=15, ge=1)
 
     OTEL_SERVICE_NAME: str = Field(default="activia-trace")
@@ -34,10 +34,18 @@ class Settings(BaseSettings):
 
     @field_validator("ENCRYPTION_KEY")
     @classmethod
-    def validate_encryption_key(cls, v: str) -> str:
-        if len(v) != 32:
-            raise ValueError("ENCRYPTION_KEY must be exactly 32 characters")
+    def validate_encryption_key(cls, v: SecretStr) -> SecretStr:
+        raw = v.get_secret_value()
+        if len(raw.encode("utf-8")) != 32:
+            raise ValueError("ENCRYPTION_KEY must be exactly 32 bytes")
         return v
+
+    def key_registry(self) -> dict[int, bytes]:
+        raw = self.ENCRYPTION_KEY.get_secret_value().encode("utf-8")
+        return {1: raw}
+
+    def current_key_id(self) -> int:
+        return 1
 
 
 @lru_cache
