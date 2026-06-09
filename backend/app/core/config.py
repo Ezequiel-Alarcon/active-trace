@@ -20,6 +20,20 @@ class Settings(BaseSettings):
     SECRET_KEY: str = Field(..., min_length=32, description="JWT signing key")
     ENCRYPTION_KEY: SecretStr = Field(..., description="AES-256 key (32 bytes)")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=15, ge=1)
+    REFRESH_TOKEN_EXPIRE_MINUTES: int = Field(
+        default=60 * 24 * 7, ge=1, description="Refresh token lifetime"
+    )
+    PASSWORD_RESET_TOKEN_TTL_MINUTES: int = Field(
+        default=30, ge=1, description="Password recovery token TTL"
+    )
+    LOGIN_RATE_LIMIT_PER_MINUTE: int = Field(
+        default=5, ge=1, description="Max login attempts per window per (ip,email)"
+    )
+    LOGIN_RATE_LIMIT_WINDOW_SECONDS: int = Field(
+        default=60, ge=1, description="Sliding window for login rate limit"
+    )
+    TOTP_ISSUER: str = Field(default="activia-trace", description="TOTP issuer label")
+    PASSWORD_MIN_LENGTH: int = Field(default=12, ge=8, description="Minimum password length")
 
     OTEL_SERVICE_NAME: str = Field(default="activia-trace")
     OTEL_EXPORTER_OTLP_ENDPOINT: str | None = Field(default=None)

@@ -6,7 +6,7 @@ from app.core.config import get_settings
 from app.core.dependencies import get_engine, get_session_factory
 from app.core.logging import configure_logging
 from app.core.observability import init_telemetry, instrument_app
-from app.api.v1.routers import health
+from app.api.v1.main_router import main_router
 
 
 @asynccontextmanager
@@ -30,4 +30,4 @@ app = FastAPI(
 
 instrument_app(app)
 
-app.include_router(health.router)
+app.include_router(main_router)

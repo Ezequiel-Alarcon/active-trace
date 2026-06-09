@@ -1,0 +1,5 @@
+schema: spec-driven
+created: 2026-06-09
+goal: Resolver la autenticación propia (ADR-001) sobre la base multi-tenant de
+  C-02, dejando get_current_user como única fuente de identidad y tenant para
+  los siguientes cambios.

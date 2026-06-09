@@ -8,6 +8,7 @@ from alembic import context
 
 from app.core.config import get_settings
 from app.models import Base  # registers all ORM models on Base.metadata
+from app.auth import models as _auth_models  # noqa: F401  (C-03 auth tables)
 
 config = context.config
 settings = get_settings()
