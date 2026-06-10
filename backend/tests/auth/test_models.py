@@ -56,7 +56,8 @@ def test_auth_user_columns(_models_in_metadata) -> None:
 def test_auth_user_indexes(_models_in_metadata) -> None:
     table = Base.metadata.tables["auth_user"]
     index_pairs = [set(idx.columns.keys()) for idx in table.indexes]
-    assert {"tenant_id", "email_enc"} in index_pairs
+    # email_hash: index for HMAC-SHA256 lookup (C-03 §D1, ADR-007)
+    assert {"tenant_id", "email_hash"} in index_pairs
     assert {"tenant_id", "deleted_at"} in index_pairs
 
 

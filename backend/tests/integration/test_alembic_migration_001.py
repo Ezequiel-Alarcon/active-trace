@@ -20,7 +20,10 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
 
 
-TEST_DB_URL = os.environ["DATABASE_URL"]
+TEST_DB_URL = os.environ.get(
+    "DATABASE_URL",
+    "postgresql+asyncpg://postgres:postgres@localhost:5433/activia_trace_test",
+)
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 ALEMBIC_EXE = r"C:\Users\edgar\AppData\Roaming\Python\Python312\Scripts\alembic.exe"
 
@@ -65,9 +68,30 @@ async def _alembic(*args: str) -> None:
 
 @pytest_asyncio.fixture(scope="module", autouse=True, loop_scope="module")
 async def _isolated_db() -> None:
-    """Reset the test schema before the module runs."""
+    """Reset the test schema before the module runs, then restore ORM tables after."""
     await _drop_and_recreate_test_schema()
     yield
+    # Restore ORM-created tables (e.g. _smoke_tests, tenant, auth_*) for subsequent
+    # modules. Without this, _apply_schema_once ran once at session start but the DROP
+    # SCHEMA CASCADE wiped everything — subsequent tests got UndefinedTableError.
+    # Cannot use conftest's _ensure_schema_sync() (uses asyncio.run() which fails
+    # inside an existing event loop). Inline the async logic here.
+    import app.models.tenant  # noqa: F401
+    from app.models.mixins import TenantScopedMixin  # noqa: F401
+    from app.auth import models as _auth_models  # noqa: F401
+    from tests._fakes import models as _smoke_models  # noqa: F401
+    from app.core.database import Base
+    from sqlalchemy.ext.asyncio import create_async_engine
+
+    async def _restore_schema() -> None:
+        engine = create_async_engine(TEST_DB_URL, pool_pre_ping=True)
+        try:
+            async with engine.begin() as conn:
+                await conn.run_sync(Base.metadata.create_all)
+        finally:
+            await engine.dispose()
+
+    await _restore_schema()
 
 
 @pytest.mark.asyncio

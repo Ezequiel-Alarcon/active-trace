@@ -128,7 +128,7 @@ class AuthSessionRepository(TenantScopedRepository[AuthSession]):
             .values(revoked_at=now)
         )
         result = await self._session.execute(stmt)
-        await self._session.flush()
+        await self._session.commit()
         return int(result.rowcount or 0)
 
 

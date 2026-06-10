@@ -14,11 +14,10 @@ from sqlalchemy.ext.asyncio import (
 from app.core.database import Base
 
 
-os.environ.setdefault(
-    "DATABASE_URL", "postgresql+asyncpg://postgres:postgres@localhost:5433/activia_trace_test"
-)
 os.environ.setdefault("SECRET_KEY", "test-secret-key-at-least-32-chars-long")
 os.environ.setdefault("ENCRYPTION_KEY", "12345678901234567890123456789012")
+# DATABASE_URL is set inside _ensure_schema_sync() (called when DB is actually needed)
+# so that test_config.py can cleanly remove it for @pytest.mark.no_db tests.
 
 
 _schema_applied = False
@@ -32,6 +31,11 @@ def _ensure_schema_sync() -> None:
     before function-scope teardown can complete. Running schema setup in
     a sync wrapper keeps the loop lifetime local to the call.
     """
+    # Set default only when actually connecting (not at import time).
+    # This allows test_config.py to cleanly remove DATABASE_URL.
+    os.environ.setdefault(
+        "DATABASE_URL", "postgresql+asyncpg://postgres:postgres@localhost:5433/activia_trace_test"
+    )
 
     async def _go() -> None:
         import app.models.tenant  # noqa: F401  (register on Base.metadata)
