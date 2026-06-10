@@ -13,6 +13,7 @@ from app.rbac.public_router import router as rbac_public_router
 from app.routers.estructura import router as estructura_router
 from app.routers.usuarios import router as usuarios_router
 from app.routers.usuarios import asignacion_router
+from app.routers.equipos import equipo_router
 
 main_router = APIRouter()
 main_router.include_router(health_router)
@@ -24,3 +25,4 @@ main_router.include_router(rbac_public_router)
 main_router.include_router(estructura_router)
 main_router.include_router(usuarios_router)
 main_router.include_router(asignacion_router)
+main_router.include_router(equipo_router)
