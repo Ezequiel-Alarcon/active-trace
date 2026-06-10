@@ -20,6 +20,7 @@ from uuid import uuid4
 
 import pytest
 import pytest_asyncio
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from app.auth.models import AuthPasswordReset, AuthSession, AuthUser
@@ -43,9 +44,17 @@ async def db_setup():
     import os
     from app.models import tenant  # noqa: F401  (register Tenant)
 
-    engine = create_async_engine(os.environ["DATABASE_URL"])
+    db_url = os.environ.get(
+        "DATABASE_URL",
+        "postgresql+asyncpg://postgres:postgres@localhost:5433/activia_trace_test",
+    )
+    engine = create_async_engine(db_url)
     async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+        # Use CASCADE to handle FK dependencies from RBAC tables (C-04)
+        await conn.execute(text("DROP SCHEMA public CASCADE"))
+        await conn.execute(text("CREATE SCHEMA public"))
+        await conn.execute(text("GRANT ALL ON SCHEMA public TO postgres"))
+        await conn.execute(text("GRANT ALL ON SCHEMA public TO public"))
         await conn.run_sync(Base.metadata.create_all)
     factory = async_sessionmaker(engine, expire_on_commit=False, autoflush=False)
     yield factory
