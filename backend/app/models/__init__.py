@@ -12,6 +12,9 @@ from app.models.cohorte import Cohorte, CohorteEstado  # noqa: F401
 from app.models.materia import Materia, MateriaEstado  # noqa: F401
 from app.models.usuario import Usuario  # noqa: F401
 from app.models.asignacion import Asignacion, ContextoTipo  # noqa: F401
+from app.models.slot_encuentro import SlotEncuentro, DiaSemana  # noqa: F401
+from app.models.instancia_encuentro import InstanciaEncuentro, EstadoEncuentro  # noqa: F401
+from app.models.guardia import Guardia  # noqa: F401
 
 __all__ = [
     "Base",
@@ -20,4 +23,7 @@ __all__ = [
     "Materia", "MateriaEstado",
     "Usuario",
     "Asignacion", "ContextoTipo",
+    "SlotEncuentro", "DiaSemana",
+    "InstanciaEncuentro", "EstadoEncuentro",
+    "Guardia",
 ]
