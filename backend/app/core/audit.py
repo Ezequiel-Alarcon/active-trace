@@ -11,6 +11,7 @@ Action codes (fixed vocabulary):
 - TENANT_CROSS_QUERY: a method bypassed the tenant filter.
 - ROW_INCLUDE_DELETED: a method returned soft-deleted rows.
 - ROW_HARD_DELETE: a row was physically removed from the database.
+- ASIGNACION_MODIFICAR: a batch operation modified assignations (create, clone, vigencia).
 
 Anything else must be added by extending this vocabulary, not by passing
 free-form strings from call sites — code review rejects unknown codes.
@@ -31,6 +32,7 @@ ROW_RESTORE: Final = "ROW_RESTORE"
 TENANT_CROSS_QUERY: Final = "TENANT_CROSS_QUERY"
 ROW_INCLUDE_DELETED: Final = "ROW_INCLUDE_DELETED"
 ROW_HARD_DELETE: Final = "ROW_HARD_DELETE"
+ASIGNACION_MODIFICAR: Final = "ASIGNACION_MODIFICAR"
 
 ACTION_CODES: Final[frozenset[str]] = frozenset(
     {
@@ -39,6 +41,7 @@ ACTION_CODES: Final[frozenset[str]] = frozenset(
         TENANT_CROSS_QUERY,
         ROW_INCLUDE_DELETED,
         ROW_HARD_DELETE,
+        ASIGNACION_MODIFICAR,
     }
 )
 
