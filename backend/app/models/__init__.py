@@ -7,4 +7,13 @@ and only this `Base` carries the metadata.
 
 from app.core.database import Base
 
-__all__ = ["Base"]
+from app.models.carrera import Carrera, CarreraEstado  # noqa: F401
+from app.models.cohorte import Cohorte, CohorteEstado  # noqa: F401
+from app.models.materia import Materia, MateriaEstado  # noqa: F401
+
+__all__ = [
+    "Base",
+    "Carrera", "CarreraEstado",
+    "Cohorte", "CohorteEstado",
+    "Materia", "MateriaEstado",
+]
