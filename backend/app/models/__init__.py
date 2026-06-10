@@ -15,6 +15,8 @@ from app.models.asignacion import Asignacion, ContextoTipo  # noqa: F401
 from app.models.slot_encuentro import SlotEncuentro, DiaSemana  # noqa: F401
 from app.models.instancia_encuentro import InstanciaEncuentro, EstadoEncuentro  # noqa: F401
 from app.models.guardia import Guardia  # noqa: F401
+from app.models.programa_materia import ProgramaMateria  # noqa: F401
+from app.models.fecha_academica import FechaAcademica, TipoFechaAcademica  # noqa: F401
 
 __all__ = [
     "Base",
@@ -26,4 +28,6 @@ __all__ = [
     "SlotEncuentro", "DiaSemana",
     "InstanciaEncuentro", "EstadoEncuentro",
     "Guardia",
+    "ProgramaMateria",
+    "FechaAcademica", "TipoFechaAcademica",
 ]
