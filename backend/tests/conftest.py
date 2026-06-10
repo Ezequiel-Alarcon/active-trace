@@ -39,6 +39,8 @@ def _ensure_schema_sync() -> None:
         import app.models.carrera  # noqa: F401
         import app.models.cohorte  # noqa: F401
         import app.models.materia  # noqa: F401
+        import app.models.usuario  # noqa: F401
+        import app.models.asignacion  # noqa: F401
         from app.auth import models  # noqa: F401  (register auth_* tables)
         from tests._fakes import models as _smoke  # noqa: F401  (register _smoke_tests)
 
