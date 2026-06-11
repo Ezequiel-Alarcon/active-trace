@@ -5,6 +5,7 @@ from __future__ import annotations
 from fastapi import APIRouter
 
 from app.api.v1.routers.health import router as health_router
+from app.audit.routers import audit_router, impersonation_router
 from app.auth.routers.auth import router as auth_login_router
 from app.auth.routers.password_reset import router as auth_password_reset_router
 from app.auth.routers.two_factor import router as auth_two_factor_router
@@ -32,3 +33,5 @@ main_router.include_router(equipo_router)
 main_router.include_router(encuentros_router)
 main_router.include_router(guardias_router)
 main_router.include_router(programas_fechas_router)
+main_router.include_router(audit_router)
+main_router.include_router(impersonation_router)
