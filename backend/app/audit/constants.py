@@ -1,0 +1,134 @@
+"""Audit action code constants (C-05 §4).
+
+Format: MODULO_ACCION (uppercase, underscore).
+These are the canonical action codes recorded in audit_log.accion.
+"""
+
+# ── Impersonation ──────────────────────────────────────────────────────────────
+AUDIT_IMPERSONACION_INICIAR = "IMPERSONACION_INICIAR"
+AUDIT_IMPERSONACION_FINALIZAR = "IMPERSONACION_FINALIZAR"
+
+# ── Estructura académica ─────────────────────────────────────────────────────────
+AUDIT_CARRERA_CREAR = "CARRERA_CREAR"
+AUDIT_CARRERA_ACTUALIZAR = "CARRERA_ACTUALIZAR"
+AUDIT_CARRERA_ELIMINAR = "CARRERA_ELIMINAR"
+AUDIT_COHORTE_CREAR = "COHORTE_CREAR"
+AUDIT_COHORTE_ACTUALIZAR = "COHORTE_ACTUALIZAR"
+AUDIT_COHORTE_ELIMINAR = "COHORTE_ELIMINAR"
+AUDIT_MATERIA_CREAR = "MATERIA_CREAR"
+AUDIT_MATERIA_ACTUALIZAR = "MATERIA_ACTUALIZAR"
+AUDIT_MATERIA_ELIMINAR = "MATERIA_ELIMINAR"
+
+# ── Usuarios y asignaciones ──────────────────────────────────────────────────────
+AUDIT_USUARIOS_GESTIONAR = "USUARIOS_GESTIONAR"
+AUDIT_ASIGNACION_CREAR = "ASIGNACION_CREAR"
+AUDIT_ASIGNACION_ACTUALIZAR = "ASIGNACION_ACTUALIZAR"
+AUDIT_ASIGNACION_ELIMINAR = "ASIGNACION_ELIMINAR"
+
+# ── Calificaciones ──────────────────────────────────────────────────────────────
+AUDIT_CALIFICACIONES_IMPORTAR = "CALIFICACIONES_IMPORTAR"
+AUDIT_CALIFICACIONES_VER = "CALIFICACIONES_VER"
+
+# ── Padrones ────────────────────────────────────────────────────────────────────
+AUDIT_PADRON_CARGAR = "PADRON_CARGAR"
+
+# ── Equipos docentes ─────────────────────────────────────────────────────────────
+AUDIT_EQUIPOS_ASIGNAR = "EQUIPOS_ASIGNAR"
+
+# ── Encuentros y guardias ───────────────────────────────────────────────────────
+AUDIT_ENCUENTRO_CREAR = "ENCUENTRO_CREAR"
+AUDIT_ENCUENTRO_GESTIONAR = "ENCUENTRO_GESTIONAR"
+AUDIT_GUARDIA_REGISTRAR = "GUARDIA_REGISTRAR"
+
+# ── Evaluaciones y coloquios ──────────────────────────────────────────────────
+AUDIT_EVALUACION_CREAR = "EVALUACION_CREAR"
+AUDIT_EVALUACION_RESERVAR = "EVALUACION_RESERVAR"
+AUDIT_COLOQUIO_REGISTRAR = "COLOQUIO_REGISTRAR"
+
+# ── Avisos ──────────────────────────────────────────────────────────────────────
+AUDIT_AVISO_PUBLICAR = "AVISO_PUBLICAR"
+AUDIT_AVISO_CONFIRMAR = "AVISO_CONFIRMAR"
+
+# ── Tareas ───────────────────────────────────────────────────────────────────────
+AUDIT_TAREA_CREAR = "TAREA_CREAR"
+AUDIT_TAREA_ACTUALIZAR = "TAREA_ACTUALIZAR"
+AUDIT_TAREA_COMENTAR = "TAREA_COMENTAR"
+
+# ── Comunicaciones ───────────────────────────────────────────────────────────────
+AUDIT_COMUNICACION_ENVIAR = "COMUNICACION_ENVIAR"
+AUDIT_COMUNICACION_APROBAR = "COMUNICACION_APROBAR"
+
+# ── Liquidaciones ───────────────────────────────────────────────────────────────
+AUDIT_LIQUIDACION_CERRAR = "LIQUIDACION_CERRAR"
+AUDIT_FACTURA_CREAR = "FACTURA_CREAR"
+
+# ── RBAC ────────────────────────────────────────────────────────────────────────
+AUDIT_ROL_CREAR = "ROL_CREAR"
+AUDIT_ROL_ACTUALIZAR = "ROL_ACTUALIZAR"
+AUDIT_ROL_ELIMINAR = "ROL_ELIMINAR"
+AUDIT_PERMISO_ASIGNAR = "PERMISO_ASIGNAR"
+AUDIT_PERMISO_REVOCAR = "PERMISO_REVOCAR"
+
+# ── Auth ──────────────────────────────────────────────────────────────────────────
+AUDIT_LOGIN_EXITO = "LOGIN_EXITO"
+AUDIT_LOGIN_FALLO = "LOGIN_FALLO"
+AUDIT_LOGOUT = "LOGOUT"
+AUDIT_TOKEN_REFRESH = "TOKEN_REFRESH"
+AUDIT_PASSWORD_RESET_SOLICITAR = "PASSWORD_RESET_SOLICITAR"
+AUDIT_PASSWORD_RESET_CONFIRMAR = "PASSWORD_RESET_CONFIRMAR"
+AUDIT_2FA_HABILITAR = "2FA_HABILITAR"
+AUDIT_2FA_DESABILITAR = "2FA_DESABILITAR"
+
+
+def is_valid_action_code(code: str) -> bool:
+    """Return True if code is a known action code constant."""
+    import app.audit.constants as c
+    return code in {
+        c.AUDIT_IMPERSONACION_INICIAR,
+        c.AUDIT_IMPERSONACION_FINALIZAR,
+        c.AUDIT_CARRERA_CREAR,
+        c.AUDIT_CARRERA_ACTUALIZAR,
+        c.AUDIT_CARRERA_ELIMINAR,
+        c.AUDIT_COHORTE_CREAR,
+        c.AUDIT_COHORTE_ACTUALIZAR,
+        c.AUDIT_COHORTE_ELIMINAR,
+        c.AUDIT_MATERIA_CREAR,
+        c.AUDIT_MATERIA_ACTUALIZAR,
+        c.AUDIT_MATERIA_ELIMINAR,
+        c.AUDIT_USUARIOS_GESTIONAR,
+        c.AUDIT_ASIGNACION_CREAR,
+        c.AUDIT_ASIGNACION_ACTUALIZAR,
+        c.AUDIT_ASIGNACION_ELIMINAR,
+        c.AUDIT_CALIFICACIONES_IMPORTAR,
+        c.AUDIT_CALIFICACIONES_VER,
+        c.AUDIT_PADRON_CARGAR,
+        c.AUDIT_EQUIPOS_ASIGNAR,
+        c.AUDIT_ENCUENTRO_CREAR,
+        c.AUDIT_ENCUENTRO_GESTIONAR,
+        c.AUDIT_GUARDIA_REGISTRAR,
+        c.AUDIT_EVALUACION_CREAR,
+        c.AUDIT_EVALUACION_RESERVAR,
+        c.AUDIT_COLOQUIO_REGISTRAR,
+        c.AUDIT_AVISO_PUBLICAR,
+        c.AUDIT_AVISO_CONFIRMAR,
+        c.AUDIT_TAREA_CREAR,
+        c.AUDIT_TAREA_ACTUALIZAR,
+        c.AUDIT_TAREA_COMENTAR,
+        c.AUDIT_COMUNICACION_ENVIAR,
+        c.AUDIT_COMUNICACION_APROBAR,
+        c.AUDIT_LIQUIDACION_CERRAR,
+        c.AUDIT_FACTURA_CREAR,
+        c.AUDIT_ROL_CREAR,
+        c.AUDIT_ROL_ACTUALIZAR,
+        c.AUDIT_ROL_ELIMINAR,
+        c.AUDIT_PERMISO_ASIGNAR,
+        c.AUDIT_PERMISO_REVOCAR,
+        c.AUDIT_LOGIN_EXITO,
+        c.AUDIT_LOGIN_FALLO,
+        c.AUDIT_LOGOUT,
+        c.AUDIT_TOKEN_REFRESH,
+        c.AUDIT_PASSWORD_RESET_SOLICITAR,
+        c.AUDIT_PASSWORD_RESET_CONFIRMAR,
+        c.AUDIT_2FA_HABILITAR,
+        c.AUDIT_2FA_DESABILITAR,
+    }

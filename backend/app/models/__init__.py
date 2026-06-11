@@ -17,6 +17,7 @@ from app.models.instancia_encuentro import InstanciaEncuentro, EstadoEncuentro  
 from app.models.guardia import Guardia  # noqa: F401
 from app.models.programa_materia import ProgramaMateria  # noqa: F401
 from app.models.fecha_academica import FechaAcademica, TipoFechaAcademica  # noqa: F401
+from app.audit.models import AuditLog  # noqa: F401
 
 __all__ = [
     "Base",

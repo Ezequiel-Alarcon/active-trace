@@ -12,6 +12,14 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.audit.constants import (
+    AUDIT_PERMISO_ASIGNAR,
+    AUDIT_PERMISO_REVOCAR,
+    AUDIT_ROL_CREAR,
+    AUDIT_ROL_ACTUALIZAR,
+    AUDIT_ROL_ELIMINAR,
+)
+from app.audit.decorator import audit
 from app.auth.deps import CurrentUser, get_current_user
 from app.core.dependencies import get_db
 from app.core.permissions import require_permission
@@ -63,6 +71,7 @@ async def list_roles(
     summary="Create role",
     dependencies=[Depends(require_permission(ADMIN_PERM))],
 )
+@audit(AUDIT_ROL_CREAR)
 async def create_role(
     request: Request,
     data: RolCreate,
@@ -105,6 +114,7 @@ async def get_role(
     summary="Update role",
     dependencies=[Depends(require_permission(ADMIN_PERM))],
 )
+@audit(AUDIT_ROL_ACTUALIZAR)
 async def update_role(
     request: Request,
     role_id: UUID,
@@ -138,6 +148,7 @@ async def update_role(
     summary="Soft-delete role",
     dependencies=[Depends(require_permission(ADMIN_PERM))],
 )
+@audit(AUDIT_ROL_ELIMINAR)
 async def delete_role(
     request: Request,
     role_id: UUID,
@@ -172,6 +183,7 @@ async def list_permisos(
     summary="Create permission",
     dependencies=[Depends(require_permission(ADMIN_PERM))],
 )
+@audit(AUDIT_PERMISO_ASIGNAR)
 async def create_permiso(
     request: Request,
     data: PermisoCreate,
@@ -194,6 +206,7 @@ async def create_permiso(
     summary="Attach permission to role",
     dependencies=[Depends(require_permission(ADMIN_PERM))],
 )
+@audit(AUDIT_PERMISO_ASIGNAR)
 async def attach_permiso(
     request: Request,
     rol_id: UUID,
@@ -223,6 +236,7 @@ async def attach_permiso(
     summary="Detach permission from role",
     dependencies=[Depends(require_permission(ADMIN_PERM))],
 )
+@audit(AUDIT_PERMISO_REVOCAR)
 async def detach_permiso(
     request: Request,
     rol_id: UUID,
