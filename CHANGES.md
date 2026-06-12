@@ -322,7 +322,7 @@ C-01 → C-02 → C-03 → C-04 → C-06 → C-07 → C-09 → C-10 → C-11 →
   - `knowledge-base/07_flujos_principales.md` FL-02 (pasos 3–5)
 
 ### [C-11] `analisis-atrasados-reportes`
-- **Estado**: `[ ]` pendiente
+- **Estado**: `[x]` hecho (archivado con bug conocido — ver abajo)
 - **Scope**:
   - Cómputo de **alumnos atrasados** (actividades faltantes o nota < umbral, RN-06) (F2.2).
   - Ranking de actividades aprobadas (F2.3, RN-09); reportes rápidos por materia (F2.4); notas finales agrupadas (F2.5).
@@ -335,6 +335,7 @@ C-01 → C-02 → C-03 → C-04 → C-06 → C-07 → C-09 → C-10 → C-11 →
   - `knowledge-base/06_funcionalidades.md` Épica 2 (F2.2–F2.9)
   - `knowledge-base/07_flujos_principales.md` FL-02 (pasos 5–6)
   - `knowledge-base/04_modelo_de_datos.md` §E7, §E8
+- **🐛 Bug conocido**: `get_ranking` en `analisis_repository.py` — `count(case/filter)` cuenta todas las filas del GROUP BY, no solo las aprobadas. La subquery con `WHERE nota.isnot(None)` no resuelve el problema. Fix pendiente. 7/8 tests pasan. Archivado en `openspec/changes/archive/2025-06-12-c-11-analisis-atrasados-reportes/`.
 
 ### [C-12] `comunicaciones-cola-worker`
 - **Estado**: `[ ]` pendiente

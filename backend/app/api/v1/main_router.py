@@ -21,6 +21,7 @@ from app.routers.programas_fechas import router as programas_fechas_router
 from app.routers.padrones import router as padrones_router
 from app.api.v1.calificaciones import router as calificaciones_router
 from app.api.v1.umbral_materia import router as umbral_materia_router
+from app.api.v1.analisis import router as analisis_router
 
 main_router = APIRouter()
 main_router.include_router(health_router)
@@ -39,5 +40,6 @@ main_router.include_router(programas_fechas_router)
 main_router.include_router(padrones_router)
 main_router.include_router(calificaciones_router)
 main_router.include_router(umbral_materia_router)
+main_router.include_router(analisis_router)
 main_router.include_router(audit_router)
 main_router.include_router(impersonation_router)

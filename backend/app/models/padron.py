@@ -12,6 +12,7 @@ from uuid import UUID
 from sqlalchemy import DateTime, ForeignKey, Index, String, func
 from sqlalchemy.dialects.postgresql import UUID as PgUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.types import JSON
 
 from app.models.base import Base
 from app.models.mixins import TenantScopedMixin
@@ -29,6 +30,7 @@ class VersionPadron(Base, TenantScopedMixin):
         nullable=False,
     )
     activa: Mapped[bool] = mapped_column(nullable=False, default=False)
+    actividades: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
 
     entradas: Mapped[list[EntradaPadron]] = relationship(
         "EntradaPadron",

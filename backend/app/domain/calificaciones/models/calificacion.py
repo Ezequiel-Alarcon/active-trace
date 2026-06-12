@@ -13,7 +13,7 @@ from sqlalchemy import JSON, Index, String
 from sqlalchemy.dialects.postgresql import UUID as PgUUID
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.models.base import Base
+from app.core.database import Base
 from app.models.mixins import TenantScopedMixin
 
 
