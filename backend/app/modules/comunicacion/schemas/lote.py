@@ -1,0 +1,19 @@
+"""Pydantic schemas for lote approval/rejection."""
+
+from __future__ import annotations
+
+from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict
+
+
+class LoteRechazarRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    razon: str | None = None
+
+
+class LoteAprobarRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    pass
