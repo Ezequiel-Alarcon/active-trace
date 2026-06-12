@@ -23,6 +23,7 @@ from app.api.v1.calificaciones import router as calificaciones_router
 from app.api.v1.umbral_materia import router as umbral_materia_router
 from app.api.v1.analisis import router as analisis_router
 from app.modules.comunicacion.router import router as comunicacion_router
+from app.routers.coloquios import router as coloquios_router
 
 main_router = APIRouter()
 main_router.include_router(health_router)
@@ -45,3 +46,4 @@ main_router.include_router(analisis_router)
 main_router.include_router(audit_router)
 main_router.include_router(impersonation_router)
 main_router.include_router(comunicacion_router)
+main_router.include_router(coloquios_router)
