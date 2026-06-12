@@ -11,7 +11,7 @@ import enum
 from datetime import datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import CheckConstraint, DateTime, Index, String, func
+from sqlalchemy import CheckConstraint, DateTime, Index, Integer, String, func
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.dialects.postgresql import UUID as PgUUID
 from sqlalchemy.orm import Mapped, mapped_column
@@ -52,6 +52,11 @@ class Tenant(Base, SoftDeleteMixin):
         server_default=func.now(),
         onupdate=func.now(),
         nullable=False,
+    )
+    umbral_aprobacion: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=10,
     )
 
     __table_args__ = (

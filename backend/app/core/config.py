@@ -39,6 +39,11 @@ class Settings(BaseSettings):
     OTEL_EXPORTER_OTLP_ENDPOINT: str | None = Field(default=None)
     OTEL_SDK_ENABLED: bool = Field(default=True)
 
+    COMUNICACION_WORKER_POLL_INTERVAL: int = Field(default=5, ge=1)
+    COMUNICACION_WORKER_LOCK_TIMEOUT: int = Field(default=5, ge=1)
+    COMUNICACION_DISPATCH_WEBHOOK_URL: str | None = Field(default=None)
+    COMUNICACION_APROBACION_THRESHOLD: int = Field(default=10, ge=1)
+
     @field_validator("SECRET_KEY")
     @classmethod
     def validate_secret_key(cls, v: str) -> str:
