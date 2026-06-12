@@ -18,6 +18,7 @@ from app.routers.equipos import equipo_router
 from app.routers.encuentros import router as encuentros_router
 from app.routers.guardias import router as guardias_router
 from app.routers.programas_fechas import router as programas_fechas_router
+from app.routers.padrones import router as padrones_router
 
 main_router = APIRouter()
 main_router.include_router(health_router)
@@ -33,5 +34,6 @@ main_router.include_router(equipo_router)
 main_router.include_router(encuentros_router)
 main_router.include_router(guardias_router)
 main_router.include_router(programas_fechas_router)
+main_router.include_router(padrones_router)
 main_router.include_router(audit_router)
 main_router.include_router(impersonation_router)

@@ -218,7 +218,7 @@ C-01 → C-02 → C-03 → C-04 → C-06 → C-07 → C-09 → C-10 → C-11 →
 ## FASE 2 — Entidades Raíz del Dominio Académico
 
 ### [C-06] `estructura-academica`
-- **Estado**: `[ ]` pendiente
+- **Estado**: `[x]` archivado (2026-06-10) → `openspec/changes/archive/2026-06-10-estructura-academica/`
 - **Scope**:
   - Modelos: `Carrera`, `Cohorte`, `Materia` (catálogo único por tenant — ADR-006).
   - ABM `/api/admin/carreras`, `/api/admin/cohortes`, `/api/admin/materias` con guard `estructura:gestionar` (ADMIN).
@@ -237,7 +237,7 @@ C-01 → C-02 → C-03 → C-04 → C-06 → C-07 → C-09 → C-10 → C-11 →
 ## FASE 3 — Identidad, Asignaciones y Estructura Documental
 
 ### [C-07] `usuarios-y-asignaciones`
-- **Estado**: `[ ]` pendiente
+- **Estado**: `[x]` archivado (2026-06-10) → `openspec/changes/archive/2026-06-10-usuarios-y-asignaciones/`
 - **Scope**:
   - Modelo `Usuario` con PII **cifrada** (`email`, `dni`, `cuil`, `cbu`, `alias_cbu`); legajo como atributo de negocio opcional (no PK, no credencial).
   - Modelo `Asignacion` (Usuario ↔ Rol ↔ contexto: materia/carrera/cohorte/comisiones), `responsable_id` (jerarquía), vigencia `desde/hasta`, `estado_vigencia` derivado.
@@ -254,7 +254,7 @@ C-01 → C-02 → C-03 → C-04 → C-06 → C-07 → C-09 → C-10 → C-11 →
   - `docs/ARQUITECTURA.md` §5, §6 (PII cifrada AES-256)
 
 ### [C-17] `programas-y-fechas-academicas`
-- **Estado**: `[ ]` pendiente
+- **Estado**: `[x]` archivado (2026-06-10) → `openspec/changes/archive/2026-06-10-programas-y-fechas-academicas/`
 - **Scope**:
   - Modelos: `ProgramaMateria` (documento por materia × carrera × cohorte, `referencia_archivo` al almacenamiento), `FechaAcademica` (parciales/TP/coloquios por materia × cohorte × número).
   - `/api/programas` (upload + asociar, `estructura:gestionar`) y `/api/fechas-academicas` (CRUD, listado tabular + calendario).
@@ -274,7 +274,7 @@ C-01 → C-02 → C-03 → C-04 → C-06 → C-07 → C-09 → C-10 → C-11 →
 > Todos dependen de `C-07` (usuarios + asignaciones). Se pueden repartir entre los 3 agentes en paralelo.
 
 ### [C-08] `equipos-docentes`
-- **Estado**: `[ ]` pendiente
+- **Estado**: `[x]` archivado (2026-06-10) → `openspec/changes/archive/2026-06-10-equipos-docentes/`
 - **Scope**:
   - Vistas/endpoints sobre `Asignacion`: mis-equipos del docente (F4.2), gestión de asignaciones (F4.3).
   - Asignación masiva (F4.4): bloque docentes × materia × carrera × cohorte × rol con vigencia.
@@ -354,7 +354,7 @@ C-01 → C-02 → C-03 → C-04 → C-06 → C-07 → C-09 → C-10 → C-11 →
   - `knowledge-base/08_arquitectura_propuesta.md` §5.2 (worker de cola)
 
 ### [C-13] `encuentros-y-guardias`
-- **Estado**: `[ ]` pendiente
+- **Estado**: `[x]` archivado (2026-06-10) → `openspec/changes/archive/2026-06-10-encuentros-y-guardias/`
 - **Scope**:
   - Modelos `SlotEncuentro`, `InstanciaEncuentro`, `Guardia`.
   - Crear encuentro recurrente (F6.1, RN-13): genera todas las instancias del slot. Encuentro único (F6.2). Editar instancia (F6.3: estado, meet_url, video_url, comentario).
