@@ -19,6 +19,9 @@ from app.models.programa_materia import ProgramaMateria  # noqa: F401
 from app.models.fecha_academica import FechaAcademica, TipoFechaAcademica  # noqa: F401
 from app.audit.models import AuditLog  # noqa: F401
 
+from app.domain.calificaciones.models.calificacion import Calificacion  # noqa: F401
+from app.domain.calificaciones.models.umbral_materia import UmbralMateria  # noqa: F401
+
 __all__ = [
     "Base",
     "Carrera", "CarreraEstado",
@@ -31,4 +34,6 @@ __all__ = [
     "Guardia",
     "ProgramaMateria",
     "FechaAcademica", "TipoFechaAcademica",
+    "Calificacion",
+    "UmbralMateria",
 ]
