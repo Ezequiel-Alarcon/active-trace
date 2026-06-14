@@ -8,10 +8,8 @@ Materia es la entidad del catálogo académico. La instancia de dictado
 from __future__ import annotations
 
 import enum
-from datetime import datetime
-from uuid import UUID
 
-from sqlalchemy import CheckConstraint, Enum, Index, String
+from sqlalchemy import Enum, Index, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base

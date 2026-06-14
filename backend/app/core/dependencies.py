@@ -1,15 +1,11 @@
 from collections.abc import AsyncGenerator
-from uuid import UUID
 
-from fastapi import Header, Request
+from fastapi import Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import create_engine, create_session_factory
 from app.core.tenancy import (
     TenantContext,
-    TenantContextMissingError,
-    get_current_tenant_context,
-    set_tenant_context,
 )
 
 

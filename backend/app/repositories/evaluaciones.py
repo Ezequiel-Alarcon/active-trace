@@ -9,7 +9,7 @@ from datetime import date
 from typing import Any, Sequence
 from uuid import UUID
 
-from sqlalchemy import and_, func, select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.evaluacion import Evaluacion, ReservaEvaluacion, ResultadoEvaluacion

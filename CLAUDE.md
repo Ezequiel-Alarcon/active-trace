@@ -125,6 +125,8 @@ Estas reglas son **contrato**. Romperlas es un defecto, no una decisión de esti
 14. **Identidad por UUID interno.** El legajo es un atributo de negocio, nunca credencial ni selector de sesión.
 15. **≤500 LOC por archivo backend**, componentes React <200 LOC. Una migración Alembic por cambio de schema.
 16. **Cobertura mínima**: ≥80% líneas, ≥90% reglas de negocio. **Strict TDD**: test que falla → código mínimo → triangulación → refactor.
+17. **TODO estandarizado en código.** Todo bug conocido, deuda técnica, pendiente, workaround temporal o comportamiento no trivial se marca con `# TODO: (FEAT|FIX|HACK|REVIEW|PERF|TEST) <mensaje>` justo donde ocurre. Usar el prefijo que corresponda (`FEAT` para funcionalidad faltante, `FIX` para bug conocido, `HACK` para workaround, `REVIEW` para decisión dudosa, `PERF` para optimización pendiente, `TEST` para cobertura faltante). Esto permite grepear y priorizar con `grep -rn "TODO:"`. Sin esta marca, un pendiente es invisible.
+18. **Auditorías y code reviews SIEMPRE con `TODO:` en el código.** Cuando se solicite una auditoría, revisión de código, code review, búsqueda de bugs/issue, inspección de calidad, o cualquier pedido similar de análisis de código, el agente DEBE marcar cada hallazgo directamente en el archivo fuente usando el formato `# TODO: (PREFIJO) <mensaje>` de la Regla #17. Está prohibido limitarse a reportar los hallazgos verbalmente o en un resumen externo — los hallazgos deben quedar registrados in-situ en el código. Si el hallazgo es transversal (ej. "todo el módulo X no tiene tests"), se marca en el `__init__.py` del módulo o en el archivo principal del mismo. Sin el `TODO:` en el archivo correcto, el hallazgo no está registrado.
 
 ---
 

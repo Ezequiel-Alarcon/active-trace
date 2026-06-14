@@ -35,22 +35,17 @@ Every permission in the system SHALL be expressed as `modulo:accion` where `modu
 
 ### Requirement: Permissions are seeded on migration
 
-Migration 002 SHALL insert the full set of permissions defined in the capability matrix (§3.3 of `knowledge-base/03_actores_y_roles.md`). The seed includes approximately 20 permissions covering all functional areas.
+The system SHALL seed all permissions defined in the capability matrix. Migration 018 SHALL ensure `avisos:publicar` and `avisos:confirmar` permissions exist in the global tenant and are assigned to the correct roles (`avisos:publicar` → COORDINADOR, ADMIN; `avisos:confirmar` → all roles), if they were not already seeded by migration 002.
 
-#### Scenario: Seed creates all matrix permissions
+**Reason**: C-15 introduces the avisos module. These permissions must exist for `require_permission("avisos:publicar")` and `require_permission("avisos:confirmar")` guards to function. Migration 018 adds them via `ON CONFLICT DO NOTHING` to handle both fresh and existing installations.
 
-- **WHEN** migration 002 runs for a tenant
-- **THEN** the `permiso` table contains at least these permissions:
-  - `academico:ver_estado_propio`, `evaluaciones:reservar`, `avisos:confirmar`
-  - `calificaciones:importar`, `calificaciones:ver`
-  - `atrasados:ver`, `entregas:ver_sin_corregir`
-  - `comunicacion:enviar`, `comunicacion:aprobar`
-  - `encuentros:gestionar`, `encuentros:registrar_guardia`
-  - `tareas:gestionar`, `avisos:publicar`
-  - `equipos:asignar`, `estructura:gestionar`
-  - `usuarios:gestionar`, `auditoria:ver`, `impersonacion:usar`
-  - `finanzas:operar_grilla`, `finanzas:cerrar_liquidacion`, `finanzas:gestionar_facturas`
-  - `tenant:configurar`, `roles:gestionar`
+#### Scenario: Seed creates avisos permissions if missing
+- **WHEN** migration 018 runs and `avisos:publicar` or `avisos:confirmar` do not exist in the global tenant
+- **THEN** the migration inserts them into the `permiso` table and assigns them to the correct roles in `rol_permiso`
+
+#### Scenario: Seed does not duplicate existing permissions
+- **WHEN** migration 018 runs and `avisos:publicar` already exists (e.g., from migration 002)
+- **THEN** the migration does not create a duplicate (uses `ON CONFLICT DO NOTHING`)
 
 ### Requirement: Permission supports soft delete
 

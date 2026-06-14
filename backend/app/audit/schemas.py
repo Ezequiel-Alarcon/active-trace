@@ -66,3 +66,40 @@ class AuditLogPageResponse(BaseModel):
     page: int
     page_size: int
     items: list[AuditLogResponse]
+
+
+# ── C-19: Panel de Auditoría — Métricas ──────────────────────────────────────
+
+
+class ActionsPerDayResponse(BaseModel):
+    """Actions grouped by day."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    date: datetime
+    count: int
+
+
+class ComunicacionStatusItem(BaseModel):
+    """Communication status counts by materia and docente."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    materia_id: UUID | None
+    docente_id: UUID
+    pending: int
+    sending: int
+    ok: int
+    failed: int
+    cancelled: int
+
+
+class InteractionItem(BaseModel):
+    """Interaction counts by materia, docente, and action."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    materia_id: UUID | None
+    docente_id: UUID
+    accion: str
+    count: int

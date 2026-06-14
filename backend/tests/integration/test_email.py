@@ -12,8 +12,6 @@ from __future__ import annotations
 
 import pytest
 
-pytestmark = pytest.mark.no_db
-
 from app.integrations import email as email_mod
 from app.integrations.email import (
     InMemoryEmailCollector,
@@ -21,6 +19,8 @@ from app.integrations.email import (
     get_email_sender,
     set_email_sender,
 )
+
+pytestmark = pytest.mark.no_db
 
 
 @pytest.fixture

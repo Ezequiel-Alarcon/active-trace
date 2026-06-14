@@ -8,11 +8,10 @@ from __future__ import annotations
 
 import csv
 import io
-from datetime import date as DateType
 from uuid import UUID
 
 from fastapi import HTTPException, status
-from sqlalchemy import or_, select
+from sqlalchemy import or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.audit import ASIGNACION_MODIFICAR, audit_emit

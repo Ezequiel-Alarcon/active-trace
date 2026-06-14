@@ -18,11 +18,9 @@ from app.core.dependencies import get_db
 from app.core.security.hashing import hash_email_for_search
 from app.core.security.jwt import encode_access_token
 from app.core.security.passwords import hash_password
-from app.core.tenancy import TenantContext, set_tenant_context, reset_tenant_context
 from app.models.tenant import Tenant, TenantEstado
 from app.rbac.models import Permiso, Rol, RolPermiso
 from app.routers.programas_fechas import router as programas_fechas_router
-from tests.programas_fechas.conftest import db_setup
 
 pytestmark = [pytest.mark.asyncio, pytest.mark.no_db]
 

@@ -11,19 +11,16 @@ from datetime import date
 from uuid import uuid4
 
 import pytest
-import pytest_asyncio
 from fastapi import HTTPException
 
 from app.core.tenancy import TenantContext, set_tenant_context, reset_tenant_context
-from app.models.carrera import Carrera, CarreraEstado
-from app.models.cohorte import Cohorte, CohorteEstado
+from app.models.cohorte import CohorteEstado
 from app.models.tenant import Tenant, TenantEstado
 from app.schemas.estructura import CarreraCreate, CarreraUpdate, CohorteCreate, CohorteUpdate
 from app.services.estructura import EstructuraService
 from tests.estructura.conftest import (
     _create_tenant,
     _seed_global_tenant,
-    db_setup,
 )
 
 pytestmark = [pytest.mark.asyncio, pytest.mark.no_db]

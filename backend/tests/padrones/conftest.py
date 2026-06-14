@@ -8,14 +8,13 @@ os.environ.setdefault(
     "DATABASE_URL", "postgresql+asyncpg://postgres:postgres@localhost:5432/activia_trace_test"
 )
 
-from datetime import datetime, timedelta, timezone
 from uuid import UUID, uuid4
 
 import pytest_asyncio
 import sqlalchemy
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from app.auth.models import AuthSession, AuthUser
+from app.auth.models import AuthUser
 from app.core.security.hashing import hash_email_for_search
 from app.core.security.passwords import hash_password
 from app.core.tenancy import TenantContext, set_tenant_context, reset_tenant_context

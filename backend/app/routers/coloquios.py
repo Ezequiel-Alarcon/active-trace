@@ -3,6 +3,9 @@
 Endpoints for evaluation colloquium management:
 - COORDINADOR/ADMIN: create, list, import, close, view results
 - ALUMNO: reserve slot, cancel reservation, view own reservations
+
+# TODO: (TEST) C-14 no tiene tests. No existe un solo archivo test_coloquio*
+# en todo el directorio tests/. Urgente agregar cobertura mínima.
 """
 
 from __future__ import annotations

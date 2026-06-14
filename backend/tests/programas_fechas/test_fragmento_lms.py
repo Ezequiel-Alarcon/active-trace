@@ -9,7 +9,6 @@ from __future__ import annotations
 from datetime import date
 
 import pytest
-import pytest_asyncio
 
 from app.core.tenancy import TenantContext, set_tenant_context, reset_tenant_context
 from app.models.carrera import Carrera, CarreraEstado
@@ -23,7 +22,6 @@ from tests.programas_fechas.conftest import (
     _create_carrera,
     _create_cohorte,
     _create_materia,
-    db_setup,
 )
 
 pytestmark = [pytest.mark.asyncio, pytest.mark.no_db]
@@ -106,7 +104,7 @@ async def test_fragmento_lms_excluye_soft_deleted(db_setup) -> None:
     try:
         async with db_setup() as session:
             svc = ProgramaFechasService(session, tid)
-            f1 = await svc.create_fecha(FechaAcademicaCreate(
+            await svc.create_fecha(FechaAcademicaCreate(
                 materia_id=materia.id, cohorte_id=cohorte.id,
                 tipo="Parcial", numero_instancia=1, fecha=date(2025, 6, 15),
                 titulo="Visible",

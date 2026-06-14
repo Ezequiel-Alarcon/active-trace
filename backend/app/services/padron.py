@@ -5,8 +5,6 @@ Orchestrates padron import: parse file → create version+entries atomically.
 
 from __future__ import annotations
 
-import uuid
-from typing import Any
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession

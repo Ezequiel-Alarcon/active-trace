@@ -8,7 +8,6 @@ import logging
 from typing import Any, Callable, ParamSpec, TypeVar
 
 from fastapi import Request
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.audit.repositories import AuditLogRepository
 
@@ -46,6 +45,10 @@ def audit(
             result = await fn(*args, **kwargs)
 
             # Defer audit write to avoid blocking the response
+            # TODO: (FIX) asyncio.create_task sin manejo de ciclo de vida.
+            # Si el event loop se cierra antes de que la tarea termine
+            # (shutdown de la app), el log de auditoría se pierde
+            # silenciosamente. Usar un task group o cola persistente.
             asyncio.create_task(
                 _write_audit_log(
                     action_code=action_code,

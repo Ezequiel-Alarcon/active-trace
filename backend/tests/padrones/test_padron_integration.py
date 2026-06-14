@@ -9,11 +9,9 @@ from uuid import uuid4
 
 import pytest
 
-from app.models.asignacion import Asignacion
 from app.models.carrera import Carrera
 from app.models.cohorte import Cohorte
 from app.models.materia import Materia
-from app.models.padron import EntradaPadron, VersionPadron
 from app.models.usuario import Usuario
 from app.repositories.padron import PadronRepository
 from app.schemas.padron import EntradaPadronCreate, VersionPadronCreate
@@ -163,7 +161,7 @@ class TestAislamientoTenant:
 
         # Import padron for tenant B
         repo_b = PadronRepository(db_session, tenant_b)
-        v_b = await repo_b.create_version_and_entries(
+        await repo_b.create_version_and_entries(
             materia_id=mat_b.id,
             cohorte_id=coh_b.id,
             cargado_por=user_admin_b,

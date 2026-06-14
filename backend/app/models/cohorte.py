@@ -9,7 +9,7 @@ cohorte abierta.
 from __future__ import annotations
 
 import enum
-from datetime import date, datetime
+from datetime import date
 from uuid import UUID
 
 from sqlalchemy import Date, Enum, ForeignKey, Index, Integer, String

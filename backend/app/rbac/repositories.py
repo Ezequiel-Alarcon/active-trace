@@ -10,7 +10,6 @@ from __future__ import annotations
 from uuid import UUID
 
 from sqlalchemy import delete, select, func
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.rbac.models import Permiso, Rol, RolPermiso
 from app.repositories.base import TenantScopedRepository

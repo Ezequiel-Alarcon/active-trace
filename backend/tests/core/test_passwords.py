@@ -15,9 +15,9 @@ import logging
 
 import pytest
 
-pytestmark = pytest.mark.no_db
-
 from app.core.security.passwords import hash_password, verify_password
+
+pytestmark = pytest.mark.no_db
 
 
 def test_hash_returns_non_empty_string() -> None:

@@ -6,7 +6,6 @@ from datetime import datetime, timezone
 from uuid import uuid4
 
 import pytest
-import pytest_asyncio
 
 from app.audit.models import AuditLog
 from app.audit.repositories import AuditLogRepository

@@ -5,14 +5,12 @@ from __future__ import annotations
 import asyncio
 import logging
 
-from app.core.config import get_settings
 from app.workers.comunicacion_worker import run_poll_loop
 
 logger = logging.getLogger("activia_trace.worker")
 
 
 async def run_worker() -> None:
-    settings = get_settings()
     logger.info("Starting comunicacion worker...")
 
     retry_count = 0

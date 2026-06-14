@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import enum
 from datetime import date as DateType
-from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy import Date, Enum, Index

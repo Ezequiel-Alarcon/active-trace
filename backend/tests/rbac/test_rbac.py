@@ -132,7 +132,6 @@ async def test_resolver_single_role_returns_that_roles_permissions(
         await session.commit()
 
     async with db_setup() as session:
-        repo = RolRepository(session, Rol, tid)
         resolver = PermissionResolver(session)
         permissions = await resolver.resolve(user.id, tid)
         assert "calificaciones:importar" in permissions

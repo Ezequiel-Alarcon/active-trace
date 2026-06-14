@@ -6,7 +6,7 @@ Slot creation auto-generates cant_semanas instances via date arithmetic.
 
 from __future__ import annotations
 
-from datetime import date, datetime, time, timedelta
+from datetime import date, timedelta
 from uuid import UUID
 
 from fastapi import HTTPException, status
@@ -16,7 +16,6 @@ from app.models.instancia_encuentro import EstadoEncuentro, InstanciaEncuentro
 from app.models.slot_encuentro import SlotEncuentro
 from app.repositories.base import get_tenant_repository
 from app.schemas.encuentros import (
-    InstanciaEncuentroBrief,
     InstanciaEncuentroCreate,
     InstanciaEncuentroUpdate,
     SlotEncuentroCreate,

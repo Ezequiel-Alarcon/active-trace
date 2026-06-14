@@ -16,10 +16,10 @@ import inspect
 
 import pytest
 
-pytestmark = pytest.mark.no_db
-
 from app.auth.deps import get_current_user, get_optional_current_user
 from app.core.dependencies import tenant_context_dep
+
+pytestmark = pytest.mark.no_db
 
 
 def test_get_current_user_signature_does_not_accept_user_or_tenant_params() -> None:

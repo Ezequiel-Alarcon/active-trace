@@ -10,7 +10,6 @@ from datetime import date
 from uuid import uuid4
 
 import pytest
-import pytest_asyncio
 from fastapi import HTTPException
 from pydantic import ValidationError
 
@@ -18,7 +17,6 @@ from app.core.tenancy import TenantContext, set_tenant_context, reset_tenant_con
 from app.models.carrera import Carrera, CarreraEstado
 from app.models.cohorte import Cohorte, CohorteEstado
 from app.models.materia import Materia, MateriaEstado
-from app.models.tenant import Tenant, TenantEstado
 from app.schemas.programas_fechas import ProgramaCreate, ProgramaUpdate
 from app.services.programas_fechas import ProgramaFechasService
 from tests.programas_fechas.conftest import (
@@ -27,7 +25,6 @@ from tests.programas_fechas.conftest import (
     _create_carrera,
     _create_cohorte,
     _create_materia,
-    db_setup,
 )
 
 pytestmark = [pytest.mark.asyncio, pytest.mark.no_db]

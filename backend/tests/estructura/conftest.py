@@ -17,7 +17,6 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from app.core.security.hashing import hash_email_for_search
 from app.core.security.passwords import hash_password
-from app.core.tenancy import TenantContext, set_tenant_context, reset_tenant_context
 from app.models.base import Base
 from app.models.tenant import Tenant, TenantEstado
 from app.rbac.constants import GLOBAL_TENANT_ID
@@ -44,7 +43,6 @@ async def db_setup():
 
 async def _seed_global_tenant(session) -> None:
     """Seed the global tenant with all RBAC roles and permissions."""
-    from app.rbac.constants import GLOBAL_TENANT_ID
 
     gid = GLOBAL_TENANT_ID
 
@@ -120,7 +118,7 @@ async def _create_user_and_session(session, tenant_id: UUID) -> tuple[UUID, UUID
     u = AuthUser(
         id=user_id,
         tenant_id=tenant_id,
-        email_enc=f"enc:test@test.com",
+        email_enc="enc:test@test.com",
         email_hash=hash_email_for_search("test@test.com", tenant_id),
         password_hash=hash_password("Pa55word!"),
     )

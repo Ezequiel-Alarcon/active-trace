@@ -1,7 +1,6 @@
 """Unit tests for worker recovery job (Task 7.7)."""
 
 import pytest
-from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 from app.modules.comunicacion.models.comunicacion import (
