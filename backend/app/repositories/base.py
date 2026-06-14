@@ -25,7 +25,7 @@ from datetime import datetime, timezone
 from typing import Any, Generic, Sequence, TypeVar
 from uuid import UUID
 
-from sqlalchemy import delete, func, select, update
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.audit import (

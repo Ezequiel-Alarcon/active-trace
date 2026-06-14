@@ -6,13 +6,9 @@ La FK es lógica, no materializada en DB para permitir usuarios sin cuenta auth.
 
 from __future__ import annotations
 
-import enum
 from datetime import date as DateType
-from datetime import datetime
-from uuid import UUID
 
 from sqlalchemy import Date, Index, String, Text
-from sqlalchemy.dialects.postgresql import UUID as PgUUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base

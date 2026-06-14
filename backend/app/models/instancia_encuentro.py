@@ -7,7 +7,7 @@ Puede pertenecer a un SlotEncuentro (slot_id) o ser un encuentro unico
 from __future__ import annotations
 
 import enum
-from datetime import date, datetime, time
+from datetime import date, time
 from uuid import UUID
 
 from sqlalchemy import Date, Enum, ForeignKey, Index, String, Text, Time

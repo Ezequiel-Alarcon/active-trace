@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -127,7 +126,6 @@ async def _recovery_job(session: AsyncSession, timeout_minutes: int = 5) -> None
     stuck = list(result.scalars().all())
 
     for comm in stuck:
-        repo = ComunicacionRepository(session, comm.tenant_id)
         comm.estado = ComunicacionEstado.PENDIENTE
         comm.error_detail = None
         await session.flush()
@@ -138,7 +136,6 @@ async def run_poll_loop() -> None:
     dispatch_svc = _build_dispatch_service()
     settings = get_settings()
     poll_interval = settings.COMUNICACION_WORKER_POLL_INTERVAL
-    recovery_interval = 60
 
     while True:
         try:

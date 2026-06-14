@@ -10,7 +10,6 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.deps import CurrentUser, get_current_user
-from app.audit.models import AuditLog
 from app.audit.schemas import AuditLogPageResponse, AuditLogResponse
 from app.audit.services import AuditLogService
 from app.core.dependencies import get_db

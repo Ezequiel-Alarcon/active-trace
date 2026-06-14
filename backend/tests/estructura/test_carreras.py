@@ -9,18 +9,16 @@ from __future__ import annotations
 from uuid import uuid4
 
 import pytest
-import pytest_asyncio
 from fastapi import HTTPException
 
 from app.core.tenancy import TenantContext, set_tenant_context, reset_tenant_context
-from app.models.carrera import Carrera, CarreraEstado
+from app.models.carrera import CarreraEstado
 from app.models.tenant import Tenant, TenantEstado
 from app.schemas.estructura import CarreraCreate, CarreraUpdate
 from app.services.estructura import EstructuraService
 from tests.estructura.conftest import (
     _create_tenant,
     _seed_global_tenant,
-    db_setup,
 )
 
 pytestmark = [pytest.mark.asyncio, pytest.mark.no_db]
@@ -207,7 +205,7 @@ async def test_update_carrera_codigo_duplicate_raises_409(db_setup) -> None:
     try:
         async with db_setup() as session:
             svc = EstructuraService(session, tid)
-            c1 = await svc.create_carrera(CarreraCreate(codigo="C1", nombre="One"))
+            await svc.create_carrera(CarreraCreate(codigo="C1", nombre="One"))
             c2 = await svc.create_carrera(CarreraCreate(codigo="C2", nombre="Two"))
             await session.commit()
 

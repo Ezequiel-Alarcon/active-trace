@@ -16,13 +16,10 @@ Spec contract (D1, D2):
 
 from __future__ import annotations
 
-import time
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 import pytest
-
-pytestmark = pytest.mark.no_db
 
 from app.core.config import get_settings
 from app.core.security.jwt import (
@@ -32,6 +29,8 @@ from app.core.security.jwt import (
     encode_access_token,
     encode_refresh_token,
 )
+
+pytestmark = pytest.mark.no_db
 
 
 def test_encode_access_token_returns_string_with_three_dot_parts() -> None:
@@ -124,10 +123,6 @@ def test_decode_access_rejects_token_signed_with_different_key(monkeypatch) -> N
 
 def test_decode_access_rejects_expired_token(monkeypatch) -> None:
     """A token with exp in the past is rejected."""
-    # Encode with a 1-minute window, then move "now" forward by hand.
-    token = encode_access_token(
-        user_id=uuid4(), tenant_id=uuid4(), session_id=uuid4(), jti=uuid4()
-    )
     # Patch ACCESS_TOKEN_EXPIRE_MINUTES to 0 by overriding the module's
     # _now_offset clock: we can simulate expiry by waiting — too slow.
     # Instead, generate a token that's already expired by manually crafting

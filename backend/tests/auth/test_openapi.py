@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import pytest
 
-pytestmark = pytest.mark.no_db
-
 from app.main import app
+
+pytestmark = pytest.mark.no_db
 
 
 def test_login_endpoint_in_openapi() -> None:

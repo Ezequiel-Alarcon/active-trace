@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import Any, Sequence
 from uuid import UUID
 
-from sqlalchemy import delete, select, update
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.padron import EntradaPadron, VersionPadron
@@ -61,7 +61,7 @@ class PadronRepository(TenantScopedRepository[VersionPadron]):
             .where(VersionPadron.tenant_id == self._tenant_id)
             .where(VersionPadron.materia_id == materia_id)
             .where(VersionPadron.cohorte_id == cohorte_id)
-            .where(VersionPadron.activa == True)
+            .where(VersionPadron.activa)
             .where(VersionPadron.deleted_at.is_(None))
         )
         result = await self._session.execute(stmt)
@@ -76,7 +76,7 @@ class PadronRepository(TenantScopedRepository[VersionPadron]):
             .where(VersionPadron.materia_id == materia_id)
             .where(VersionPadron.cohorte_id == cohorte_id)
             .where(VersionPadron.id != version_id_except)
-            .where(VersionPadron.activa == True)
+            .where(VersionPadron.activa)
             .where(VersionPadron.deleted_at.is_(None))
             .values(activa=False)
         )

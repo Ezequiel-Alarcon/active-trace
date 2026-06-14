@@ -5,6 +5,11 @@ will replace the body of `audit_emit` with a real write to the `AuditLog`
 table. The action-code vocabulary and the function signature are STABLE —
 do not change them in C-05, only the sink.
 
+# TODO: (FIX) C-05 está marcado como completado pero audit_emit() sigue
+# escribiendo al logger en lugar de a la tabla AuditLog real. El decorador
+# @audit en audit/decorator.py sí escribe a la DB, pero el seam usado por
+# TenantScopedRepository (soft_delete, restore, unsafe_*) nunca fue migrado.
+
 Action codes (fixed vocabulary):
 - ROW_SOFT_DELETE: a row was soft-deleted.
 - ROW_RESTORE: a soft-deleted row was restored.

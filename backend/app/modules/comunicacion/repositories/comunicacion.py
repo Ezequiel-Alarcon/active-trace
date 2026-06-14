@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from uuid import UUID
 
 from sqlalchemy import and_, select, update
@@ -96,7 +96,6 @@ class ComunicacionRepository(TenantScopedRepository[Comunicacion]):
         await self._session.flush()
 
     async def get_stuck_sending(self, timeout_minutes: int = 5) -> list[Comunicacion]:
-        cutoff = datetime.now(timezone.utc) - timedelta(minutes=timeout_minutes)
         stmt = (
             select(Comunicacion)
             .where(

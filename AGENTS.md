@@ -78,14 +78,14 @@ Cargá la skill correspondiente al contexto **ANTES** de escribir código. Aplic
 
 | Agente | Rol | Skills que carga |
 |--------|-----|------------------|
-| **Backend Core** | FastAPI / SQLAlchemy / migraciones / modelos | `fastapi-templates`, `postgresql-table-design`, `python-testing-patterns`, `test-driven-development` |
-| **Backend Aux** | Servicios, integraciones, seguridad, performance | `api-security-best-practices`, `postgresql-optimization`, `systematic-debugging` |
-| **Frontend** | React / TanStack / Tailwind / E2E | `typescript-advanced-types`, `tailwind-design-system`, `playwright-best-practices` |
-| **DevOps** | Contenedores / build | `multi-stage-dockerfile` |
-| **Transversal** | Calidad / revisión | `code-review-excellence`, `systematic-debugging` |
-| **Orquestación** | SDD / OPSX / docs | `kb-creator`, `roadmap-generator`, `agent-instruction`, `find-skill` |
+| **Backend Core** | FastAPI / SQLAlchemy / migraciones / modelos | `fastapi-python`, `fastapi-pro`, `fastapi-async-patterns`, `postgres`, `supabase-postgres-best-practices`, `python-testing-patterns`, `python-code-quality` |
+| **Backend Aux** | Servicios, integraciones, seguridad, performance | `security-best-practices`, `postgres`, `systematic-debugging`, `neon-postgres`, `n8n-*` |
+| **Frontend** | React / TanStack / Tailwind / E2E | `typescript-advanced-types`, `tailwind-theme-builder`, `shadcn-ui`, `react-vite`, `vercel-react-best-practices` |
+| **DevOps** | Contenedores / build | `vite` (build frontend) — Docker manual por ahora |
+| **Transversal** | Calidad / revisión / debugging | `code-review-excellence`, `systematic-debugging`, `python-code-quality`, `judgment-day` |
+| **Orquestación** | SDD / OPSX / docs | `kb-creator`, `roadmap-generator`, `agent-instruction`, `find-skill`, `skill-registry`, `gh-commit`, `openspec-*` |
 
-> **Gap conocido**: no hay skill de buenas prácticas React instalada (`vercel-react-best-practices` recomendada pero NO instalada por decisión del usuario). El stack queda cubierto ~100% por las skills preinstaladas.
+> **Skills instaladas recientemente**: `python-code-quality` (limpieza linting), `security-best-practices` (OpenAI oficial), `fastapi-pro` (FastAPI avanzado), `code-review-excellence` (22K+ installs), `systematic-debugging`, `gh-commit`. Stack backend cubierto al ~100%.
 
 ---
 
@@ -125,6 +125,8 @@ Estas reglas son **contrato**. Romperlas es un defecto, no una decisión de esti
 14. **Identidad por UUID interno.** El legajo es un atributo de negocio, nunca credencial ni selector de sesión.
 15. **≤500 LOC por archivo backend**, componentes React <200 LOC. Una migración Alembic por cambio de schema.
 16. **Cobertura mínima**: ≥80% líneas, ≥90% reglas de negocio. **Strict TDD**: test que falla → código mínimo → triangulación → refactor.
+17. **TODO estandarizado en código.** Todo bug conocido, deuda técnica, pendiente, workaround temporal o comportamiento no trivial se marca con `# TODO: (FEAT|FIX|HACK|REVIEW|PERF|TEST) <mensaje>` justo donde ocurre. Usar el prefijo que corresponda (`FEAT` para funcionalidad faltante, `FIX` para bug conocido, `HACK` para workaround, `REVIEW` para decisión dudosa, `PERF` para optimización pendiente, `TEST` para cobertura faltante). Esto permite grepear y priorizar con `grep -rn "TODO:"`. Sin esta marca, un pendiente es invisible.
+18. **Auditorías y code reviews SIEMPRE con `TODO:` en el código.** Cuando se solicite una auditoría, revisión de código, code review, búsqueda de bugs/issue, inspección de calidad, o cualquier pedido similar de análisis de código, el agente DEBE marcar cada hallazgo directamente en el archivo fuente usando el formato `# TODO: (PREFIJO) <mensaje>` de la Regla #17. Está prohibido limitarse a reportar los hallazgos verbalmente o en un resumen externo — los hallazgos deben quedar registrados in-situ en el código. Si el hallazgo es transversal (ej. "todo el módulo X no tiene tests"), se marca en el `__init__.py` del módulo o en el archivo principal del mismo. Sin el `TODO:` en el archivo correcto, el hallazgo no está registrado.
 
 ---
 

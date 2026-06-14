@@ -16,7 +16,7 @@ Spec contract:
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 import pytest_asyncio
@@ -180,7 +180,7 @@ async def test_revoke_chain_branching(db_setup, tenant_ctx) -> None:
         b1 = await _make_session(
             session, user_id=u.id, tenant_id=tid, replaced_by_id=parent.id
         )
-        b2 = await _make_session(
+        await _make_session(
             session, user_id=u.id, tenant_id=tid, replaced_by_id=parent.id
         )
         parent.rotated_to_id = b1.id

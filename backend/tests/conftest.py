@@ -107,7 +107,7 @@ def _ensure_auth_models_registered() -> None:
 def set_tenant_context():
     """Factory fixture: returns a callable that sets the tenant context
     for the duration of a block. Mirrors `tenant_scope` but as a test fixture."""
-    from app.core.tenancy import TenantContext, set_tenant_context, reset_tenant_context
+    from app.core.tenancy import TenantContext, set_tenant_context
 
     def _set(tenant_id):
         token = set_tenant_context(TenantContext(tenant_id=tenant_id))

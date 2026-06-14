@@ -69,7 +69,6 @@ async def get_ranking(
 ) -> RankingResponse:
     """Ranking de alumnos por cantidad de actividades aprobadas."""
     require_permission("analisis:ver")
-    rankings = await svc.get_ranking(materia_id, limit)
     return RankingResponse(
         materia_id=materia_id,
         materia_nombre="",

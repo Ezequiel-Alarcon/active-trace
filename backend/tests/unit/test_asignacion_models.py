@@ -9,17 +9,12 @@ Tests cover:
 
 from __future__ import annotations
 
-import os
 from datetime import date, timedelta
 from uuid import uuid4
 
 import pytest
-import pytest_asyncio
-import sqlalchemy
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from app.models.asignacion import Asignacion, ContextoTipo
-from app.models.base import Base
 
 pytestmark = pytest.mark.no_db
 

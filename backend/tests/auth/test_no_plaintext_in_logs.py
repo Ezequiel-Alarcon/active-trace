@@ -16,10 +16,10 @@ import secrets
 
 import pytest
 
-pytestmark = pytest.mark.no_db
-
 from app.core.security.passwords import hash_password
 from app.core.security.jwt import encode_access_token
+
+pytestmark = pytest.mark.no_db
 
 
 SENSITIVE = [

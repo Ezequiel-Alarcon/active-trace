@@ -24,7 +24,6 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from app.core.security.hashing import hash_email_for_search
 from app.core.security.jwt import encode_access_token
 from app.core.security.passwords import hash_password
-from app.core.tenancy import TenantContext, set_tenant_context, reset_tenant_context
 from app.main import app
 from app.models.base import Base
 from app.models.tenant import Tenant, TenantEstado
@@ -108,7 +107,7 @@ async def _setup_with_permission(db_setup) -> tuple[str, UUID, UUID]:
         u = AuthUser(
             id=uid,
             tenant_id=tid,
-            email_enc=f"enc:admin@test.com",
+            email_enc="enc:admin@test.com",
             email_hash=hash_email_for_search("admin@test.com", tid),
             password_hash=hash_password("Pa55word!"),
         )
@@ -161,7 +160,7 @@ async def _setup_without_permission(db_setup) -> tuple[str, UUID, UUID]:
         u = AuthUser(
             id=uid,
             tenant_id=tid,
-            email_enc=f"enc:noperm@test.com",
+            email_enc="enc:noperm@test.com",
             email_hash=hash_email_for_search("noperm@test.com", tid),
             password_hash=hash_password("Pa55word!"),
         )

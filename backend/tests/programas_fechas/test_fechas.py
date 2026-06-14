@@ -10,7 +10,6 @@ from datetime import date
 from uuid import uuid4
 
 import pytest
-import pytest_asyncio
 from fastapi import HTTPException
 from pydantic import ValidationError
 
@@ -26,7 +25,6 @@ from tests.programas_fechas.conftest import (
     _create_carrera,
     _create_cohorte,
     _create_materia,
-    db_setup,
 )
 
 pytestmark = [pytest.mark.asyncio, pytest.mark.no_db]

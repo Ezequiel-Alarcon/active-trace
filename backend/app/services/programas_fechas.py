@@ -7,7 +7,6 @@ is implemented server-side as string formatting, not Jinja2.
 
 from __future__ import annotations
 
-from datetime import date
 from uuid import UUID
 
 from fastapi import HTTPException, status
@@ -231,7 +230,7 @@ class ProgramaFechasService:
 
         lines: list[str] = []
         lines.append('<div class="fechas-academicas">')
-        lines.append(f'<h2>Fechas Academicas</h2>')
+        lines.append('<h2>Fechas Academicas</h2>')
 
         current_tipo: TipoFechaAcademica | None = None
         for f in fechas:

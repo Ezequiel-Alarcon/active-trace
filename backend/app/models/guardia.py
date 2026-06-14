@@ -7,7 +7,7 @@ propias, COORDINADOR/ADMIN ven todas.
 
 from __future__ import annotations
 
-from datetime import date, datetime, time
+from datetime import date, time
 from uuid import UUID
 
 from sqlalchemy import Date, ForeignKey, Index, String, Text, Time

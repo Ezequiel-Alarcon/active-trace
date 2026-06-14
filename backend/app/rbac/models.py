@@ -10,15 +10,12 @@ contract (id, tenant_id, created_at, updated_at, deleted_at):
 
 from __future__ import annotations
 
-from datetime import datetime
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from sqlalchemy import (
-    DateTime,
     ForeignKey,
     Index,
     String,
-    func,
 )
 from sqlalchemy.dialects.postgresql import UUID as PgUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship

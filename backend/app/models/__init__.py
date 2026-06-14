@@ -18,6 +18,9 @@ from app.models.guardia import Guardia  # noqa: F401
 from app.models.programa_materia import ProgramaMateria  # noqa: F401
 from app.models.fecha_academica import FechaAcademica, TipoFechaAcademica  # noqa: F401
 from app.audit.models import AuditLog  # noqa: F401
+from app.models.avisos import Aviso, AcknowledgmentAviso, AlcanceAviso, SeveridadAviso  # noqa: F401
+from app.models.tarea import ComentarioTarea, EstadoTarea, Tarea  # noqa: F401
+from app.models.mensaje_interno import MensajeInterno  # noqa: F401
 
 # NOTE: Comunicacion vive en app.modules.comunicacion.models.
 # NO importar aquí porque comunicacion.py importa TenantScopedMixin
@@ -43,4 +46,6 @@ __all__ = [
     "Guardia",
     "ProgramaMateria",
     "FechaAcademica", "TipoFechaAcademica",
+    "Aviso", "AcknowledgmentAviso", "AlcanceAviso", "SeveridadAviso",
+    "Tarea", "ComentarioTarea", "EstadoTarea",
 ]

@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from sqlalchemy import and_, case, func, select, text
+from sqlalchemy import and_, case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.calificaciones.models.calificacion import Calificacion
@@ -63,7 +63,6 @@ class AnalisisRepository:
             # Need cohorte filter - use VersionPadron join
             pass
 
-        calif_counts = entradas_stmt.subquery()
         return []
 
     async def get_ranking(

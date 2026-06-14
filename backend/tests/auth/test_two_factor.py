@@ -20,10 +20,10 @@ from __future__ import annotations
 import pyotp
 import pytest
 
-pytestmark = pytest.mark.no_db
-
 from app.auth.schemas import TwoFactorEnrollResponse
 from app.auth.services.two_factor_service import TwoFactorService
+
+pytestmark = pytest.mark.no_db
 
 
 class _StubUser:
@@ -82,7 +82,7 @@ def test_verify_with_correct_code_marks_totp_enabled() -> None:
 def test_verify_with_wrong_code_returns_false() -> None:
     user = _StubUser()
     svc = TwoFactorService()
-    out = svc.enroll(user, _StubSession())
+    svc.enroll(user, _StubSession())
     res = svc.verify(user, _StubSession(), "000000")
     assert res.verified is False
     assert user.totp_enabled is False

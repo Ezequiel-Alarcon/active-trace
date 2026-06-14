@@ -9,18 +9,16 @@ from __future__ import annotations
 from uuid import uuid4
 
 import pytest
-import pytest_asyncio
 from fastapi import HTTPException
 
 from app.core.tenancy import TenantContext, set_tenant_context, reset_tenant_context
-from app.models.materia import Materia, MateriaEstado
+from app.models.materia import MateriaEstado
 from app.models.tenant import Tenant, TenantEstado
 from app.schemas.estructura import MateriaCreate, MateriaUpdate
 from app.services.estructura import EstructuraService
 from tests.estructura.conftest import (
     _create_tenant,
     _seed_global_tenant,
-    db_setup,
 )
 
 pytestmark = [pytest.mark.asyncio, pytest.mark.no_db]

@@ -8,8 +8,7 @@ auto-generated from dias_disponibles + fecha_inicio + cupos.
 from __future__ import annotations
 
 import enum
-import uuid
-from datetime import date, datetime
+from datetime import date
 from uuid import UUID
 
 from sqlalchemy import Date, Enum, ForeignKey, Index, Integer, String, Text

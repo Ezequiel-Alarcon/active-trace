@@ -13,8 +13,6 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-pytestmark = pytest.mark.no_db
-
 from app.auth.schemas import (
     ForgotRequest,
     LoginRequest,
@@ -26,6 +24,8 @@ from app.auth.schemas import (
     TwoFactorVerifyRequest,
     TwoFactorVerifyResponse,
 )
+
+pytestmark = pytest.mark.no_db
 
 
 def test_login_request_accepts_documented_fields() -> None:

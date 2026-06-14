@@ -7,7 +7,6 @@ from typing import Any
 from uuid import uuid4
 
 import pytest
-import pytest_asyncio
 
 from app.audit.decorator import audit
 

@@ -11,7 +11,7 @@ Tests cover service layer with real DB:
 from __future__ import annotations
 
 import os
-from datetime import date, datetime, timedelta, timezone
+from datetime import date
 from uuid import uuid4
 
 import pytest
@@ -20,8 +20,6 @@ import sqlalchemy
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from app.core.security.hashing import hash_email_for_search
-from app.core.security.passwords import hash_password
 from app.core.tenancy import TenantContext, reset_tenant_context, set_tenant_context
 from app.models.base import Base
 from app.models.tenant import Tenant, TenantEstado
@@ -61,7 +59,6 @@ async def _seed_tenant(session) -> Tenant:
     from app.rbac.constants import GLOBAL_TENANT_ID
     gid = GLOBAL_TENANT_ID
 
-    from app.rbac.models import Rol, Permiso, RolPermiso
 
     existing = await session.get(Tenant, gid)
     if existing is None:

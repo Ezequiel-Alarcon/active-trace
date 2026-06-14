@@ -6,6 +6,10 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 
+# TODO: (REVIEW) Las migraciones no siguen la numeración de CHANGES.md.
+# C-04 dice "Migración 002" pero el archivo es 004_rbac_tables.py.
+# La convención "una migración por change" quedó desactualizada frente
+# a las migraciones acumulativas. Revisar y alinear.
 from app.core.config import get_settings
 from app.models import Base  # registers all ORM models on Base.metadata
 from app.auth import models as _auth_models  # noqa: F401  (C-03 auth tables)

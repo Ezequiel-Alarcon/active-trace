@@ -16,7 +16,6 @@ import pytest_asyncio
 import sqlalchemy
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from app.core.security.hashing import hash_email_for_search
 from app.core.tenancy import TenantContext, set_tenant_context, reset_tenant_context
 from app.models.base import Base
 from app.models.tenant import Tenant, TenantEstado

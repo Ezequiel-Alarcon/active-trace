@@ -8,10 +8,10 @@ automaticamente las instancias correspondientes.
 from __future__ import annotations
 
 import enum
-from datetime import date, datetime, time
+from datetime import date, time
 from uuid import UUID
 
-from sqlalchemy import Date, Enum, ForeignKey, Index, Integer, String, Time
+from sqlalchemy import Date, ForeignKey, Index, Integer, String, Time
 from sqlalchemy.dialects.postgresql import UUID as PgUUID
 from sqlalchemy.orm import Mapped, mapped_column
 

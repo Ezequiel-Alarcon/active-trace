@@ -17,12 +17,12 @@ import asyncio
 
 import pytest
 
-pytestmark = pytest.mark.no_db
-
 from app.core.rate_limit import (
     InMemorySlidingWindowRateLimiter,
     RateLimiter,
 )
+
+pytestmark = pytest.mark.no_db
 
 
 def test_rate_limiter_protocol_is_satisfied_by_default_impl() -> None:

@@ -18,8 +18,6 @@ from __future__ import annotations
 import pytest
 from fastapi import HTTPException
 
-pytestmark = pytest.mark.no_db
-
 from app.auth import errors as auth_errors
 from app.auth.errors import (
     AUTH_2FA_INVALID,
@@ -39,6 +37,8 @@ from app.auth.errors import (
     AUTH_USER_DISABLED,
     auth_error,
 )
+
+pytestmark = pytest.mark.no_db
 
 
 def test_auth_error_returns_http_exception_with_code() -> None:

@@ -25,8 +25,6 @@ from app.schemas.padron import (
     VersionPadronResponse,
 )
 from app.services.padron import (
-    DangerousExtensionError,
-    FileTooLargeError,
     PadronService,
     PadronServiceError,
 )

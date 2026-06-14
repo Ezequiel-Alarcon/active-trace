@@ -1,5 +1,8 @@
 """Encuentros router (C-18 §7).
 
+# TODO: (TEST) C-13 no tiene tests. Ni encuentros ni guardias tienen
+# archivos test_encuentro* o test_guardia*. Agregar cobertura.
+
 Endpoints for SlotEncuentro and InstanciaEncuentro CRUD, plus
 fragmento LMS generation.
 """
@@ -9,16 +12,14 @@ from __future__ import annotations
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi import APIRouter, Depends, Query, Request, status
 from fastapi.responses import HTMLResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.deps import CurrentUser, get_current_user
 from app.core.dependencies import get_db
 from app.core.permissions import require_permission
-from app.models.instancia_encuentro import InstanciaEncuentro
 from app.schemas.encuentros import (
-    InstanciaEncuentroBrief,
     InstanciaEncuentroCreate,
     InstanciaEncuentroResponse,
     InstanciaEncuentroUpdate,

@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi import APIRouter, Depends, Query, Request, status
 from fastapi.responses import HTMLResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -20,7 +20,6 @@ from app.schemas.programas_fechas import (
     FechaAcademicaCreate,
     FechaAcademicaResponse,
     FechaAcademicaUpdate,
-    FragmentoLmsResponse,
     ProgramaCreate,
     ProgramaResponse,
     ProgramaUpdate,

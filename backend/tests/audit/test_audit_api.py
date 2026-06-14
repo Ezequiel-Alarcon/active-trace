@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 from datetime import datetime, timedelta, timezone
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 import pytest_asyncio
@@ -15,7 +15,6 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from app.auth.models import AuthSession, AuthUser
 from app.core.security.hashing import hash_email_for_search
 from app.core.security.jwt import encode_access_token
-from app.core.tenancy import TenantContext, reset_tenant_context, set_tenant_context
 from app.main import app
 from app.models.base import Base
 from app.models.tenant import Tenant, TenantEstado
@@ -128,7 +127,7 @@ async def _create_role_with_permission(
 async def test_get_audit_log_returns_401_without_auth(db_setup) -> None:
     """GET /api/audit/log returns 401 when no Authorization header is provided."""
     async with db_setup() as session:
-        t = await _seed_tenant(session)
+        await _seed_tenant(session)
         await session.commit()
 
     transport = ASGITransport(app=app)
@@ -165,7 +164,6 @@ async def test_get_audit_log_returns_403_without_permission(db_setup) -> None:
 @pytest.mark.asyncio
 async def test_get_audit_log_returns_paginated_results(db_setup) -> None:
     """GET /api/audit/log returns paginated audit log entries."""
-    from app.audit.models import AuditLog
     from app.audit.repositories import AuditLogRepository
 
     async with db_setup() as session:
@@ -315,8 +313,6 @@ async def test_post_impersonation_start_returns_403_without_permission(db_setup)
 @pytest.mark.asyncio
 async def test_post_impersonation_start_creates_audit_entry(db_setup) -> None:
     """POST /api/impersonation/start creates an audit log entry."""
-    from app.audit.repositories import AuditLogRepository
-
     async with db_setup() as session:
         t = await _seed_tenant(session)
         await session.flush()
@@ -350,7 +346,6 @@ async def test_post_impersonation_start_creates_audit_entry(db_setup) -> None:
     assert "message" in data
 
     async with db_setup() as session:
-        repo = AuditLogRepository(session, tenant_id)
         from sqlalchemy import select
         from app.audit.models import AuditLog
         result = await session.execute(
@@ -393,7 +388,6 @@ async def test_delete_impersonation_end_returns_403_without_permission(db_setup)
 @pytest.mark.asyncio
 async def test_delete_impersonation_end_creates_audit_entry(db_setup) -> None:
     """DELETE /api/impersonation/end creates an audit log entry."""
-    from app.audit.repositories import AuditLogRepository
     from app.audit.impersonation import start_impersonation
 
     async with db_setup() as session:
@@ -428,7 +422,6 @@ async def test_delete_impersonation_end_creates_audit_entry(db_setup) -> None:
     assert response.status_code == 204
 
     async with db_setup() as session:
-        repo = AuditLogRepository(session, tenant_id)
         from sqlalchemy import select
         from app.audit.models import AuditLog
         result = await session.execute(

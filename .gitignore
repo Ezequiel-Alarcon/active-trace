@@ -33,3 +33,6 @@ backend/dist/
 backend/build/
 backend/.coverage
 backend/htmlcov/
+
+
+.env*

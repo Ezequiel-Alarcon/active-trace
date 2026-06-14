@@ -21,7 +21,6 @@ from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from app.core.tenancy import TenantContext, reset_tenant_context, set_tenant_context
-from app.models.asignacion import ContextoTipo
 from app.models.base import Base
 from app.models.carrera import Carrera, CarreraEstado
 from app.models.cohorte import Cohorte, CohorteEstado
@@ -67,7 +66,7 @@ async def db_setup():
 
 
 async def _seed_tenant_and_context(session) -> tuple:
-    from app.rbac.models import Rol, Permiso, RolPermiso
+    from app.rbac.models import Rol
     from app.models.usuario import Usuario
 
     t = Tenant(codigo="ASG-TEST", nombre="Asignacion Test", estado=TenantEstado.ACTIVO)

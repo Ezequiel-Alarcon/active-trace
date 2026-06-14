@@ -8,7 +8,7 @@ from __future__ import annotations
 from datetime import date, timedelta
 from uuid import UUID
 
-from fastapi import HTTPException, status
+from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.evaluacion import (
@@ -17,7 +17,7 @@ from app.models.evaluacion import (
     ReservaEvaluacion,
     ReservaEstado,
 )
-from app.repositories.evaluaciones import ColoquioRepository, get_coloquio_repository
+from app.repositories.evaluaciones import get_coloquio_repository
 from app.schemas.evaluaciones import (
     ColoquioMetricsResponse,
     DiaSlotSchema,

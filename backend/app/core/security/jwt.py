@@ -19,6 +19,9 @@ import time
 from typing import Any, Final
 from uuid import UUID
 
+# TODO: (FIX) pyproject.toml ahora declara PyJWT>=2.8.0, no python-jose.
+# Los imports `from jose import ...` son incompatible con PyJWT.
+# Migrar a: `import jwt` y adaptar llamadas jwt.encode/decode.
 from jose import JWTError, jwt
 from jose.exceptions import ExpiredSignatureError
 
