@@ -3,19 +3,22 @@ name = "activia-trace"
 version = "0.1.0"
 description = "Plataforma de gestión académica y trazabilidad multi-tenant"
 readme = "../README.md"
+# TODO: (REVIEW) requires-python es >=3.12 pero tool.ruff.target-version es py313
+# y tool.mypy.python_version es 3.13. Alinear: bajar los target a 3.12 o
+# subir requires-python a >=3.13.
 requires-python = ">=3.12"
 license = { text = "UNLICENSED" }
 
 dependencies = [
-    "fastapi>=0.115.0",
+    "fastapi[standard]>=0.115.0",
     "uvicorn[standard]>=0.34.0",
     "sqlalchemy>=2.0.36",
     "alembic>=1.14.0",
     "asyncpg>=0.30.0",
-    "pydantic>=2.10.0",
+    "pydantic[email]>=2.10.0",
     "pydantic-settings>=2.7.0",
     "argon2-cffi>=25.0.0",
-    "python-jose[cryptography]>=3.3.0",
+    "PyJWT>=2.8.0",
     "cryptography>=43.0.0",
     "pyotp>=2.9.0",
     "qrcode[pil]>=8.2",
@@ -33,6 +36,7 @@ dependencies = [
 dev = [
     "pytest>=8.3.0",
     "pytest-asyncio>=0.25.0",
+    "pytest-cov>=5.0.0",
     "httpx>=0.28.0",
     "ruff>=0.9.0",
     "mypy>=1.14.0",
