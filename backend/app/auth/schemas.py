@@ -73,3 +73,20 @@ class TwoFactorVerifyResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     verified: bool
+
+
+class SessionResponse(BaseModel):
+    """Respuesta de GET /api/auth/session (C-21).
+
+    Devuelve identidad del usuario autenticado y sus permisos efectivos.
+    La identidad se extrae del JWT verificado; nunca de parámetros de petición.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    user_id: str
+    tenant_id: str
+    # TODO: (HACK) email se sirve desde email_enc que actualmente almacena texto plano hasta C-07 (AES-256)
+    email: str
+    roles: list[str]
+    permissions: list[str]

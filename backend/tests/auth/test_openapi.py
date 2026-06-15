@@ -52,6 +52,14 @@ def test_me_endpoint_in_openapi() -> None:
     assert "/api/auth/me" in paths
 
 
+def test_session_endpoint_in_openapi() -> None:
+    paths = {r.path: r for r in app.routes}
+    assert "/api/auth/session" in paths
+    route = paths["/api/auth/session"]
+    methods = getattr(route, "methods", set()) or set()
+    assert "GET" in methods
+
+
 def test_health_endpoint_preserved() -> None:
     paths = {r.path: r for r in app.routes}
     assert "/health" in paths

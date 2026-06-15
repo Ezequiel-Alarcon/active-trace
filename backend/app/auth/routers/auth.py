@@ -17,6 +17,7 @@ from app.auth.schemas import (
     LoginResponse,
     LogoutResponse,
     RefreshRequest,
+    SessionResponse,
 )
 from app.auth.services.auth_service import AuthService
 from app.core.dependencies import get_db
@@ -80,6 +81,28 @@ async def logout(
     service = AuthService(db, tenant_lookup=lambda c: _tenant_lookup(db, c))
     await service.logout(payload.refresh_token)
     return LogoutResponse()
+
+
+@router.get("/session", response_model=SessionResponse)
+async def get_session(
+    current: Annotated[CurrentUser, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> SessionResponse:
+    """Devuelve identidad y permisos efectivos del usuario autenticado.
+
+    Identidad extraída del JWT verificado. Roles y permisos resueltos desde
+    las Asignaciones vigentes del usuario en su tenant.
+    Nunca lee user_id ni tenant_id de parámetros de URL, body ni headers.
+    """
+    service = AuthService(db, tenant_lookup=lambda c: _tenant_lookup(db, c))
+    data = await service.get_session_data(current.user_id, current.tenant_id)
+    return SessionResponse(
+        user_id=data.user_id,
+        tenant_id=data.tenant_id,
+        email=data.email,
+        roles=data.roles,
+        permissions=data.permissions,
+    )
 
 
 @router.get("/me")

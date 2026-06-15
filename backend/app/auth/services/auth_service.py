@@ -50,6 +50,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 logger = logging.getLogger("activia_trace.auth.service")
 
 
+@dataclass(frozen=True)
+class SessionData:
+    """Datos de sesión efectivos resueltos para GET /api/auth/session."""
+
+    user_id: str
+    tenant_id: str
+    email: str
+    roles: list[str]
+    permissions: list[str]
+
+
 class _TenantLookup(Protocol):
     async def __call__(self, codigo: str) -> Tenant | None: ...
 
@@ -236,6 +247,82 @@ class AuthService:
             token_type="bearer",
             expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
             requires_2fa=False,
+        )
+
+    async def get_session_data(
+        self,
+        user_id: UUID,
+        tenant_id: UUID,
+    ) -> "SessionData":
+        """Resuelve roles y permisos efectivos de un usuario para GET /api/auth/session.
+
+        Flujo:
+        1. Obtiene el AuthUser (para el email descifrado).
+        2. Consulta Asignacion → Rol (vigente hoy, no borrado, en el tenant del usuario).
+        3. Consulta Permiso vía RolPermiso para esos roles.
+
+        Regla de negocio: solo asignaciones vigentes (desde <= hoy <= hasta o hasta IS NULL).
+        El resolver de permisos globales (GLOBAL_TENANT_ID) es responsabilidad de
+        PermissionResolver; este método resuelve solo los roles propios del usuario.
+        """
+        # TODO: (REVIEW) PermissionResolver.resolve() no filtra por usuario; get_session_data resuelve via Asignacion join como workaround hasta que PermissionResolver soporte user_id
+        from datetime import date as DateType
+
+        from sqlalchemy import or_
+
+        from app.models.asignacion import Asignacion
+        from app.rbac.models import Permiso, Rol, RolPermiso
+
+        # 1. Obtener usuario para el email
+        user_repo = self._user_repo(tenant_id)
+        user = await user_repo.get_by_id(user_id)
+        # TODO: (HACK) email_enc almacena texto plano hasta C-07 (AES-256); descifrar aquí cuando C-07 esté disponible
+        email = user.email_enc if user else ""
+
+        today = DateType.today()
+
+        # 2. Roles vigentes del usuario (via Asignacion)
+        roles_stmt = (
+            select(Rol.nombre)
+            .join(Asignacion, Asignacion.rol_id == Rol.id)
+            .where(Asignacion.usuario_id == user_id)
+            .where(Asignacion.tenant_id == tenant_id)
+            .where(Asignacion.deleted_at.is_(None))
+            .where(Rol.tenant_id == tenant_id)
+            .where(Rol.deleted_at.is_(None))
+            .where(Asignacion.desde <= today)
+            .where(or_(Asignacion.hasta.is_(None), Asignacion.hasta >= today))
+            .distinct()
+        )
+        roles_result = await self.session.execute(roles_stmt)
+        roles = [row[0] for row in roles_result.all()]
+
+        # 3. Permisos efectivos desde esos roles vigentes
+        perms_stmt = (
+            select(Permiso.modulo, Permiso.accion)
+            .join(RolPermiso, RolPermiso.permiso_id == Permiso.id)
+            .join(Rol, Rol.id == RolPermiso.rol_id)
+            .join(Asignacion, Asignacion.rol_id == Rol.id)
+            .where(Asignacion.usuario_id == user_id)
+            .where(Asignacion.tenant_id == tenant_id)
+            .where(Asignacion.deleted_at.is_(None))
+            .where(Rol.tenant_id == tenant_id)
+            .where(Rol.deleted_at.is_(None))
+            .where(Permiso.tenant_id == tenant_id)
+            .where(Permiso.deleted_at.is_(None))
+            .where(Asignacion.desde <= today)
+            .where(or_(Asignacion.hasta.is_(None), Asignacion.hasta >= today))
+            .distinct()
+        )
+        perms_result = await self.session.execute(perms_stmt)
+        permissions = [f"{modulo}:{accion}" for modulo, accion in perms_result.all()]
+
+        return SessionData(
+            user_id=str(user_id),
+            tenant_id=str(tenant_id),
+            email=email,
+            roles=sorted(roles),
+            permissions=sorted(permissions),
         )
 
     async def logout(self, presented_token: str) -> None:
