@@ -102,8 +102,9 @@ class TestEntradaSinUsuario:
 
         entradas = await repo.get_entries_by_version(version.id)
         assert len(entradas) == 1
+        from app.repositories.padron import decrypt_entrada_email
         assert entradas[0].usuario_id is None
-        assert entradas[0].email == "sin-cuenta@test.com"
+        assert decrypt_entrada_email(entradas[0]) == "sin-cuenta@test.com"
 
 
 @pytest.mark.usefixtures("_apply_schema_once")
@@ -227,9 +228,15 @@ class TestPadronServicePreview:
         # Create a usuario first
         user = await _create_usuario(db_session, tenant_a, email="juan@matching.com")
 
+        from app.core.security.hashing import hash_email_for_search
         svc = PadronService(db_session, tenant_a)
         content = b"Nombre,Apellidos,Email\nJuan,Perez,juan@matching.com"
-        usuario_ids_by_email = {"juan@matching.com": user.id}
+        # TODO: (FIX) El lookup de usuario por email usa email_hash (HMAC del email
+        # cifrado, con scope de tenant) y NO el email en texto plano. La DB solo
+        # almacena el hash — nunca el email legible — por diseño PII. El dict
+        # usuario_ids_by_email debe ser {email_hash: user_id}, no {email: user_id}.
+        email_hash = hash_email_for_search("juan@matching.com", tenant_a)
+        usuario_ids_by_email = {email_hash: user.id}
 
         result = await svc.preview(content, "test.csv", usuario_ids_by_email)
 

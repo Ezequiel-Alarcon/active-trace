@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from typing import Sequence, Union
 
+import sqlalchemy as sa
 from alembic import op
 
 
@@ -21,27 +22,27 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     op.create_table(
         "mensaje_interno",
-        op.Column("id", op.UUID(), primary_key=True),
-        op.Column("tenant_id", op.UUID(), nullable=False),
-        op.Column("created_at", op.DateTime(timezone=True), nullable=False, server_default=op.text("now()")),
-        op.Column("updated_at", op.DateTime(timezone=True), nullable=False, server_default=op.text("now()")),
-        op.Column("deleted_at", op.DateTime(timezone=True), nullable=True),
-        op.Column("asunto", op.Text(), nullable=False),
-        op.Column("cuerpo", op.Text(), nullable=False),
-        op.Column("remitente_id", op.UUID(), nullable=False),
-        op.Column("destinatario_id", op.UUID(), nullable=False),
-        op.Column("hilo_id", op.UUID(), nullable=False),
-        op.Column("padre_id", op.UUID(), nullable=True),
-        op.Column("leido_at", op.DateTime(timezone=True), nullable=True),
-        op.ForeignKeyConstraint(["tenant_id"], ["tenant.id"], ondelete="RESTRICT"),
-        op.ForeignKeyConstraint(["remitente_id"], ["usuario.id"], ondelete="RESTRICT"),
-        op.ForeignKeyConstraint(["destinatario_id"], ["usuario.id"], ondelete="RESTRICT"),
-        op.ForeignKeyConstraint(["padre_id"], ["mensaje_interno.id"], ondelete="SET NULL"),
-        op.Index("ix_mensaje_interno_tenant", "tenant_id"),
-        op.Index("ix_mensaje_interno_tenant_deleted", "tenant_id", "deleted_at"),
-        op.Index("ix_mensaje_interno_remitente", "tenant_id", "remitente_id"),
-        op.Index("ix_mensaje_interno_destinatario", "tenant_id", "destinatario_id"),
-        op.Index("ix_mensaje_interno_hilo", "tenant_id", "hilo_id"),
+        sa.Column("id", sa.UUID(), primary_key=True),
+        sa.Column("tenant_id", sa.UUID(), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
+        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
+        sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),
+        sa.Column("asunto", sa.Text(), nullable=False),
+        sa.Column("cuerpo", sa.Text(), nullable=False),
+        sa.Column("remitente_id", sa.UUID(), nullable=False),
+        sa.Column("destinatario_id", sa.UUID(), nullable=False),
+        sa.Column("hilo_id", sa.UUID(), nullable=False),
+        sa.Column("padre_id", sa.UUID(), nullable=True),
+        sa.Column("leido_at", sa.DateTime(timezone=True), nullable=True),
+        sa.ForeignKeyConstraint(["tenant_id"], ["tenant.id"], ondelete="RESTRICT"),
+        sa.ForeignKeyConstraint(["remitente_id"], ["usuario.id"], ondelete="RESTRICT"),
+        sa.ForeignKeyConstraint(["destinatario_id"], ["usuario.id"], ondelete="RESTRICT"),
+        sa.ForeignKeyConstraint(["padre_id"], ["mensaje_interno.id"], ondelete="SET NULL"),
+        sa.Index("ix_mensaje_interno_tenant", "tenant_id"),
+        sa.Index("ix_mensaje_interno_tenant_deleted", "tenant_id", "deleted_at"),
+        sa.Index("ix_mensaje_interno_remitente", "tenant_id", "remitente_id"),
+        sa.Index("ix_mensaje_interno_destinatario", "tenant_id", "destinatario_id"),
+        sa.Index("ix_mensaje_interno_hilo", "tenant_id", "hilo_id"),
     )
 
 

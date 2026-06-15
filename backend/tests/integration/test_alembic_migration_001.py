@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+import sys
 
 import pytest
 import pytest_asyncio
@@ -25,7 +26,7 @@ TEST_DB_URL = os.environ.get(
     "postgresql+asyncpg://postgres:postgres@localhost:5433/activia_trace_test",
 )
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-ALEMBIC_EXE = r"C:\Users\edgar\AppData\Roaming\Python\Python312\Scripts\alembic.exe"
+_PYTHON = sys.executable
 
 
 async def _drop_and_recreate_test_schema() -> None:
@@ -37,6 +38,14 @@ async def _drop_and_recreate_test_schema() -> None:
             await conn.execute(text("CREATE SCHEMA public"))
             await conn.execute(text("GRANT ALL ON SCHEMA public TO postgres"))
             await conn.execute(text("GRANT ALL ON SCHEMA public TO public"))
+            # Pre-create alembic_version with VARCHAR(256) — the default VARCHAR(32)
+            # is too small for revision IDs like "013_analisis_reportes_permissions" (33 chars).
+            await conn.execute(text("""
+                CREATE TABLE alembic_version (
+                    version_num VARCHAR(256) NOT NULL,
+                    CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num)
+                )
+            """))
     finally:
         await engine.dispose()
 
@@ -50,7 +59,7 @@ async def _alembic(*args: str) -> None:
     """
     env = os.environ.copy()
     proc = await asyncio.create_subprocess_exec(
-        ALEMBIC_EXE,
+        _PYTHON, "-m", "alembic",
         *args,
         cwd=REPO_ROOT,
         env=env,

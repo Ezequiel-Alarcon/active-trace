@@ -290,7 +290,7 @@ C-01 → C-02 → C-03 → C-04 → C-06 → C-07 → C-09 → C-10 → C-11 →
   - `knowledge-base/04_modelo_de_datos.md` §E5 Asignación
 
 ### [C-09] `padron-ingesta-moodle`
-- **Estado**: `[ ]` pendiente
+- **Estado**: `[x]` completo
 - **Scope**:
   - Modelos `VersionPadron` + `EntradaPadron` (versionado: una versión activa por materia×cohorte; activar nueva desactiva la anterior).
   - Import de padrón: archivo `.xlsx`/`.csv` (fallback manual) con vista previa (F1.3, F1.4).
@@ -306,7 +306,7 @@ C-01 → C-02 → C-03 → C-04 → C-06 → C-07 → C-09 → C-10 → C-11 →
   - `knowledge-base/08_arquitectura_propuesta.md` §5.1 (Moodle WS, fallback manual)
 
 ### [C-10] `calificaciones-y-umbral`
-- **Estado**: `[ ]` pendiente
+- **Estado**: `[x]` archivado (2026-06-12) → `openspec/changes/archive/2026-06-12-c-10-calificaciones-y-umbral/`
 - **Scope**:
   - Modelos `Calificacion` (numérica/textual, `aprobado` derivado, origen Importado/Manual) y `UmbralMateria` (umbral_pct por asignación, valores aprobatorios).
   - Importar calificaciones desde archivo del LMS (F1.1): detecta columnas de actividades numéricas (RN-01) y textuales (RN-02), vista previa, selección de actividades.
@@ -521,15 +521,26 @@ C-01 → C-02 → C-03 → C-04 → C-06 → C-07 → C-09 → C-10 → C-11 →
   - `knowledge-base/06_funcionalidades.md` Épicas 9, 10, 5
   - `knowledge-base/07_flujos_principales.md` FL-08, FL-11, FL-12
 
+### [fix-test-errors-pending] `fix-test-errors-pending`
+- **Estado**: `[x]` archivado (2026-06-15) → `openspec/changes/archive/2026-06-15-fix-test-errors-pending/`
+- **Scope**: Cross-cutting — resuelve 53 fallos pre-existentes en la suite de tests (636 passed, 0 failed).
+  - Lifecycle de ENUMs en migraciones (015/016/018/019): DO $$ blocks + pg_ENUM(create_type=False) + DROP TYPE
+  - Reemplaza `Base.metadata.drop_all` + FK loop con CASCADE SQL en todos los conftests/tests
+  - Alembic integration tests: sys.executable en lugar de path hardcodeado + alembic_version VARCHAR(256)
+  - `Calificacion.nota`: JSON(none_as_null=True) — Python None → SQL NULL (no JSON null)
+  - `test_estructura/test_migration.py`: downgrade a `"004_rbac"` en lugar de `"-1"`
+  - Fix pytest event loop / engine singleton con fixture `_reset_app_engine_async`
+  - `AuditLogService.get_logs()`: bug de precedencia de operador ternario → TypeError
+
 ---
 
 ## Resumen
 
 | Métrica | Valor |
 |---------|-------|
-| Total de changes | 24 |
-| Completados | 17 |
-| Pendientes | 7 (C-09, C-10, C-18, C-21, C-22, C-23, C-24) |
+| Total de changes | 24 + 1 transversal |
+| Completados | 18 + fix-test-errors-pending |
+| Pendientes | 7 (C-18, C-21, C-22, C-23, C-24) |
 | Deuda técnica | C-18 (PA-22/PA-23 sin resolver) |
 | Fases | 6 (FASE 0 a FASE 5) |
 | Camino crítico | 10 changes (`C-01 → C-02 → C-03 → C-04 → C-06 → C-07 → C-09 → C-10 → C-11 → C-12`) |

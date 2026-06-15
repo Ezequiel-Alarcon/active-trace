@@ -33,8 +33,17 @@ async def db_setup():
 
     engine = create_async_engine(os.environ["DATABASE_URL"])
     async with engine.begin() as conn:
-        await conn.execute(sqlalchemy.text("DROP TABLE IF EXISTS _smoke_tests CASCADE"))
-        await conn.run_sync(Base.metadata.drop_all)
+        # TODO: (HACK) SQL raw con CASCADE en lugar de Base.metadata.drop_all() por FKs
+        # cruzadas entre módulos. drop_all() falla si alguna tabla referenciada no está
+        # registrada en el metadata local. El DO $$ block borra todas las tablas públicas
+        # con CASCADE, ignorando el orden de FK. Ver mismo patrón en otros conftest.
+        await conn.execute(sqlalchemy.text("""
+            DO $$ DECLARE r RECORD; BEGIN
+                FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename <> 'alembic_version') LOOP
+                    EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(r.tablename) || ' CASCADE';
+                END LOOP;
+            END $$;
+        """))
         await conn.run_sync(Base.metadata.create_all)
     factory = async_sessionmaker(engine, expire_on_commit=False, autoflush=False)
     yield factory

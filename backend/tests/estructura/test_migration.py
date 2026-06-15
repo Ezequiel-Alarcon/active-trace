@@ -20,7 +20,7 @@ TEST_DB_URL = os.environ.get(
     "postgresql+asyncpg://postgres:postgres@localhost:5432/activia_trace_test",
 )
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-ALEMBIC_EXE = os.path.join(os.path.dirname(sys.executable), "Scripts", "alembic.exe")
+_PYTHON = sys.executable
 
 
 async def _drop_and_recreate_test_schema() -> None:
@@ -31,6 +31,12 @@ async def _drop_and_recreate_test_schema() -> None:
             await conn.execute(text("CREATE SCHEMA public"))
             await conn.execute(text("GRANT ALL ON SCHEMA public TO postgres"))
             await conn.execute(text("GRANT ALL ON SCHEMA public TO public"))
+            await conn.execute(text("""
+                CREATE TABLE alembic_version (
+                    version_num VARCHAR(256) NOT NULL,
+                    CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num)
+                )
+            """))
     finally:
         await engine.dispose()
 
@@ -38,7 +44,7 @@ async def _drop_and_recreate_test_schema() -> None:
 async def _alembic(*args: str) -> None:
     env = os.environ.copy()
     proc = await asyncio.create_subprocess_exec(
-        ALEMBIC_EXE,
+        _PYTHON, "-m", "alembic",
         *args,
         cwd=REPO_ROOT,
         env=env,
@@ -158,7 +164,12 @@ async def test_alembic_upgrade_creates_estructura_tables() -> None:
 @pytest.mark.asyncio
 async def test_alembic_downgrade_drops_estructura_tables() -> None:
     await _alembic("upgrade", "head")
-    await _alembic("downgrade", "-1")
+    # TODO: (HACK) Se baja a "004_rbac" en lugar de "-1" porque "-1" falla cuando
+    # la cadena de revisiones tiene ramificaciones (branch_labels) o cuando el
+    # head no tiene un único down_revision resoluble sin ambigüedad. Bajar a una
+    # revisión nombrada específica es más robusto y explícito sobre el estado
+    # esperado del schema tras el downgrade.
+    await _alembic("downgrade", "004_rbac")
     engine = create_async_engine(TEST_DB_URL)
     try:
         async with engine.connect() as conn:

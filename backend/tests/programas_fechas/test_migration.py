@@ -21,7 +21,7 @@ TEST_DB_URL = os.environ.get(
     "postgresql+asyncpg://postgres:postgres@localhost:5432/activia_trace_test",
 )
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-ALEMBIC_EXE = os.path.join(os.path.dirname(sys.executable), "Scripts", "alembic.exe")
+_PYTHON = sys.executable
 
 
 async def _drop_and_recreate_test_schema() -> None:
@@ -32,6 +32,12 @@ async def _drop_and_recreate_test_schema() -> None:
             await conn.execute(text("CREATE SCHEMA public"))
             await conn.execute(text("GRANT ALL ON SCHEMA public TO postgres"))
             await conn.execute(text("GRANT ALL ON SCHEMA public TO public"))
+            await conn.execute(text("""
+                CREATE TABLE alembic_version (
+                    version_num VARCHAR(256) NOT NULL,
+                    CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num)
+                )
+            """))
     finally:
         await engine.dispose()
 
@@ -39,7 +45,7 @@ async def _drop_and_recreate_test_schema() -> None:
 async def _alembic(*args: str) -> None:
     env = os.environ.copy()
     proc = await asyncio.create_subprocess_exec(
-        ALEMBIC_EXE,
+        _PYTHON, "-m", "alembic",
         *args,
         cwd=REPO_ROOT,
         env=env,

@@ -17,7 +17,7 @@ from alembic import op
 
 
 revision: str = "005_audit"
-down_revision: Union[str, None] = "004_rbac"
+down_revision: Union[str, None] = "006_usuarios_asignaciones"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

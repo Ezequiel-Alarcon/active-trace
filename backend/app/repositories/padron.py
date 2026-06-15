@@ -12,8 +12,28 @@ from uuid import UUID
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.security.crypto import decrypt, encrypt
+from app.core.security.hashing import hash_email_for_search
 from app.models.padron import EntradaPadron, VersionPadron
 from app.repositories.base import TenantScopedRepository
+
+_AAD_EMAIL = "entrada_padron.email"
+
+
+def encrypt_entrada_fields(data: dict[str, Any], tenant_id: UUID) -> dict[str, Any]:
+    """Encrypt PII fields for EntradaPadron. Mirrors encrypt_usuario_fields pattern."""
+    result = dict(data)
+    if "email" in result and result["email"] is not None:
+        email_lower = result["email"].strip().lower()
+        result["email_hash"] = hash_email_for_search(email_lower, tenant_id)
+        result["email_enc"] = encrypt(email_lower, tenant_id=tenant_id, aad_suffix=_AAD_EMAIL)
+        del result["email"]
+    return result
+
+
+def decrypt_entrada_email(entrada: EntradaPadron) -> str:
+    """Decrypt email from EntradaPadron. Returns plaintext email."""
+    return decrypt(entrada.email_enc, tenant_id=entrada.tenant_id, aad_suffix=_AAD_EMAIL)
 
 
 class PadronRepository(TenantScopedRepository[VersionPadron]):
@@ -38,15 +58,17 @@ class PadronRepository(TenantScopedRepository[VersionPadron]):
         await self._session.flush()
 
         for entry_data in entradas_data:
+            encrypted = encrypt_entrada_fields(entry_data, self._tenant_id)
             entry = EntradaPadron(
                 tenant_id=self._tenant_id,
                 version_id=version.id,
-                nombre=entry_data["nombre"],
-                apellidos=entry_data["apellidos"],
-                email=entry_data["email"],
-                usuario_id=entry_data.get("usuario_id"),
-                comision=entry_data.get("comision"),
-                regional=entry_data.get("regional"),
+                nombre=encrypted["nombre"],
+                apellidos=encrypted["apellidos"],
+                email_hash=encrypted["email_hash"],
+                email_enc=encrypted["email_enc"],
+                usuario_id=encrypted.get("usuario_id"),
+                comision=encrypted.get("comision"),
+                regional=encrypted.get("regional"),
             )
             self._session.add(entry)
 

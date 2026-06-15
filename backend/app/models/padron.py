@@ -62,7 +62,8 @@ class EntradaPadron(Base, TenantScopedMixin):
     usuario_id: Mapped[UUID | None] = mapped_column(PgUUID(as_uuid=True), nullable=True)
     nombre: Mapped[str] = mapped_column(String(128), nullable=False)
     apellidos: Mapped[str] = mapped_column(String(255), nullable=False)
-    email: Mapped[str] = mapped_column(String(2048), nullable=False)
+    email_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    email_enc: Mapped[str] = mapped_column(String(2048), nullable=False)
     comision: Mapped[str | None] = mapped_column(String(64), nullable=True)
     regional: Mapped[str | None] = mapped_column(String(128), nullable=True)
 
@@ -73,6 +74,7 @@ class EntradaPadron(Base, TenantScopedMixin):
         Index("ix_entrada_padron_version", "version_id"),
         Index("ix_entrada_padron_usuario", "usuario_id"),
         Index("ix_entrada_padron_tenant_deleted", "tenant_id", "deleted_at"),
+        Index("ix_entrada_padron_tenant_email_hash", "tenant_id", "email_hash"),
     )
 
     def __repr__(self) -> str:

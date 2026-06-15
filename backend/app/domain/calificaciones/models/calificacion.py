@@ -27,7 +27,11 @@ class Calificacion(Base, TenantScopedMixin):
         PgUUID(as_uuid=True),
         nullable=True,
     )
-    nota: Mapped[dict | list | float | int | str | None] = mapped_column(JSON, nullable=True)
+    # TODO: (HACK) JSON(none_as_null=True) es necesario para que Python None se
+    # persista como SQL NULL y no como el literal JSON "null". Sin este flag,
+    # SQLAlchemy 2.0 serializa None como la cadena JSON "null", lo que rompe
+    # queries que filtran por `IS NULL`. Documentado en SA issue #9179.
+    nota: Mapped[dict | list | float | int | str | None] = mapped_column(JSON(none_as_null=True), nullable=True)
     origen: Mapped[str] = mapped_column(String(16), nullable=False)
     import_batch_id: Mapped[UUID | None] = mapped_column(PgUUID(as_uuid=True), nullable=True)
     created_by: Mapped[UUID | None] = mapped_column(PgUUID(as_uuid=True), nullable=True)

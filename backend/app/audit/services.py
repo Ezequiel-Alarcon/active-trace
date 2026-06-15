@@ -72,22 +72,17 @@ class AuditLogService:
         if impersonado_id is not None:
             conditions.append(AuditLog.impersonado_id == impersonado_id)
 
-        where_clause = and_(*conditions) if conditions else None
-
         count_stmt = select(AuditLog.id)
-        if where_clause is not None:
-            count_stmt = count_stmt.where(where_clause)
+        for cond in conditions:
+            count_stmt = count_stmt.where(cond)
         result = await self._session.execute(count_stmt)
         total = len(result.all())
 
         offset = (page - 1) * page_size
-        stmt = (
-            select(AuditLog)
-            .where(where_clause) if where_clause else select(AuditLog)
-            .order_by(AuditLog.fecha_hora.desc())
-            .limit(page_size)
-            .offset(offset)
-        )
+        stmt = select(AuditLog)
+        for cond in conditions:
+            stmt = stmt.where(cond)
+        stmt = stmt.order_by(AuditLog.fecha_hora.desc()).limit(page_size).offset(offset)
         result = await self._session.execute(stmt)
         items = list(result.scalars().all())
 
@@ -147,6 +142,11 @@ class AuditLogService:
             "cancelled": "Cancelado",
         }
 
+        # TODO: (FIX) Bug de precedencia de operadores resuelto: las tuplas
+        # (condicion, valor) pasadas a sa.case() deben ir como argumentos
+        # posicionales separados — no como una sola tupla anidada. En SQLAlchemy
+        # 2.0, `sa.case((cond1, v1), (cond2, v2), else_=0)` es la forma correcta;
+        # `sa.case([(cond1, v1), (cond2, v2)], else_=0)` ya no es válido.
         pending_col = func.coalesce(
             func.sum(
                 sa.case(

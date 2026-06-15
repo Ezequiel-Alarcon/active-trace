@@ -9,7 +9,9 @@ from __future__ import annotations
 
 from typing import Sequence, Union
 
+import sqlalchemy as sa
 from alembic import op
+from sqlalchemy.dialects.postgresql import ENUM as pg_ENUM
 
 
 revision: str = "015_comunicacion"
@@ -19,40 +21,52 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    # TODO: (HACK) pg_ENUM(create_type=False) en SQLAlchemy 2.0 no garantiza
+    # idempotencia en re-ejecuciones. El DO $$ block con EXCEPTION WHEN
+    # duplicate_object hace el CREATE TYPE idempotente. Ver mismo patrón en
+    # 016_evaluaciones.py y 018_avisos.py.
+    op.execute("""
+        DO $$ BEGIN
+            CREATE TYPE comunicacion_estado AS ENUM ('Pendiente', 'Enviando', 'Enviado', 'Error', 'Cancelado');
+        EXCEPTION WHEN duplicate_object THEN NULL;
+        END $$;
+    """)
+
     op.add_column(
         "tenant",
-        op.Column("umbral_aprobacion", op.Integer(), nullable=False, server_default="10"),
+        sa.Column("umbral_aprobacion", sa.Integer(), nullable=False, server_default="10"),
     )
     op.execute("COMMENT ON COLUMN tenant.umbral_aprobacion IS 'Threshold for comunicacion approval'")
 
     op.create_table(
         "comunicacion",
-        op.Column("id", op.UUID(), primary_key=True),
-        op.Column("tenant_id", op.UUID(), nullable=False),
-        op.Column("created_at", op.DateTime(timezone=True), nullable=False, server_default=op.text("now()")),
-        op.Column("updated_at", op.DateTime(timezone=True), nullable=False, server_default=op.text("now()")),
-        op.Column("deleted_at", op.DateTime(timezone=True), nullable=True),
-        op.Column("asunto", op.String(500), nullable=False),
-        op.Column("cuerpo", op.Text(), nullable=False),
-        op.Column("destinatario", op.String(255), nullable=False),
-        op.Column(
+        sa.Column("id", sa.UUID(), primary_key=True),
+        sa.Column("tenant_id", sa.UUID(), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
+        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
+        sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),
+        sa.Column("asunto", sa.String(500), nullable=False),
+        sa.Column("cuerpo", sa.Text(), nullable=False),
+        sa.Column("destinatario", sa.String(255), nullable=False),
+        sa.Column(
             "estado",
-            op.Enum("Pendiente", "Enviando", "Enviado", "Error", "Cancelado", name="comunicacion_estado"),
+            pg_ENUM("Pendiente", "Enviando", "Enviado", "Error", "Cancelado", name="comunicacion_estado", create_type=False),
             nullable=False,
             server_default="Pendiente",
         ),
-        op.Column("lote_id", op.UUID(), nullable=True),
-        op.Column("error_detail", op.Text(), nullable=True),
-        op.Column("enviado_at", op.DateTime(timezone=True), nullable=True),
-        op.Column("retry_count", op.Integer(), nullable=False, server_default="0"),
-        op.ForeignKeyConstraint(["tenant_id"], ["tenant.id"], ondelete="RESTRICT"),
-        op.Index("ix_comunicacion_estado", "estado"),
-        op.Index("ix_comunicacion_lote_id", "lote_id"),
-        op.Index("ix_comunicacion_tenant_estado", "tenant_id", "estado"),
-        op.Index("ix_comunicacion_tenant_deleted", "tenant_id", "deleted_at"),
+        sa.Column("lote_id", sa.UUID(), nullable=True),
+        sa.Column("error_detail", sa.Text(), nullable=True),
+        sa.Column("enviado_at", sa.DateTime(timezone=True), nullable=True),
+        sa.Column("retry_count", sa.Integer(), nullable=False, server_default="0"),
+        sa.ForeignKeyConstraint(["tenant_id"], ["tenant.id"], ondelete="RESTRICT"),
+        sa.Index("ix_comunicacion_estado", "estado"),
+        sa.Index("ix_comunicacion_lote_id", "lote_id"),
+        sa.Index("ix_comunicacion_tenant_estado", "tenant_id", "estado"),
+        sa.Index("ix_comunicacion_tenant_deleted", "tenant_id", "deleted_at"),
     )
 
 
 def downgrade() -> None:
     op.drop_table("comunicacion")
     op.drop_column("tenant", "umbral_aprobacion")
+    op.execute("DROP TYPE IF EXISTS comunicacion_estado")

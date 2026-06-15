@@ -7,10 +7,16 @@ from __future__ import annotations
 
 from uuid import UUID
 
+from fastapi import HTTPException
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.audit import audit_emit, PADRON_CARGAR
+from app.core.audit import PADRON_CARGAR, PADRON_VACIAR, audit_emit
+from app.core.security.hashing import hash_email_for_search
+from app.models.asignacion import Asignacion
 from app.models.padron import VersionPadron
+from app.rbac.constants import GLOBAL_TENANT_ID
+from app.rbac.models import Rol
 from app.repositories.padron import PadronRepository
 from app.schemas.padron import (
     PadronPreviewResponse,
@@ -18,6 +24,9 @@ from app.schemas.padron import (
     VersionPadronCreate,
 )
 from app.services.padron_parser import PadronParseError, parse_padron_file
+
+# Roles with global scope on padron:vaciar (can vaciar any version)
+_GLOBAL_VACIAR_ROLES = frozenset({"COORDINADOR", "ADMIN"})
 
 
 class PadronServiceError(Exception):
@@ -58,7 +67,10 @@ class PadronService:
         preview_rows: list[PadronPreviewRow] = []
         for row in rows:
             email = row.get("email") or ""
-            matched = usuario_ids_by_email.get(email.lower())
+            # usuario_ids_by_email is keyed by email_hash (deterministic, tenant-scoped)
+            email_lower = email.strip().lower()
+            email_hash = hash_email_for_search(email_lower, self._tenant_id) if email_lower else ""
+            matched = usuario_ids_by_email.get(email_hash) if email_lower else None
             preview_rows.append(PadronPreviewRow(
                 nombre=row.get("nombre") or "",
                 apellidos=row.get("apellidos") or "",
@@ -113,19 +125,62 @@ class PadronService:
 
         return version
 
+    async def _is_global_vaciar(self, user_id: UUID) -> bool:
+        """Return True if the user has a COORDINADOR or ADMIN role in this tenant."""
+        stmt = (
+            select(Rol.nombre)
+            .join(Asignacion, Asignacion.rol_id == Rol.id)
+            .where(Asignacion.tenant_id == self._tenant_id)
+            .where(Asignacion.usuario_id == user_id)
+            .where(Asignacion.deleted_at.is_(None))
+            .where(
+                (Rol.tenant_id == self._tenant_id) | (Rol.tenant_id == GLOBAL_TENANT_ID)
+            )
+            .where(Rol.deleted_at.is_(None))
+        )
+        result = await self._session.execute(stmt)
+        role_names = {row[0] for row in result.all()}
+        return bool(role_names & _GLOBAL_VACIAR_ROLES)
+
     async def vaciar_datos(
-        self, materia_id: UUID, cohorte_id: UUID, user_id: UUID,
+        self, materia_id: UUID, cohorte_id: UUID, current_user: object,
     ) -> None:
-        """Soft-delete all padron versions and entries for materia/cohorte."""
+        """Soft-delete all padron versions and entries for materia/cohorte.
+
+        Authorization rules (RN-04 / RN-05):
+        - COORDINADOR / ADMIN: can vaciar any version of the tenant.
+        - PROFESOR (or any other role with padron:vaciar): can only vaciar
+          versions that they loaded (cargado_por == current_user.user_id).
+        The RBAC permission check (padron:vaciar) is enforced by the router.
+        """
+        user_id: UUID = getattr(current_user, "user_id", current_user)  # type: ignore[arg-type]
+        is_global = await self._is_global_vaciar(user_id)
+
+        if not is_global:
+            # PROFESOR scope: verify all versions belong to this user before deleting
+            version = await self._repo.get_active_version(materia_id, cohorte_id)
+            if version is not None and version.cargado_por != user_id:
+                raise HTTPException(
+                    status_code=403,
+                    detail="Solo puede vaciar versiones que usted mismo cargó.",
+                )
+            # Also check non-active versions
+            versions = await self._repo.list_by_materia_cohorte(materia_id, cohorte_id)
+            for v in versions:
+                if v.cargado_por != user_id:
+                    raise HTTPException(
+                        status_code=403,
+                        detail="Solo puede vaciar versiones que usted mismo cargó.",
+                    )
+
         count = await self._repo.vaciar_datos(materia_id, cohorte_id)
         audit_emit(
-            PADRON_CARGAR,
+            PADRON_VACIAR,
             tenant_id=self._tenant_id,
-            filas_afectadas=0,
+            filas_afectadas=count,
             detalle={
                 "materia_id": str(materia_id),
                 "cohorte_id": str(cohorte_id),
-                "action": "vaciar_datos",
                 "versions_deleted": count,
             },
         )

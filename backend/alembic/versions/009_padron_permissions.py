@@ -16,7 +16,7 @@ from alembic import op
 
 
 revision: str = "009_padron_permissions"
-down_revision: Union[str, None] = "008_encuentros_guardias"
+down_revision: Union[str, None] = "007_padron"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

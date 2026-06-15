@@ -9,7 +9,9 @@ from __future__ import annotations
 
 from typing import Sequence, Union
 
+import sqlalchemy as sa
 from alembic import op
+from sqlalchemy.dialects.postgresql import ENUM as pg_ENUM
 
 
 revision: str = "019_tareas"
@@ -17,62 +19,67 @@ down_revision: Union[str, None] = "018_avisos"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
-# ── Permission IDs ─────────────────────────────────────────────────────
-TAREAS_GESTIONAR_ID = "00000000-0000-0000-0001-d00000000001"
+# ── Permission IDs (from 004_rbac seed) ────────────────────────────────
+TAREAS_GESTIONAR_ID = "00000000-0000-0000-0001-a00000000012"
 
-# ── Role IDs ────────────────────────────────────────────────────────────
-ALUMNO_ID = "00000000-0000-0000-0000-a00000000002"
-TUTOR_ID = "00000000-0000-0000-0000-a00000000003"
+# ── Role IDs (from 004_rbac seed) ───────────────────────────────────────
+ALUMNO_ID = "00000000-0000-0000-0000-a00000000001"
+TUTOR_ID = "00000000-0000-0000-0000-a00000000002"
+PROFESOR_ID = "00000000-0000-0000-0000-a00000000003"
 COORDINADOR_ID = "00000000-0000-0000-0000-a00000000004"
 NEXO_ID = "00000000-0000-0000-0000-a00000000005"
 ADMIN_ID = "00000000-0000-0000-0000-a00000000006"
 FINANZAS_ID = "00000000-0000-0000-0000-a00000000007"
-PROFESOR_ID = "00000000-0000-0000-0000-a00000000008"
 
 GLOBAL_TENANT = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
 
 
 def upgrade() -> None:
     # ── estado_tarea enum ─────────────────────────────────────────────
-    op.execute("CREATE TYPE estado_tarea AS ENUM ('Pendiente', 'En progreso', 'Resuelta', 'Cancelada')")
+    op.execute("""
+        DO $$ BEGIN
+            CREATE TYPE estado_tarea AS ENUM ('Pendiente', 'En progreso', 'Resuelta', 'Cancelada');
+        EXCEPTION WHEN duplicate_object THEN NULL;
+        END $$;
+    """)
 
     # ── tarea table ──────────────────────────────────────────────────
     op.create_table(
         "tarea",
-        op.Column("id", op.UUID(), primary_key=True),
-        op.Column("tenant_id", op.UUID(), nullable=False),
-        op.Column("created_at", op.DateTime(timezone=True), nullable=False, server_default=op.text("now()")),
-        op.Column("updated_at", op.DateTime(timezone=True), nullable=False, server_default=op.text("now()")),
-        op.Column("deleted_at", op.DateTime(timezone=True), nullable=True),
-        op.Column("materia_id", op.UUID(), nullable=True),
-        op.Column("asignado_a", op.UUID(), nullable=False),
-        op.Column("asignado_por", op.UUID(), nullable=False),
-        op.Column("estado", op.Enum("Pendiente", "En progreso", "Resuelta", "Cancelada", name="estado_tarea", create_type=False), nullable=False, server_default="Pendiente"),
-        op.Column("descripcion", op.Text(), nullable=False),
-        op.Column("contexto_id", op.UUID(), nullable=True),
-        op.ForeignKeyConstraint(["tenant_id"], ["tenant.id"], ondelete="RESTRICT"),
-        op.Index("ix_tarea_tenant", "tenant_id"),
-        op.Index("ix_tarea_tenant_deleted", "tenant_id", "deleted_at"),
-        op.Index("ix_tarea_asignado_a", "tenant_id", "asignado_a"),
-        op.Index("ix_tarea_estado", "tenant_id", "estado"),
+        sa.Column("id", sa.UUID(), primary_key=True),
+        sa.Column("tenant_id", sa.UUID(), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
+        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
+        sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),
+        sa.Column("materia_id", sa.UUID(), nullable=True),
+        sa.Column("asignado_a", sa.UUID(), nullable=False),
+        sa.Column("asignado_por", sa.UUID(), nullable=False),
+        sa.Column("estado", pg_ENUM("Pendiente", "En progreso", "Resuelta", "Cancelada", name="estado_tarea", create_type=False), nullable=False, server_default="Pendiente"),
+        sa.Column("descripcion", sa.Text(), nullable=False),
+        sa.Column("contexto_id", sa.UUID(), nullable=True),
+        sa.ForeignKeyConstraint(["tenant_id"], ["tenant.id"], ondelete="RESTRICT"),
+        sa.Index("ix_tarea_tenant", "tenant_id"),
+        sa.Index("ix_tarea_tenant_deleted", "tenant_id", "deleted_at"),
+        sa.Index("ix_tarea_asignado_a", "tenant_id", "asignado_a"),
+        sa.Index("ix_tarea_estado", "tenant_id", "estado"),
     )
 
     # ── comentario_tarea table ───────────────────────────────────────────
     op.create_table(
         "comentario_tarea",
-        op.Column("id", op.UUID(), primary_key=True),
-        op.Column("tenant_id", op.UUID(), nullable=False),
-        op.Column("created_at", op.DateTime(timezone=True), nullable=False, server_default=op.text("now()")),
-        op.Column("updated_at", op.DateTime(timezone=True), nullable=False, server_default=op.text("now()")),
-        op.Column("deleted_at", op.DateTime(timezone=True), nullable=True),
-        op.Column("tarea_id", op.UUID(), nullable=False),
-        op.Column("autor_id", op.UUID(), nullable=False),
-        op.Column("texto", op.Text(), nullable=False),
-        op.ForeignKeyConstraint(["tenant_id"], ["tenant.id"], ondelete="RESTRICT"),
-        op.ForeignKeyConstraint(["tarea_id"], ["tarea.id"], ondelete="CASCADE"),
-        op.Index("ix_comentario_tarea_tenant", "tenant_id"),
-        op.Index("ix_comentario_tarea_tenant_deleted", "tenant_id", "deleted_at"),
-        op.Index("ix_comentario_tarea_tarea", "tenant_id", "tarea_id"),
+        sa.Column("id", sa.UUID(), primary_key=True),
+        sa.Column("tenant_id", sa.UUID(), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
+        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
+        sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),
+        sa.Column("tarea_id", sa.UUID(), nullable=False),
+        sa.Column("autor_id", sa.UUID(), nullable=False),
+        sa.Column("texto", sa.Text(), nullable=False),
+        sa.ForeignKeyConstraint(["tenant_id"], ["tenant.id"], ondelete="RESTRICT"),
+        sa.ForeignKeyConstraint(["tarea_id"], ["tarea.id"], ondelete="CASCADE"),
+        sa.Index("ix_comentario_tarea_tenant", "tenant_id"),
+        sa.Index("ix_comentario_tarea_tenant_deleted", "tenant_id", "deleted_at"),
+        sa.Index("ix_comentario_tarea_tarea", "tenant_id", "tarea_id"),
     )
 
     # ── Permission seeds ─────────────────────────────────────────────

@@ -33,7 +33,7 @@ pytestmark = [pytest.mark.asyncio, pytest.mark.no_db]
 
 
 @pytest_asyncio.fixture
-async def db_setup():
+async def db_setup(_reset_app_engine_async):  # noqa: F811
     """Isolated schema for permission tests — module-scoped to avoid
     engine-disposal conflicts with the app's cached engine pool."""
     from app.models import tenant  # noqa: F401
@@ -43,14 +43,22 @@ async def db_setup():
 
     engine = create_async_engine(os.environ["DATABASE_URL"], pool_pre_ping=True)
     async with engine.begin() as conn:
-        await conn.execute(sqlalchemy.text("DROP TABLE IF EXISTS _smoke_tests CASCADE"))
-        await conn.run_sync(Base.metadata.drop_all)
-        # drop_all doesn't clean up custom enum types — purge them manually
-        await conn.execute(sqlalchemy.text("DROP TYPE IF EXISTS contexto_tipo CASCADE"))
+        # TODO: (HACK) SQL raw con CASCADE en lugar de Base.metadata.drop_all() — ver
+        # backend/tests/calificaciones/conftest.py para explicación completa.
+        await conn.execute(sqlalchemy.text("""
+            DO $$ DECLARE r RECORD; BEGIN
+                FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename <> 'alembic_version') LOOP
+                    EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(r.tablename) || ' CASCADE';
+                END LOOP;
+            END $$;
+        """))
         await conn.run_sync(Base.metadata.create_all)
     factory = async_sessionmaker(engine, expire_on_commit=False, autoflush=False)
     yield factory
-    await engine.dispose()
+    try:
+        await engine.dispose()
+    except Exception:
+        pass
 
 
 async def _setup_with_permission(db_setup) -> tuple[str, UUID, UUID]:

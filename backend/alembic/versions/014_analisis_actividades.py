@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from typing import Sequence, Union
 
+import sqlalchemy as sa
 from alembic import op
 
 
@@ -21,7 +22,7 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     op.add_column(
         "version_padron",
-        op.Column("actividades", op.JSON(), nullable=False, server_default="[]"),
+        sa.Column("actividades", sa.JSON(), nullable=False, server_default="[]"),
     )
 
 

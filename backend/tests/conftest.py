@@ -144,6 +144,12 @@ def _make_session_factory_per_test() -> tuple[AsyncEngine, async_sessionmaker]:
     previous event loop into the next test ("Event loop is closed" from
     asyncpg). So we build a fresh engine per test and dispose it on
     teardown.
+
+    # TODO: (HACK) Crear un engine por test es costoso (overhead de conexión).
+    # Es necesario porque pytest-asyncio 1.4 usa function-scoped event loops y
+    # asyncpg vincula sus conexiones al loop en que se crearon. Reutilizar el
+    # engine causaría "Event loop is closed" en el segundo test. Migrar a
+    # anyio o a session-scoped loops eliminaría esta necesidad.
     """
     engine = create_async_engine(os.environ["DATABASE_URL"], pool_pre_ping=True)
     return engine, async_sessionmaker(engine, expire_on_commit=False, autoflush=False)
@@ -171,3 +177,44 @@ async def test_engine():
         yield engine
     finally:
         await engine.dispose()
+
+
+@pytest_asyncio.fixture(scope="function")
+async def _reset_app_engine_async():
+    """Reset FastAPI's cached engine for tests that use AsyncClient.
+
+    pytest-asyncio 1.4 creates a new event loop per test function. The
+    FastAPI app caches a single AsyncEngine in app.core.dependencies. If
+    that engine was created in a previous test's loop (now closed), the next
+    HTTP request will hit 'RuntimeError: Event loop is closed'.
+
+    Import this fixture in test files that use AsyncClient (NOT autouse —
+    only tests that actually hit the HTTP layer need it).
+
+    # TODO: (HACK) El engine de FastAPI (app.core.dependencies._async_engine)
+    # es un singleton que se inicializa una sola vez. pytest-asyncio 1.4 crea
+    # un event loop nuevo por cada función de test, por lo que el engine del
+    # test anterior queda ligado a un loop cerrado y rompe la siguiente petición
+    # HTTP con "RuntimeError: Event loop is closed". Este fixture fuerza el
+    # descarte y recreación del engine antes y después de cada test que use
+    # AsyncClient. La solución definitiva requiere migrar a session-scoped loops
+    # o usar anyio, pero implica cambios en toda la suite.
+    """
+    from app.core import dependencies as _app_deps
+    old_engine = _app_deps._async_engine
+    _app_deps._async_engine = None
+    _app_deps._async_session_factory = None
+    if old_engine is not None:
+        try:
+            await old_engine.dispose()
+        except Exception:
+            pass
+    yield
+    old_engine = _app_deps._async_engine
+    _app_deps._async_engine = None
+    _app_deps._async_session_factory = None
+    if old_engine is not None:
+        try:
+            await old_engine.dispose()
+        except Exception:
+            pass
