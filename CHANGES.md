@@ -485,7 +485,7 @@ C-01 → C-02 → C-03 → C-04 → C-06 → C-07 → C-09 → C-10 → C-11 →
   - `docs/ARQUITECTURA.md` (stack frontend, convenciones)
 
 ### [C-22] `frontend-academico-docente`
-- **Estado**: `[ ]` pendiente
+- **Estado**: `[x]` completado
 - **Scope**:
   - Feature de gestión de comisión (PROFESOR): importación de calificaciones con preview y selección de actividades, configuración de umbral, vista de atrasados, ranking, notas finales, reportes rápidos.
   - Detección de entregas sin corregir + export. Comunicación a atrasados: preview + envío + tracking de estado en tiempo real.
@@ -539,8 +539,8 @@ C-01 → C-02 → C-03 → C-04 → C-06 → C-07 → C-09 → C-10 → C-11 →
 | Métrica | Valor |
 |---------|-------|
 | Total de changes | 24 + 1 transversal |
-| Completados | 19 + fix-test-errors-pending (C-21 frontend-shell-y-auth) |
-| Pendientes | 6 (C-18, C-22, C-23, C-24) |
+| Completados | 20 + fix-test-errors-pending (C-21 frontend-shell-y-auth, C-22 frontend-academico-docente) |
+| Pendientes | 5 (C-18, C-23, C-24) |
 | Deuda técnica | C-18 (PA-22/PA-23 sin resolver) |
 | Fases | 6 (FASE 0 a FASE 5) |
 | Camino crítico | 10 changes (`C-01 → C-02 → C-03 → C-04 → C-06 → C-07 → C-09 → C-10 → C-11 → C-12`) |
