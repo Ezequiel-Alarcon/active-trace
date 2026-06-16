@@ -9,8 +9,11 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  // TODO: (FEAT) Expand with module nav items as C-22/23/24 features are added
   { label: 'Inicio', to: '/', permission: 'alumnos:ver' },
+  // C-22 entries — conditioned by permission (fail-closed via hasPermission)
+  { label: 'Comisión', to: '/comision', permission: 'analisis:ver' },
+  { label: 'Monitor', to: '/monitor', permission: 'analisis:ver' },
+  { label: 'Comunicaciones', to: '/comision/comunicar', permission: 'comunicacion:enviar' },
 ];
 
 export default function AppLayout() {
