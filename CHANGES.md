@@ -471,7 +471,7 @@ C-01 → C-02 → C-03 → C-04 → C-06 → C-07 → C-09 → C-10 → C-11 →
 > `C-21` es el shell común. Las features (C-22/23/24) consumen los endpoints ya construidos en backend.
 
 ### [C-21] `frontend-shell-y-auth`
-- **Estado**: `[ ]` pendiente
+- **Estado**: `[x]` completado (2026-06-15) → `openspec/changes/archive/2026-06-15-c-21-frontend-shell-y-auth/`
 - **Scope**:
   - Scaffolding React 18 + TypeScript + Vite. Estructura feature-based. Tailwind, TanStack Query, React Hook Form + Zod, Axios.
   - Cliente HTTP centralizado: interceptor de auth + **refresh transparente** de tokens. Manejo de 401/403.
@@ -539,8 +539,8 @@ C-01 → C-02 → C-03 → C-04 → C-06 → C-07 → C-09 → C-10 → C-11 →
 | Métrica | Valor |
 |---------|-------|
 | Total de changes | 24 + 1 transversal |
-| Completados | 18 + fix-test-errors-pending |
-| Pendientes | 7 (C-18, C-21, C-22, C-23, C-24) |
+| Completados | 19 + fix-test-errors-pending (C-21 frontend-shell-y-auth) |
+| Pendientes | 6 (C-18, C-22, C-23, C-24) |
 | Deuda técnica | C-18 (PA-22/PA-23 sin resolver) |
 | Fases | 6 (FASE 0 a FASE 5) |
 | Camino crítico | 10 changes (`C-01 → C-02 → C-03 → C-04 → C-06 → C-07 → C-09 → C-10 → C-11 → C-12`) |

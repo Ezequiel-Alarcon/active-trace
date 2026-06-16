@@ -4,7 +4,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { http, HttpResponse } from '../../../test/server';
 import { server } from '../../../test/server';
 import { useSession } from './useSession';
-import type { Session } from '../types/session';
 import React from 'react';
 
 function makeWrapper() {
@@ -18,8 +17,10 @@ function makeWrapper() {
   };
 }
 
-const mockSession: Session = {
-  user: { user_id: 'u-1', email: 'test@example.com', tenant_id: 't-1' },
+const mockSession = {
+  user_id: 'u-1',
+  email: 'test@example.com',
+  tenant_id: 't-1',
   roles: ['COORDINADOR'],
   permissions: ['alumnos:ver', 'calificaciones:importar'],
 };
