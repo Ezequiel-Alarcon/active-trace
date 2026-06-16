@@ -135,15 +135,15 @@ class AuthService:
         # Issue tokens
         settings = get_settings()
         now = datetime.now(timezone.utc)
+        sid = uuid4()
         access = encode_access_token(
             user_id=user.id,
             tenant_id=tenant.id,
-            session_id=uuid4(),
+            session_id=sid,
             jti=uuid4(),
         )
         refresh = secrets.token_urlsafe(32)
         refresh_hash = hash_password(refresh)
-        sid = uuid4()
         new_session = AuthSession(
             id=sid,
             tenant_id=tenant.id,
@@ -271,6 +271,7 @@ class AuthService:
         from sqlalchemy import or_
 
         from app.models.asignacion import Asignacion
+        from app.rbac.constants import GLOBAL_TENANT_ID
         from app.rbac.models import Permiso, Rol, RolPermiso
 
         # 1. Obtener usuario para el email
@@ -282,13 +283,16 @@ class AuthService:
         today = DateType.today()
 
         # 2. Roles vigentes del usuario (via Asignacion)
+        # Los roles del catálogo viven en GLOBAL_TENANT_ID; las Asignaciones
+        # pertenecen al tenant del usuario. Se acepta Rol en el tenant propio
+        # O en el tenant global para que ambos escenarios funcionen.
         roles_stmt = (
             select(Rol.nombre)
             .join(Asignacion, Asignacion.rol_id == Rol.id)
             .where(Asignacion.usuario_id == user_id)
             .where(Asignacion.tenant_id == tenant_id)
             .where(Asignacion.deleted_at.is_(None))
-            .where(Rol.tenant_id == tenant_id)
+            .where(or_(Rol.tenant_id == tenant_id, Rol.tenant_id == GLOBAL_TENANT_ID))
             .where(Rol.deleted_at.is_(None))
             .where(Asignacion.desde <= today)
             .where(or_(Asignacion.hasta.is_(None), Asignacion.hasta >= today))
@@ -298,6 +302,8 @@ class AuthService:
         roles = [row[0] for row in roles_result.all()]
 
         # 3. Permisos efectivos desde esos roles vigentes
+        # Rol y Permiso pueden residir en GLOBAL_TENANT_ID (catálogo global) o
+        # en el tenant propio; RolPermiso sigue al mismo tenant que Rol/Permiso.
         perms_stmt = (
             select(Permiso.modulo, Permiso.accion)
             .join(RolPermiso, RolPermiso.permiso_id == Permiso.id)
@@ -306,9 +312,9 @@ class AuthService:
             .where(Asignacion.usuario_id == user_id)
             .where(Asignacion.tenant_id == tenant_id)
             .where(Asignacion.deleted_at.is_(None))
-            .where(Rol.tenant_id == tenant_id)
+            .where(or_(Rol.tenant_id == tenant_id, Rol.tenant_id == GLOBAL_TENANT_ID))
             .where(Rol.deleted_at.is_(None))
-            .where(Permiso.tenant_id == tenant_id)
+            .where(or_(Permiso.tenant_id == tenant_id, Permiso.tenant_id == GLOBAL_TENANT_ID))
             .where(Permiso.deleted_at.is_(None))
             .where(Asignacion.desde <= today)
             .where(or_(Asignacion.hasta.is_(None), Asignacion.hasta >= today))
