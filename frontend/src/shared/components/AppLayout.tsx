@@ -5,11 +5,11 @@ import { useLogout } from '@/features/auth/hooks/useLogout';
 interface NavItem {
   label: string;
   to: string;
-  permission: string;
+  permission?: string; // undefined = visible to all authenticated users
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { label: 'Inicio', to: '/', permission: 'alumnos:ver' },
+  { label: 'Inicio', to: '/' }, // no permission required — visible to all authenticated users
   // C-22 entries — conditioned by permission (fail-closed via hasPermission)
   { label: 'Comisión', to: '/comision', permission: 'analisis:ver' },
   { label: 'Monitor', to: '/monitor', permission: 'analisis:ver' },
@@ -20,7 +20,9 @@ export default function AppLayout() {
   const { hasPermission, session } = useAuth();
   const logout = useLogout();
 
-  const visibleItems = NAV_ITEMS.filter((item) => hasPermission(item.permission));
+  const visibleItems = NAV_ITEMS.filter(
+    (item) => !item.permission || hasPermission(item.permission),
+  );
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -29,7 +31,6 @@ export default function AppLayout() {
         <div className="flex items-center gap-4">
           {session && (
             <span className="text-sm text-gray-500">
-              {/* TODO: (HACK C-07) email arrives AES-encrypted from backend; display as-is until C-07 decrypts it */}
               {session.user.email}
             </span>
           )}

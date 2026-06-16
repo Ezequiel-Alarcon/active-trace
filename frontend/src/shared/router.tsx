@@ -50,11 +50,7 @@ export const router = createBrowserRouter([
         children: [
           {
             path: '/',
-            element: (
-              <RequirePermission permission="alumnos:ver">
-                <DashboardPage />
-              </RequirePermission>
-            ),
+            element: <DashboardPage />,
           },
 
           // ── C-22: comisión workspace ──────────────────────────────────────

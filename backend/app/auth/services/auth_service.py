@@ -39,6 +39,7 @@ from app.auth.repositories import (
 from app.auth.schemas import LoginRequest, LoginResponse
 from app.core.audit import audit_emit
 from app.core.config import get_settings
+from app.core.security.crypto import CryptoError, decrypt
 from app.core.security.jwt import (
     encode_access_token,
 )
@@ -277,8 +278,14 @@ class AuthService:
         # 1. Obtener usuario para el email
         user_repo = self._user_repo(tenant_id)
         user = await user_repo.get_by_id(user_id)
-        # TODO: (HACK) email_enc almacena texto plano hasta C-07 (AES-256); descifrar aquí cuando C-07 esté disponible
-        email = user.email_enc if user else ""
+        if user:
+            try:
+                email = decrypt(user.email_enc, tenant_id=tenant_id, aad_suffix="usuario.email")
+            except (CryptoError, Exception):
+                # TODO: (FIX) error descifrando email — revisar ENCRYPTION_KEY o formato del campo
+                email = "[email no disponible]"
+        else:
+            email = ""
 
         today = DateType.today()
 

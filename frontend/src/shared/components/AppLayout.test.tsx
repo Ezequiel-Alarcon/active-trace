@@ -61,11 +61,14 @@ describe('AppLayout', () => {
   });
 
   it('7.4 — menu does NOT show items the user lacks permission for', async () => {
+    // "Inicio" has no permission guard — visible to every authenticated user.
+    // "Comisión" requires analisis:ver — must be hidden when the user lacks it.
     render(makeTree(sessionWithoutAlumnos));
     await waitFor(() =>
       expect(screen.getByText('Active Trace')).toBeInTheDocument(),
     );
-    expect(screen.queryByText('Inicio')).not.toBeInTheDocument();
+    expect(screen.getByText('Inicio')).toBeInTheDocument(); // always visible
+    expect(screen.queryByText('Comisión')).not.toBeInTheDocument(); // gated
   });
 
   it('8.2 — 404 page renders for unknown routes', async () => {
