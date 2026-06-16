@@ -19,11 +19,8 @@ import time
 from typing import Any, Final
 from uuid import UUID
 
-# TODO: (FIX) pyproject.toml ahora declara PyJWT>=2.8.0, no python-jose.
-# Los imports `from jose import ...` son incompatible con PyJWT.
-# Migrar a: `import jwt` y adaptar llamadas jwt.encode/decode.
-from jose import JWTError, jwt
-from jose.exceptions import ExpiredSignatureError
+import jwt
+from jwt import ExpiredSignatureError, PyJWTError
 
 from app.core.config import get_settings
 
@@ -107,11 +104,11 @@ def _decode(token: str, expected_typ: str) -> dict[str, Any]:
             token,
             settings.SECRET_KEY,
             algorithms=[_ALG],
-            options={"verify_iat": True, "verify_exp": True},
+            options={"verify_exp": True},
         )
     except ExpiredSignatureError as exc:
         raise InvalidTokenError("token expired") from exc
-    except JWTError as exc:
+    except PyJWTError as exc:
         raise InvalidTokenError("token verification failed") from exc
 
     typ = claims.get("typ")

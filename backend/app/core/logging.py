@@ -33,6 +33,8 @@ def configure_logging() -> None:
     root_logger = logging.getLogger()
     root_logger.addHandler(handler)
     root_logger.setLevel(logging.INFO)
-    for logger_name in ["uvicorn", "uvicorn.error", "uvicorn.access"]:
-        uv_logger = logging.getLogger(logger_name)
-        uv_logger.setLevel(logging.WARNING)
+    # Suppress per-request access logs (noisy) but keep uvicorn.error at INFO
+    # so that operational messages like "Application startup complete." are visible.
+    # Setting uvicorn or uvicorn.error to WARNING silences startup/shutdown
+    # confirmation messages and makes the app appear to hang on startup.
+    logging.getLogger("uvicorn.access").setLevel(logging.WARNING)

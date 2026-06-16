@@ -11,7 +11,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.audit.constants import AUDIT_COMUNICACION_ENVIAR
 from app.core.audit import audit_emit
 from app.core.config import get_settings
-from app.core.database import async_session_maker
+from app.core.database import create_session_factory
+
+# Build the session factory once at module level using the default engine.
+async_session_maker = create_session_factory()
 from app.modules.comunicacion.models.comunicacion import (
     Comunicacion,
     ComunicacionEstado,
