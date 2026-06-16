@@ -1,4 +1,5 @@
 import { apiClient } from '@/shared/services/api';
+import { tokenStore } from '@/shared/services/tokenStore';
 import type {
   LoginRequest,
   LoginResponse,
@@ -54,8 +55,13 @@ export async function resetPassword(payload: ResetRequest): Promise<void> {
 }
 
 /**
- * DELETE /api/auth/session (or POST /api/auth/logout per C-03 spec)
+ * POST /api/auth/logout
+ * Sends the in-memory refresh token so the backend can revoke it.
+ * If no refresh token is present (already cleared), the call is skipped —
+ * the caller (useLogout) always clears the local session regardless.
  */
 export async function logout(): Promise<void> {
-  await apiClient.post('/api/auth/logout');
+  const refreshToken = tokenStore.getRefresh();
+  if (!refreshToken) return;
+  await apiClient.post('/api/auth/logout', { refresh_token: refreshToken });
 }

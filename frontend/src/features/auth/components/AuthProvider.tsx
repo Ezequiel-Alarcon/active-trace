@@ -38,6 +38,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const setSession = useCallback(
     (loginResponse: LoginResponse) => {
       tokenStore.set(loginResponse.access_token);
+      tokenStore.setRefresh(loginResponse.refresh_token);
       // Invalidate so useSession refetches from /api/auth/session
       queryClient.invalidateQueries({ queryKey: SESSION_QUERY_KEY });
     },

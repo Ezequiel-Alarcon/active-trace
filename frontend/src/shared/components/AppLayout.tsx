@@ -25,7 +25,10 @@ export default function AppLayout() {
         <span className="font-semibold text-gray-800">Active Trace</span>
         <div className="flex items-center gap-4">
           {session && (
-            <span className="text-sm text-gray-500">{session.user.email}</span>
+            <span className="text-sm text-gray-500">
+              {/* TODO: (HACK C-07) email arrives AES-encrypted from backend; display as-is until C-07 decrypts it */}
+              {session.user.email}
+            </span>
           )}
           <button
             type="button"

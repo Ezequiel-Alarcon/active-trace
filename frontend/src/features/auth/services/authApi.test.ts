@@ -116,13 +116,30 @@ describe('authApi', () => {
   });
 
   describe('logout', () => {
-    it('resolves without error on 204', async () => {
+    it('resolves without error on 200 when refresh token is set', async () => {
+      tokenStore.setRefresh('refresh-tok-123');
+      let capturedBody: unknown = undefined;
       server.use(
-        http.post('http://localhost:8000/api/auth/logout', () =>
-          new HttpResponse(null, { status: 204 }),
-        ),
+        http.post('http://localhost:8000/api/auth/logout', async ({ request }) => {
+          capturedBody = await request.json();
+          return HttpResponse.json({ ok: true }, { status: 200 });
+        }),
       );
       await expect(logout()).resolves.toBeUndefined();
+      expect(capturedBody).toEqual({ refresh_token: 'refresh-tok-123' });
+    });
+
+    it('resolves immediately without calling the server when no refresh token is stored', async () => {
+      let callCount = 0;
+      server.use(
+        http.post('http://localhost:8000/api/auth/logout', () => {
+          callCount++;
+          return new HttpResponse(null, { status: 204 });
+        }),
+      );
+      // tokenStore was cleared in beforeEach — no refresh token present
+      await expect(logout()).resolves.toBeUndefined();
+      expect(callCount).toBe(0);
     });
   });
 });

@@ -31,12 +31,15 @@ function makeWrapper() {
 }
 
 describe('useLogout', () => {
-  beforeEach(() => tokenStore.set('active-token'));
+  beforeEach(() => {
+    tokenStore.set('active-token');
+    tokenStore.setRefresh('active-refresh-token');
+  });
 
-  it('6.7 — 204 → clears token and navigates', async () => {
+  it('6.7 — 200 → clears token and navigates', async () => {
     server.use(
       http.post('http://localhost:8000/api/auth/logout', () =>
-        new HttpResponse(null, { status: 204 }),
+        HttpResponse.json({ ok: true }, { status: 200 }),
       ),
     );
     const { useLogout } = await import('./useLogout');
