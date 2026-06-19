@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.audit.constants import AUDIT_COMUNICACION_ENVIAR
 from app.core.audit import audit_emit
 from app.core.config import get_settings
+from app.core.tenancy import TenantContext, set_tenant_context
 from app.modules.comunicacion.models.comunicacion import (
     Comunicacion,
     ComunicacionEstado,
@@ -38,6 +40,23 @@ def _build_dispatch_service() -> WebhookDispatchService | NoOpDispatchService:
     return NoOpDispatchService()
 
 
+def _get_worker_tenant_id() -> TenantContext:
+    """Validate and return the tenant context for this worker.
+
+    Raises RuntimeError if COMUNICACION_WORKER_TENANT_ID is not configured,
+    ensuring fail-fast rather than processing messages from all tenants.
+    """
+    settings = get_settings()
+    if not settings.COMUNICACION_WORKER_TENANT_ID:
+        raise RuntimeError(
+            "COMUNICACION_WORKER_TENANT_ID is not configured. "
+            "Worker cannot start without a tenant_id — set it to the tenant UUID."
+        )
+    from uuid import UUID
+
+    return TenantContext(tenant_id=UUID(settings.COMUNICACION_WORKER_TENANT_ID))
+
+
 async def _process_message(
     session: AsyncSession,
     comm: Comunicacion,
@@ -57,7 +76,7 @@ async def _process_message(
     )
 
     result: DispatchResult = await dispatch_svc.send(
-        comm.destinatario,
+        comm.get_destinatario(),
         comm.asunto,
         comm.cuerpo,
     )
@@ -77,7 +96,7 @@ async def _process_message(
         await repo.increment_retry(comm)
         backoff = 2**comm.retry_count
         await asyncio.sleep(backoff)
-        result = await dispatch_svc.send(comm.destinatario, comm.asunto, comm.cuerpo)
+        result = await dispatch_svc.send(comm.get_destinatario(), comm.asunto, comm.cuerpo)
         if result.success:
             await repo.update_estado(comm, ComunicacionEstado.ENVIADO)
             await audit_emit(
@@ -114,7 +133,7 @@ async def _process_message(
         )
 
 
-async def _recovery_job(session: AsyncSession, timeout_minutes: int = 5) -> None:
+async def _recovery_job(session: AsyncSession, tenant_id: UUID, timeout_minutes: int = 5) -> None:
     settings = get_settings()
     timeout = timeout_minutes or settings.COMUNICACION_WORKER_LOCK_TIMEOUT
 
@@ -124,6 +143,7 @@ async def _recovery_job(session: AsyncSession, timeout_minutes: int = 5) -> None
     stmt = (
         select(Comunicacion)
         .where(
+            Comunicacion.tenant_id == tenant_id,
             Comunicacion.estado == ComunicacionEstado.ENVIANDO,
             Comunicacion.deleted_at.is_(None),
         )
@@ -141,18 +161,29 @@ async def _recovery_job(session: AsyncSession, timeout_minutes: int = 5) -> None
 
 
 async def run_poll_loop() -> None:
+    # Fail-fast if tenant_id is not configured
+    worker_tenant = _get_worker_tenant_id()
+    worker_tenant_id = worker_tenant.tenant_id
+    set_tenant_context(worker_tenant)
+
     dispatch_svc = _build_dispatch_service()
     settings = get_settings()
     poll_interval = settings.COMUNICACION_WORKER_POLL_INTERVAL
 
+    logger.info("Worker started for tenant_id=%s", worker_tenant_id)
+
     while True:
         try:
             async with async_session_maker() as session:
-                await _recovery_job(session, settings.COMUNICACION_WORKER_LOCK_TIMEOUT)
+                # Ensure tenant context is set for each session
+                set_tenant_context(worker_tenant)
+
+                await _recovery_job(session, worker_tenant_id, settings.COMUNICACION_WORKER_LOCK_TIMEOUT)
 
                 stmt = (
                     select(Comunicacion)
                     .where(
+                        Comunicacion.tenant_id == worker_tenant_id,
                         Comunicacion.estado == ComunicacionEstado.PENDIENTE,
                         Comunicacion.deleted_at.is_(None),
                     )

@@ -56,7 +56,7 @@ class AnalisisService:
                 },
             )
             umbral_pct = row["umbral_pct"] or 60
-            conjunto = row["conjunto_aprobado"] or ["A", "B+", "C", "7", "8", "9", "10"]
+            conjunto = row["conjunto_aprobado"] or ["Satisfactorio", "Supera lo esperado"]
             if calificacion.nota is not None:
                 item["cantidad_totales"] += 1
                 if isinstance(calificacion.nota, int | float):
@@ -94,7 +94,7 @@ class AnalisisService:
             actividades = row["actividades"] or []
             calificaciones = row["calificaciones"]
             umbral_pct = row["umbral_pct"] or 60
-            conjunto = row["conjunto_aprobado"] or ["A", "B+", "C", "7", "8", "9", "10"]
+            conjunto = row["conjunto_aprobado"] or ["Satisfactorio", "Supera lo esperado"]
             failing = [c for c in calificaciones if c.nota is not None and not derivar_aprobado(c.nota, umbral_pct, conjunto)]
             missing = len(actividades) > len([c for c in calificaciones if c.nota is not None])
             if not failing and not missing:
@@ -129,7 +129,7 @@ class AnalisisService:
             cohorte_id = row["cohorte_id"]
             cohorte_nombre = row["cohorte_nombre"]
             umbral_pct = row["umbral_pct"] or 60
-            conjunto = row["conjunto_aprobado"] or ["A", "B+", "C", "7", "8", "9", "10"]
+            conjunto = row["conjunto_aprobado"] or ["Satisfactorio", "Supera lo esperado"]
             actividades = []
             for calificacion in row["calificaciones"]:
                 actividades.append(
@@ -176,7 +176,7 @@ class AnalisisService:
             )
             item["alumnos"].add(calificacion.usuario_id)
             umbral_pct = row["umbral_pct"] or 60
-            conjunto = row["conjunto_aprobado"] or ["A", "B+", "C", "7", "8", "9", "10"]
+            conjunto = row["conjunto_aprobado"] or ["Satisfactorio", "Supera lo esperado"]
             if derivar_aprobado(calificacion.nota, umbral_pct, conjunto):
                 item["aprobados"].add(calificacion.usuario_id)
             if isinstance(calificacion.nota, int | float):

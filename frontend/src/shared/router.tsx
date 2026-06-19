@@ -14,6 +14,7 @@ import RankingPage from '@/features/analisis/pages/RankingPage';
 import NotasFinalesPage from '@/features/analisis/pages/NotasFinalesPage';
 import ReportesPage from '@/features/analisis/pages/ReportesPage';
 import EntregasSinCorregirPage from '@/features/entregas/pages/EntregasSinCorregirPage';
+import AprobacionesPage from '@/features/comunicacion/pages/AprobacionesPage';
 import ComunicarPage from '@/features/comunicacion/pages/ComunicarPage';
 import MonitorPage from '@/features/monitor/pages/MonitorPage';
 
@@ -135,6 +136,14 @@ export const router = createBrowserRouter([
                 element: (
                   <RequirePermission permission="comunicacion:enviar">
                     <ComunicarPage />
+                  </RequirePermission>
+                ),
+              },
+              {
+                path: 'aprobaciones',
+                element: (
+                  <RequirePermission permission="comunicacion:aprobar">
+                    <AprobacionesPage />
                   </RequirePermission>
                 ),
               },

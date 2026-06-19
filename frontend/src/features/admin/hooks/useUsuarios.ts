@@ -1,3 +1,7 @@
+// TODO: (BUG) El hook useUsuarios devuelve UsuarioTenant[] que incluye dni, cuil, cbu.
+// Según ARQUITECTURA.md §5.4 estos campos son PII y deben estar cifrados en el backend.
+// Si el backend los devuelve sin cifrar, es una violación de seguridad.
+// El frontend los muestra directamente sin descifrar.
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchUsuarios, createUsuario, updateUsuario, deleteUsuario } from '../services/usuariosApi';
 import type {

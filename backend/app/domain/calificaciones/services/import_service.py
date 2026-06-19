@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import csv
 import io
+import re
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any
@@ -79,9 +80,16 @@ _HEADER_ALIASES: dict[str, str] = {
     "calificacion (real)": "nota",
 }
 
+# Regex: matches any header ending with "(Real)" case-insensitively (RN-01)
+_REAL_SUFFIX_RE = re.compile(r"\(real\)$", re.I)
+
 
 def _normalize_header(header: str) -> str:
-    return _HEADER_ALIASES.get(header.strip().lower(), header.strip().lower())
+    stripped = header.strip()
+    # RN-01: columns ending in "(Real)" are numeric scores
+    if _REAL_SUFFIX_RE.search(stripped):
+        return "nota"
+    return _HEADER_ALIASES.get(stripped.lower(), stripped.lower())
 
 
 def _detect_column_mapping(headers: list[str]) -> dict[str, int]:

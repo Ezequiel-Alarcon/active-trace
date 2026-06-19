@@ -75,11 +75,15 @@ export default function UsuarioFormModal({ usuario, onClose }: UsuarioFormModalP
           </div>
           <div>
             <label className="text-sm text-gray-600">DNI</label>
+            {/* C-07: Usuario.dni/cuil se cifra en backend con AES-256 (UsuarioService).
+                El campo llega/torna texto plano en el formulario — el cifrado es transparente al frontend. */}
             <input {...register('dni')} className="border border-gray-200 rounded px-3 py-1.5 text-sm w-full" />
             {errors.dni && <p className="text-xs text-red-600">{errors.dni.message}</p>}
           </div>
           <div>
             <label className="text-sm text-gray-600">CUIL</label>
+            {/* C-07: Usuario.dni/cuil se cifra en backend con AES-256 (UsuarioService).
+                El campo llega/torna texto plano en el formulario — el cifrado es transparente al frontend. */}
             <input {...register('cuil')} className="border border-gray-200 rounded px-3 py-1.5 text-sm w-full" />
             {errors.cuil && <p className="text-xs text-red-600">{errors.cuil.message}</p>}
           </div>

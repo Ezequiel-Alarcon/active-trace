@@ -15,7 +15,8 @@ from app.repositories.base import TenantScopedRepository
 
 
 _DEFAULT_UMBRAL_PCT = 60
-_DEFAULT_CONJUNTO = ["A", "B+", "C", "7", "8", "9", "10"]
+# Default conjunto_aprobado per KB RN-02: "Satisfactorio" and "Supera lo esperado".
+_DEFAULT_CONJUNTO = ["Satisfactorio", "Supera lo esperado"]
 
 
 class UmbralMateriaRepository(TenantScopedRepository[UmbralMateria]):

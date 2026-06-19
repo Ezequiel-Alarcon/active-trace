@@ -83,10 +83,11 @@ async def enqueue_mensajes(
             tenant_id=current_user.tenant_id,
             asunto=item.asunto,
             cuerpo=item.cuerpo,
-            destinatario=item.destinatario,
             estado=ComunicacionEstado.PENDIENTE,
             lote_id=lote_id,
         )
+        # Encrypt and hash the destinatario using set_destinatario (KB E21 [cifrado])
+        obj.set_destinatario(item.destinatario)
         created_obj = await repo.create(obj)
         created.append(created_obj)
 
@@ -111,7 +112,7 @@ async def enqueue_mensajes(
             tenant_id=c.tenant_id,
             asunto=c.asunto,
             cuerpo=c.cuerpo,
-            destinatario=c.destinatario,
+            destinatario=c.get_destinatario(),
             estado=c.estado,
             lote_id=c.lote_id,
             error_detail=c.error_detail,
@@ -253,7 +254,7 @@ async def get_mensaje(
         tenant_id=obj.tenant_id,
         asunto=obj.asunto,
         cuerpo=obj.cuerpo,
-        destinatario=obj.destinatario,
+        destinatario=obj.get_destinatario(),
         estado=obj.estado,
         lote_id=obj.lote_id,
         error_detail=obj.error_detail,

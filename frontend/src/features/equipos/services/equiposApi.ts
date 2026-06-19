@@ -27,7 +27,17 @@ export async function actualizarVigencia(data: VigenciaRequest): Promise<{ actua
   return response.data;
 }
 
-export async function exportarEquipo(equipoId: string): Promise<Blob> {
-  const response = await apiClient.get(`/api/equipos/exportar/${equipoId}`, { responseType: 'blob' });
+export async function exportarEquipo(
+  materiaId: string,
+  cohorteId: string,
+  rolId?: string,
+): Promise<Blob> {
+  // Backend: GET /api/equipos/exportar?materia_id=...&cohorte_id=...&rol_id=...
+  const params: Record<string, string> = {
+    materia_id: materiaId,
+    cohorte_id: cohorteId,
+  };
+  if (rolId) params.rol_id = rolId;
+  const response = await apiClient.get('/api/equipos/exportar', { params, responseType: 'blob' });
   return response.data;
 }

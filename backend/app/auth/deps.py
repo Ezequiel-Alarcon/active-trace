@@ -30,8 +30,24 @@ from app.core.security.jwt import (
 )
 from app.core.tenancy import TenantContext, set_tenant_context
 from app.core.dependencies import get_db
+from app.rbac.services import PermissionResolver
 
 logger = logging.getLogger("activia_trace.auth.deps")
+
+
+async def resolve_user_roles(
+    db: AsyncSession,
+    user_id: UUID,
+    tenant_id: UUID,
+) -> list[str]:
+    """Resolve effective roles for a user via PermissionResolver.
+
+    Used by routers that need roles for service-layer authorization
+    (e.g. TareaService) when CurrentUser doesn't carry roles directly.
+    """
+    resolver = PermissionResolver(db)
+    resolved = await resolver.resolve(user_id, tenant_id)
+    return list(resolved)
 
 
 @dataclass(frozen=True)

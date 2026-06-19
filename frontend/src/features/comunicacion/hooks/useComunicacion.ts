@@ -1,9 +1,10 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { enqueueMensajes, fetchLoteStatus, previewMensaje } from '../services/comunicacionApi';
+import { aprobarLote, enqueueMensajes, fetchLoteStatus, fetchLotesPendientes, previewMensaje, rechazarLote } from '../services/comunicacionApi';
 import { TERMINAL_ESTADOS } from '../types/comunicacion';
 import type {
   ComunicacionCreate,
   ComunicacionResponse,
+  LotePendienteResponse,
   LoteStatusResponse,
   PreviewRequest,
   PreviewResponse,
@@ -39,5 +40,13 @@ export function useLoteStatus(loteId: string | null) {
       return 4000;
     },
     staleTime: 0,
+  });
+}
+
+export function useLotesPendientes() {
+  return useQuery<LotePendienteResponse[]>({
+    queryKey: ['lotes-pendientes'],
+    queryFn: fetchLotesPendientes,
+    refetchInterval: 30_000, // refresh every 30s so other sessions' approve/reject actions are visible
   });
 }

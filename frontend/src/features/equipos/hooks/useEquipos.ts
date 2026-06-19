@@ -44,13 +44,13 @@ export function useVigenciaEquipo() {
 }
 
 export function useExportarEquipo() {
-  return useMutation<void, Error, string>({
-    mutationFn: async (equipoId: string) => {
-      const blob = await exportarEquipo(equipoId);
+  return useMutation<void, Error, { materiaId: string; cohorteId: string; rolId?: string }>({
+    mutationFn: async ({ materiaId, cohorteId, rolId }) => {
+      const blob = await exportarEquipo(materiaId, cohorteId, rolId);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `equipo-${equipoId}.csv`;
+      a.download = `equipo-${materiaId}.csv`;
       a.click();
       window.URL.revokeObjectURL(url);
     },

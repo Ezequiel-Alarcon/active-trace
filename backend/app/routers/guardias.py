@@ -15,6 +15,7 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.deps import CurrentUser, get_current_user
+from app.audit.impersonation import get_impersonation_record, is_impersonating
 from app.core.dependencies import get_db
 from app.core.permissions import require_permission
 from app.rbac.services import PermissionResolver
@@ -35,8 +36,8 @@ PERM_GESTIONAR = "encuentros:gestionar"
 def require_any_permission(*permissions: str) -> Callable:
     """Factory: returns a FastAPI dependency that checks if the user holds
     ANY of the required permissions. Stores the full resolved set in
-    request.state.permissions for downstream use."""
-
+    request.state.permissions for downstream use.
+    """
     async def _guard(
         request: Request,
         current_user: Annotated[CurrentUser, Depends(get_current_user)],
@@ -49,6 +50,14 @@ def require_any_permission(*permissions: str) -> Callable:
                 status_code=403,
                 detail={"detail": f"No tiene ninguno de los permisos: {permissions}"},
             )
+        # Populate impersonation state on request.state (C-05 §6)
+        impersonating = is_impersonating(current_user.user_id)
+        request.state.impersonating = impersonating
+        if impersonating:
+            record = get_impersonation_record(current_user.user_id)
+            request.state.impersonated_user_id = record.target_user_id if record else None
+        else:
+            request.state.impersonated_user_id = None
         request.state.permissions = resolved
         request.state.current_user = current_user
         return current_user
