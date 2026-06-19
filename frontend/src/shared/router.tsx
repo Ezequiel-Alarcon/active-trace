@@ -1,4 +1,5 @@
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { lazy } from 'react';
 import RequireAuth from './components/RequireAuth';
 import RequirePermission from './components/RequirePermission';
 import AppLayout from './components/AppLayout';
@@ -15,6 +16,25 @@ import ReportesPage from '@/features/analisis/pages/ReportesPage';
 import EntregasSinCorregirPage from '@/features/entregas/pages/EntregasSinCorregirPage';
 import ComunicarPage from '@/features/comunicacion/pages/ComunicarPage';
 import MonitorPage from '@/features/monitor/pages/MonitorPage';
+
+// ── Coordinación pages (lazy-loaded) ──────────────────────────────────────
+const EquiposPage = lazy(() => import('@/features/equipos/pages/EquiposPage'));
+const AvisosPage = lazy(() => import('@/features/avisos/pages/AvisosPage'));
+const TareasPage = lazy(() => import('@/features/tareas/pages/TareasPage'));
+const MonitorGeneralPage = lazy(() => import('@/features/monitor/pages/MonitorGeneralPage'));
+const EncuentrosPage = lazy(() => import('@/features/encuentros/pages/EncuentrosPage'));
+const ColoquiosPage = lazy(() => import('@/features/coloquios/pages/ColoquiosPage'));
+const SetupPage = lazy(() => import('@/features/setup-cuatrimestre/pages/SetupPage'));
+
+// ── C-24: Administración pages (lazy-loaded) ───────────────────────────────
+const LiquidacionPeriodoPage = lazy(() => import('@/features/liquidaciones/pages/LiquidacionPeriodoPage'));
+const HistorialPage = lazy(() => import('@/features/liquidaciones/pages/HistorialPage'));
+const GrillaSalarialPage = lazy(() => import('@/features/liquidaciones/pages/GrillaSalarialPage'));
+const FacturasPage = lazy(() => import('@/features/liquidaciones/pages/FacturasPage'));
+const EstructuraPage = lazy(() => import('@/features/admin/pages/EstructuraPage'));
+const UsuariosPage = lazy(() => import('@/features/admin/pages/UsuariosPage'));
+const AuditoriaPanelPage = lazy(() => import('@/features/admin/pages/AuditoriaPanelPage'));
+const AuditoriaLogPage = lazy(() => import('@/features/admin/pages/AuditoriaLogPage'));
 
 // Placeholder dashboard page for the authenticated shell
 function DashboardPage() {
@@ -127,6 +147,144 @@ export const router = createBrowserRouter([
             element: (
               <RequirePermission permission="analisis:ver">
                 <MonitorPage />
+              </RequirePermission>
+            ),
+          },
+
+          // ── C-24: liquidaciones (sección agrupada) ──────────────────────────
+          {
+            path: '/admin/liquidaciones',
+            element: <Navigate to="/admin/liquidaciones/periodo" replace />,
+          },
+          {
+            path: '/admin/liquidaciones/periodo',
+            element: (
+              <RequirePermission permission="liquidaciones:ver">
+                <LiquidacionPeriodoPage />
+              </RequirePermission>
+            ),
+          },
+          {
+            path: '/admin/liquidaciones/historial',
+            element: (
+              <RequirePermission permission="liquidaciones:ver">
+                <HistorialPage />
+              </RequirePermission>
+            ),
+          },
+          {
+            path: '/admin/liquidaciones/grilla',
+            element: (
+              <RequirePermission permission="liquidaciones:configurar-salarios">
+                <GrillaSalarialPage />
+              </RequirePermission>
+            ),
+          },
+          {
+            path: '/admin/liquidaciones/facturas',
+            element: (
+              <RequirePermission permission="liquidaciones:ver">
+                <FacturasPage />
+              </RequirePermission>
+            ),
+          },
+
+          // ── C-24: administración (sección agrupada) ──────────────────────────
+          {
+            path: '/admin',
+            element: <Navigate to="/admin/estructura" replace />,
+          },
+          {
+            path: '/admin/estructura',
+            element: (
+              <RequirePermission permission="estructura:gestionar">
+                <EstructuraPage />
+              </RequirePermission>
+            ),
+          },
+          {
+            path: '/admin/usuarios',
+            element: (
+              <RequirePermission permission="usuarios:gestionar">
+                <UsuariosPage />
+              </RequirePermission>
+            ),
+          },
+          {
+            path: '/admin/auditoria',
+            element: (
+              <RequirePermission permission="auditoria:ver">
+                <AuditoriaPanelPage />
+              </RequirePermission>
+            ),
+          },
+          {
+            path: '/admin/auditoria/log',
+            element: (
+              <RequirePermission permission="auditoria:ver">
+                <AuditoriaLogPage />
+              </RequirePermission>
+            ),
+          },
+
+          // ── C-23: coordinación (sección agrupada) ──────────────────────────
+          {
+            path: '/coordinacion',
+            element: <Navigate to="/coordinacion/equipos" replace />,
+          },
+          {
+            path: '/coordinacion/equipos',
+            element: (
+              <RequirePermission permission="equipos:asignar">
+                <EquiposPage />
+              </RequirePermission>
+            ),
+          },
+          {
+            path: '/coordinacion/avisos',
+            element: (
+              <RequirePermission permission="avisos:publicar">
+                <AvisosPage />
+              </RequirePermission>
+            ),
+          },
+          {
+            path: '/coordinacion/tareas',
+            element: (
+              <RequirePermission permission="tareas:ver">
+                <TareasPage />
+              </RequirePermission>
+            ),
+          },
+          {
+            path: '/coordinacion/monitor',
+            element: (
+              <RequirePermission permission="analisis:ver">
+                <MonitorGeneralPage />
+              </RequirePermission>
+            ),
+          },
+          {
+            path: '/coordinacion/encuentros',
+            element: (
+              <RequirePermission permission="encuentros:ver">
+                <EncuentrosPage />
+              </RequirePermission>
+            ),
+          },
+          {
+            path: '/coordinacion/coloquios',
+            element: (
+              <RequirePermission permission="coloquios:ver">
+                <ColoquiosPage />
+              </RequirePermission>
+            ),
+          },
+          {
+            path: '/coordinacion/setup',
+            element: (
+              <RequirePermission permission="estructura:gestionar">
+                <SetupPage />
               </RequirePermission>
             ),
           },

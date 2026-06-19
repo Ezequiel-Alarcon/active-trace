@@ -210,7 +210,7 @@ async def test_soft_delete_emits_audit(
 ) -> None:
     t_a, _ = tenants
     repo = TenantScopedRepository(db_session, Smoke, t_a.id)
-    caplog.set_level(logging.WARNING, logger="activia_trace.audit")
+    caplog.set_level(logging.DEBUG, logger="activia_trace.audit")
     await repo.soft_delete(smoke_a)
     actions = [r.__dict__.get("action") for r in caplog.records if r.name == "activia_trace.audit"]
     assert ROW_SOFT_DELETE in actions
@@ -227,7 +227,7 @@ async def test_restore_emits_audit(
     repo = TenantScopedRepository(db_session, Smoke, t_a.id)
     await repo.soft_delete(smoke_a)
     caplog.clear()
-    caplog.set_level(logging.WARNING, logger="activia_trace.audit")
+    caplog.set_level(logging.DEBUG, logger="activia_trace.audit")
     await repo.restore(smoke_a)
     actions = [r.__dict__.get("action") for r in caplog.records if r.name == "activia_trace.audit"]
     assert ROW_RESTORE in actions
@@ -267,7 +267,7 @@ async def test_unsafe_list_all_includes_soft_deleted_and_cross_tenant(
     await repo_a.soft_delete(smoke_a)
     # unsafe_list_all on A repo returns both A (deleted) and B (other tenant)
     caplog.clear()
-    caplog.set_level(logging.WARNING, logger="activia_trace.audit")
+    caplog.set_level(logging.DEBUG, logger="activia_trace.audit")
     all_rows = await repo_a.unsafe_list_all()
     ids = {r.id for r in all_rows}
     assert smoke_a.id in ids
@@ -286,7 +286,7 @@ async def test_unsafe_physical_delete_emits_audit_and_removes_row(
     t_a, _ = tenants
     repo = TenantScopedRepository(db_session, Smoke, t_a.id)
     caplog.clear()
-    caplog.set_level(logging.WARNING, logger="activia_trace.audit")
+    caplog.set_level(logging.DEBUG, logger="activia_trace.audit")
     await repo.unsafe_physical_delete(smoke_a)
     # Even unsafe_get should not see it
     assert await repo.unsafe_get(smoke_a.id) is None
@@ -461,7 +461,7 @@ async def test_unsafe_soft_delete_emits_audit(
 ) -> None:
     t_a, _ = tenants
     repo = TenantScopedRepository(db_session, Smoke, t_a.id)
-    caplog.set_level(logging.WARNING, logger="activia_trace.audit")
+    caplog.set_level(logging.DEBUG, logger="activia_trace.audit")
     # Re-fetch the row without soft-delete filter, then soft-delete via unsafe
     fresh = await repo.unsafe_get(smoke_a.id)
     assert fresh is not None
@@ -481,7 +481,7 @@ async def test_unsafe_restore_emits_audit(
     repo = TenantScopedRepository(db_session, Smoke, t_a.id)
     await repo.soft_delete(smoke_a)
     caplog.clear()
-    caplog.set_level(logging.WARNING, logger="activia_trace.audit")
+    caplog.set_level(logging.DEBUG, logger="activia_trace.audit")
     fresh = await repo.unsafe_get(smoke_a.id)
     assert fresh is not None
     await repo.unsafe_restore(fresh)

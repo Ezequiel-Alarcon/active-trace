@@ -22,7 +22,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth.deps import get_current_user
 from app.core.dependencies import get_db
 from app.core.permissions import require_permission
-from app.core.security.hashing import hash_email_for_search
 from app.integrations.moodle_ws import MoodleWSClient, MoodleWSError
 from app.models.usuario import Usuario
 from app.repositories.padron import PadronRepository, decrypt_entrada_email

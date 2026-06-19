@@ -129,10 +129,10 @@ def test_decode_access_rejects_expired_token(monkeypatch) -> None:
     # a JWT with exp < iat. We use the encoder; if the encoder respects a
     # negative window, we get an expired token. If not, we use the
     # library directly to craft one.
-    from jose import jwt as jose_jwt
+    import jwt
 
     past = datetime.now(tz=timezone.utc) - timedelta(minutes=1)
-    expired = jose_jwt.encode(
+    expired = jwt.encode(
         {
             "sub": str(uuid4()),
             "tid": str(uuid4()),
@@ -155,10 +155,10 @@ def test_decode_access_rejects_token_with_iat_in_future(monkeypatch) -> None:
     The contract says: iat is verified against the server clock with a small
     tolerance (default 30s). A token with iat 10 minutes in the future MUST fail.
     """
-    from jose import jwt as jose_jwt
+    import jwt
 
     future = datetime.now(tz=timezone.utc) + timedelta(minutes=10)
-    bad = jose_jwt.encode(
+    bad = jwt.encode(
         {
             "sub": str(uuid4()),
             "tid": str(uuid4()),

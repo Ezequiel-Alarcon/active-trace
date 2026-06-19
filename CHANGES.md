@@ -419,7 +419,7 @@ C-01 → C-02 → C-03 → C-04 → C-06 → C-07 → C-09 → C-10 → C-11 →
   - `knowledge-base/07_flujos_principales.md` FL-05 (workflow de tareas)
 
 ### [C-18] `liquidaciones-y-honorarios`
-- **Estado**: `[ ]` pendiente — PA-22/PA-23 cerradas; listo para `/opsx:propose` con governance CRITICO
+- **Estado**: `[x]` archivado (2026-06-19) → `openspec/changes/archive/2026-06-19-c-18-liquidaciones-y-honorarios/`
 - **Scope**:
   - Modelos `SalarioBase` (por rol, vigencia), `SalarioPlus` (grupo × rol, vigencia), `Liquidacion` (base + plus = total, es_nexo, excluido_por_factura, estado Abierta/Cerrada), `Factura`.
   - Cálculo de liquidación del período (FL-08, RN-21): base por rol vigente + plus por grupos. Vista (F10.1), cerrar (F10.2, inmutable RN-22), historial (F10.3).
@@ -485,7 +485,7 @@ C-01 → C-02 → C-03 → C-04 → C-06 → C-07 → C-09 → C-10 → C-11 →
   - `docs/ARQUITECTURA.md` (stack frontend, convenciones)
 
 ### [C-22] `frontend-academico-docente`
-- **Estado**: `[x]` completado
+- **Estado**: `[x]` archivado (2026-06-16) → `openspec/changes/archive/2026-06-16-c-22-frontend-academico-docente/`
 - **Scope**:
   - Feature de gestión de comisión (PROFESOR): importación de calificaciones con preview y selección de actividades, configuración de umbral, vista de atrasados, ranking, notas finales, reportes rápidos.
   - Detección de entregas sin corregir + export. Comunicación a atrasados: preview + envío + tracking de estado en tiempo real.
@@ -497,8 +497,30 @@ C-01 → C-02 → C-03 → C-04 → C-06 → C-07 → C-09 → C-10 → C-11 →
   - `knowledge-base/06_funcionalidades.md` Épicas 1, 2, 3
   - `knowledge-base/07_flujos_principales.md` FL-02, FL-04
 
+### [C-25] `frontend-design-system`
+- **Estado**: `[x]` archivado (2026-06-18) → `openspec/changes/archive/2026-06-18-c-25-frontend-design-system/`
+- **Scope**:
+  - Tokens visuales y colores semánticos en `frontend/src/shared/ui/estado-colores.ts`.
+  - Primitivos UI (Button, Badge, StatusBadge, Card, PageHeader, EmptyState, KpiCard, FilterBar, DataTable<T>) con Strict TDD y barrel export.
+  - Re-estilado del shell (AppLayout), login, y páginas académico-docente con la nueva capa UI.
+  - Cobertura 100% de primitivos shared/ui, 0 regresión (141/141 tests).
+- **Dependencias**: `C-22`
+- **Governance**: BAJO
+- **Leer antes**: `docs/DESIGN-SYSTEM.md`
+
+### [C-26] `completar-analisis-comisiones-import`
+- **Estado**: `[x]` archivado (2026-06-19) → `openspec/changes/archive/2026-06-19-c-26-completar-analisis-comisiones-import/`
+- **Scope**:
+  - API `GET /api/comisiones` con listing tenant-scoped desde VersionPadron activo.
+  - Fix `POST /api/calificaciones/import/confirm` con DI injection correcta.
+  - Implementación real de `GET /api/analisis/atrasados`, `/ranking`, `/reportes/notas-finales`, `/reportes/materia/{id}` (reemplaza stubs vacíos).
+  - Tests API para todos los endpoints, RBAC, aislamiento tenant, PII cifrada.
+- **Dependencias**: `C-11`
+- **Governance**: MEDIO
+- **Leer antes**: knowledge-base relevante de Épicas 1 y 2
+
 ### [C-23] `frontend-coordinacion`
-- **Estado**: `[ ]` pendiente
+- **Estado**: `[x]` completado (2026-06-19)
 - **Scope**:
   - Features de COORDINADOR/ADMIN: gestión de equipos docentes (mis-equipos, masiva, clonar, vigencia, export), avisos (ABM + scope + ack), tareas internas (workflow), monitores transversales (general F2.7, F2.9), encuentros admin, coloquios.
   - Setup de cuatrimestre (FL-03). Consume `C-08`, `C-13`, `C-14`, `C-15`, `C-16`, `C-17`.
@@ -510,7 +532,7 @@ C-01 → C-02 → C-03 → C-04 → C-06 → C-07 → C-09 → C-10 → C-11 →
   - `knowledge-base/07_flujos_principales.md` FL-03, FL-05, FL-06, FL-09
 
 ### [C-24] `frontend-finanzas-y-admin`
-- **Estado**: `[ ]` pendiente
+- **Estado**: `[x]` completado (2026-06-19)
 - **Scope**:
   - Feature FINANZAS: vista de liquidaciones del período con segmentación (general / NEXO / factura) + KPIs, cerrar liquidación, historial, grilla salarial, gestión de facturas.
   - Feature ADMIN: estructura académica (carreras, cohortes, materias), usuarios del tenant, panel de auditoría y métricas, log completo. Consume `C-06`, `C-07`, `C-18`, `C-19`.
@@ -523,7 +545,7 @@ C-01 → C-02 → C-03 → C-04 → C-06 → C-07 → C-09 → C-10 → C-11 →
 
 ### [fix-test-errors-pending] `fix-test-errors-pending`
 - **Estado**: `[x]` archivado (2026-06-15) → `openspec/changes/archive/2026-06-15-fix-test-errors-pending/`
-- **Scope**: Cross-cutting — resuelve 53 fallos pre-existentes en la suite de tests (636 passed, 0 failed).
+- **Scope**: Cross-cutting — resuelve 53 fallos pre-existentes en la suite de tests.
   - Lifecycle de ENUMs en migraciones (015/016/018/019): DO $$ blocks + pg_ENUM(create_type=False) + DROP TYPE
   - Reemplaza `Base.metadata.drop_all` + FK loop con CASCADE SQL en todos los conftests/tests
   - Alembic integration tests: sys.executable en lugar de path hardcodeado + alembic_version VARCHAR(256)
@@ -532,22 +554,57 @@ C-01 → C-02 → C-03 → C-04 → C-06 → C-07 → C-09 → C-10 → C-11 →
   - Fix pytest event loop / engine singleton con fixture `_reset_app_engine_async`
   - `AuditLogService.get_logs()`: bug de precedencia de operador ternario → TypeError
 
+### [fix-pre-existing-failures] `fix-pre-existing-failures`
+- **Estado**: `[x]` archivado (2026-06-19) → `openspec/changes/archive/2026-06-19-fix-pre-existing-failures/`
+- **Scope**: Cross-cutting — resuelve los 8 fallos de test y 20 errores de lint restantes.
+  - JWT tests: reemplaza `jose` por `PyJWT` (ya era dependencia) en `tests/core/test_jwt.py` (2 tests).
+  - Session endpoint: encripta email correctamente en test helper `_create_user()` (2 tests).
+  - PerfilResponse: agrega `facturante: bool = False` al schema Pydantic (4 tests).
+  - Lint: remueve imports/variables sin usar, reordena imports module-level en 5 archivos (20 violaciones).
+  - Resultado final: **653 tests passed, 0 failed, 0 lint errors**.
+
+### [fix-all-audit-findings] `fix-all-audit-findings`
+- **Estado**: `[x]` archivado (2026-06-19) → `openspec/changes/archive/2026-06-19-fix-all-audit-findings/`
+- **Scope**: Cross-cutting — corrige todos los hallazgos de la auditoría de seguridad y calidad.
+  - A1: Authz bypass — 18 `require_permission()` bare calls envueltas en `Depends()` en 4 routers.
+  - A2: `PermissionResolver.resolve()` — join con `Asignacion`, filtro por `user_id`, vigencia temporal, soft-delete.
+  - A3: `audit_emit()` — reemplaza `logger.warning()` por `AuditLogRepository.create()` con `AsyncSession`.
+  - B1–B5: Architecture violations — mueve queries DB de routers a services/repos, hard delete → soft delete en `LiquidacionRepository`, cifra `Comunicacion.destinatario`, fix refresh token rotation.
+  - C1–C3: Infrastructure hardening — `TrustedHostMiddleware`, security headers, docs condicional.
+  - D1–D7: Domain gaps — `estado` en Usuario, RN-26 banking validation, `facturante`→`facturador`, NEXO roles, RN-01 column suffix, RN-16 preview, `AuditLog.deleted_at` fix.
+  - E1: KB contradiction — RN-05 synced.
+
+### [C-27] `redis-rate-limiter`
+- **Estado**: `[x]` archivado (2026-06-19) → `openspec/changes/archive/2026-06-19-c-27-redis-rate-limiter/`
+- **Scope**:
+  - Dependencia `redis[hiredis]` (prod), `fakeredis[lua]` (dev).
+  - Config `REDIS_URL` en Settings (default `redis://localhost:6379/0`).
+  - Módulo `redis_client.py`: lazy singleton async Redis client con `get_redis_client()`, `reset_redis_client()` (test seam), `close_redis_client()` (shutdown).
+  - Implementación `RedisSlidingWindowRateLimiter` vía Redis sorted sets (ZADD, ZREMRANGEBYSCORE, ZCARD), implementando el protocolo `RateLimiter` existente.
+  - Factory condicional: si `REDIS_URL` configurado → Redis, si no → in-memory.
+  - Lifecycle: conectar pool en startup, cerrar en shutdown.
+  - RateLimiter protocol migrado a async (no rompe call sites existentes).
+  - Tests con `fakeredis.asyncio.FakeRedis` monkey-patched: protocolo, límite, evicción temporal, keys independientes, singleton, reset.
+- **Dependencias**: `C-03` (modifica rate limiter usado por auth)
+- **Governance**: BAJO
+- **Leer antes**: `docs/ARQUITECTURA.md` §4.1 (stack de infra)
+
 ---
 
 ## Resumen
 
 | Métrica | Valor |
 |---------|-------|
-| Total de changes | 24 + 1 transversal |
-| Completados | 20 + fix-test-errors-pending (C-21 frontend-shell-y-auth, C-22 frontend-academico-docente) |
-| Pendientes | 5 (C-18, C-23, C-24) |
-| Deuda técnica | C-18 pendiente de proponer/implementar; PA-22/PA-23 ya cerradas |
+| Total de changes | 27 |
+| Completados | 27 (todos los changes planificados) |
+| Pendientes | 0 — **proyecto completo** 🎉 |
+| Deuda técnica | Ninguna conocida bloqueante |
 | Fases | 6 (FASE 0 a FASE 5) |
 | Camino crítico | 10 changes (`C-01 → C-02 → C-03 → C-04 → C-06 → C-07 → C-09 → C-10 → C-11 → C-12`) |
 | Gates de paralelismo | 11 (GATE 0 a GATE 10) |
 | Changes CRITICO (governance) | 6 (C-02, C-03, C-04, C-05, C-07, C-18) |
 | Primer fork | GATE 4 (tras C-04, seguridad lista) |
 
-**Primer change recomendado**: `C-01` (foundation-setup).
+**Próximos changes recomendados**: `C-23 frontend-coordinacion` y `C-24 frontend-finanzas-y-admin` (paralelizables).
 
-Para arrancar: `/opsx:propose C-01-foundation-setup`
+Para arrancar: `/opsx:propose C-23-frontend-coordinacion` o `/opsx:propose C-24-frontend-finanzas-y-admin`

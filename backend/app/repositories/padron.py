@@ -14,7 +14,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security.crypto import decrypt, encrypt
 from app.core.security.hashing import hash_email_for_search
+from app.models.asignacion import Asignacion
 from app.models.padron import EntradaPadron, VersionPadron
+from app.rbac.constants import GLOBAL_TENANT_ID
+from app.rbac.models import Rol
 from app.repositories.base import TenantScopedRepository
 
 _AAD_EMAIL = "entrada_padron.email"
@@ -170,6 +173,23 @@ class PadronRepository(TenantScopedRepository[VersionPadron]):
         )
         result = await self._session.execute(stmt)
         return list(result.scalars().all())
+
+    async def user_has_global_role(self, user_id: UUID, role_names: frozenset[str]) -> bool:
+        """Check if user has any of the given roles in this tenant."""
+        stmt = (
+            select(Rol.nombre)
+            .join(Asignacion, Asignacion.rol_id == Rol.id)
+            .where(Asignacion.tenant_id == self._tenant_id)
+            .where(Asignacion.usuario_id == user_id)
+            .where(Asignacion.deleted_at.is_(None))
+            .where(
+                (Rol.tenant_id == self._tenant_id) | (Rol.tenant_id == GLOBAL_TENANT_ID)
+            )
+            .where(Rol.deleted_at.is_(None))
+        )
+        result = await self._session.execute(stmt)
+        user_roles = {row[0] for row in result.all()}
+        return bool(user_roles & role_names)
 
     async def get_version_by_id(self, version_id: UUID) -> VersionPadron | None:
         stmt = (

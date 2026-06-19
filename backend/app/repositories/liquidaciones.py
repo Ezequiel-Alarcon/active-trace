@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime, timezone
 from uuid import UUID
 
-from sqlalchemy import Select, and_, delete, select, update
+from sqlalchemy import Select, and_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.asignacion import Asignacion
@@ -104,11 +104,16 @@ class LiquidacionRepository:
         return bool(rows)
 
     async def replace_open(self, cohorte_id: UUID, periodo: str, rows: list[dict]) -> list[Liquidacion]:
-        stmt = delete(Liquidacion).where(
-            Liquidacion.tenant_id == self._tenant_id,
-            Liquidacion.cohorte_id == cohorte_id,
-            Liquidacion.periodo == periodo,
-            Liquidacion.estado == LiquidacionEstado.ABIERTA,
+        now = datetime.now(timezone.utc)
+        stmt = (
+            update(Liquidacion)
+            .where(
+                Liquidacion.tenant_id == self._tenant_id,
+                Liquidacion.cohorte_id == cohorte_id,
+                Liquidacion.periodo == periodo,
+                Liquidacion.estado == LiquidacionEstado.ABIERTA,
+            )
+            .values(deleted_at=now)
         )
         await self._session.execute(stmt)
         created = []

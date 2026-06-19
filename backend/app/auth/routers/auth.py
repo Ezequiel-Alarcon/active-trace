@@ -5,7 +5,6 @@ from __future__ import annotations
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Request
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.deps import CurrentUser, get_current_user
@@ -22,18 +21,9 @@ from app.auth.schemas import (
 from app.auth.services.auth_service import AuthService
 from app.core.dependencies import get_db
 from app.core.rate_limit import get_login_rate_limiter
-from app.models.tenant import Tenant
 from app.core.config import get_settings
 
 router = APIRouter(prefix="/api/auth", tags=["Auth"])
-
-
-async def _tenant_lookup(db: AsyncSession, codigo: str) -> Tenant | None:
-    stmt = select(Tenant).where(Tenant.codigo == codigo)
-    row = (await db.execute(stmt)).scalar_one_or_none()
-    if row is None or row.estado.value != "Activo" or row.deleted_at is not None:
-        return None
-    return row
 
 
 @router.post("/login", response_model=LoginResponse)
@@ -46,11 +36,11 @@ async def login(
     limiter = get_login_rate_limiter()
     client_ip = request.client.host if request.client else "unknown"
     key = (client_ip, payload.email.lower())
-    if not limiter.check(key):
+    if not await limiter.check(key):
         from app.auth.errors import AUTH_RATE_LIMITED
 
         raise auth_error(AUTH_RATE_LIMITED, 429, retry_after=settings.LOGIN_RATE_LIMIT_WINDOW_SECONDS)
-    service = AuthService(db, tenant_lookup=lambda c: _tenant_lookup(db, c))
+    service = AuthService(db)
     try:
         resp = await service.login(
             payload,
@@ -58,9 +48,9 @@ async def login(
             user_agent=request.headers.get("user-agent"),
         )
     except Exception:
-        limiter.record(key)
+        await limiter.record(key)
         raise
-    limiter.record(key)
+    await limiter.record(key)
     return resp
 
 
@@ -69,7 +59,7 @@ async def refresh(
     payload: RefreshRequest,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> LoginResponse:
-    service = AuthService(db, tenant_lookup=lambda c: _tenant_lookup(db, c))
+    service = AuthService(db)
     return await service.refresh(payload.refresh_token)
 
 
@@ -78,7 +68,7 @@ async def logout(
     payload: RefreshRequest,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> LogoutResponse:
-    service = AuthService(db, tenant_lookup=lambda c: _tenant_lookup(db, c))
+    service = AuthService(db)
     await service.logout(payload.refresh_token)
     return LogoutResponse()
 
@@ -94,7 +84,7 @@ async def get_session(
     las Asignaciones vigentes del usuario en su tenant.
     Nunca lee user_id ni tenant_id de parámetros de URL, body ni headers.
     """
-    service = AuthService(db, tenant_lookup=lambda c: _tenant_lookup(db, c))
+    service = AuthService(db)
     data = await service.get_session_data(current.user_id, current.tenant_id)
     return SessionResponse(
         user_id=data.user_id,

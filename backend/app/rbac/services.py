@@ -9,9 +9,10 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.asignacion import Asignacion
 from app.rbac.constants import GLOBAL_TENANT_ID
 from app.rbac.models import Permiso, Rol, RolPermiso
 
@@ -35,8 +36,7 @@ class PermissionResolver:
         """Resolve effective permissions for (user_id, tenant_id).
 
         Returns permissions from the user's roles in their tenant (via asignacion).
-        C-07 will add temporal validity filtering on asignacion.desde/hasta.
-        C-04 always resolves all roles (unfiltered).
+        Filters by user assignment, temporal validity (desde/hasta), and soft-delete.
 
         The global tenant baseline (GLOBAL_TENANT_ID) is included so that all
         tenants get the universal permission matrix without per-tenant seed
@@ -53,8 +53,15 @@ class PermissionResolver:
             select(Permiso.modulo, Permiso.accion)
             .join(RolPermiso, RolPermiso.permiso_id == Permiso.id)
             .join(Rol, Rol.id == RolPermiso.rol_id)
+            .join(Asignacion, Asignacion.rol_id == Rol.id)
             .where(
                 (Rol.tenant_id == tenant_id) | (Rol.tenant_id == GLOBAL_TENANT_ID)
+            )
+            .where(Asignacion.usuario_id == user_id)
+            .where(Asignacion.deleted_at.is_(None))
+            .where(Asignacion.desde <= func.current_date())
+            .where(
+                (Asignacion.hasta.is_(None)) | (Asignacion.hasta >= func.current_date())
             )
             .where(Rol.deleted_at.is_(None))
             .where(Permiso.deleted_at.is_(None))

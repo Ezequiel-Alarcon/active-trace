@@ -16,6 +16,7 @@ from app.auth.models import AuthSession, AuthUser
 from app.core.security.hashing import hash_email_for_search
 from app.core.security.jwt import encode_access_token
 from app.main import app
+from app.models.asignacion import Asignacion, ContextoTipo
 from app.models.base import Base
 from app.models.tenant import Tenant, TenantEstado
 from app.rbac.models import Permiso, Rol, RolPermiso
@@ -171,7 +172,12 @@ async def test_get_audit_log_returns_paginated_results(db_setup) -> None:
         user = await _make_auth_user(session, t.id, "viewer@test.com")
         await session.flush()
         sess = await _make_session(session, user.id, t.id)
-        await _create_role_with_permission(session, t.id, "AUDITOR", "auditoria", "ver")
+        rol = await _create_role_with_permission(session, t.id, "AUDITOR", "auditoria", "ver")
+        from datetime import date
+        session.add(Asignacion(
+            tenant_id=t.id, usuario_id=user.id, rol_id=rol.id,
+            contexto_tipo=ContextoTipo.GLOBAL, desde=date(2024, 1, 1),
+        ))
         await session.commit()
         user_id, tenant_id, session_id = user.id, t.id, sess.id
 
@@ -221,7 +227,12 @@ async def test_get_audit_log_filters_by_actor_id(db_setup) -> None:
         session.add(other_user)
         await session.flush()
         sess = await _make_session(session, user.id, t.id)
-        await _create_role_with_permission(session, t.id, "AUDITOR2", "auditoria", "ver")
+        rol = await _create_role_with_permission(session, t.id, "AUDITOR2", "auditoria", "ver")
+        from datetime import date
+        session.add(Asignacion(
+            tenant_id=t.id, usuario_id=user.id, rol_id=rol.id,
+            contexto_tipo=ContextoTipo.GLOBAL, desde=date(2024, 1, 1),
+        ))
         await session.commit()
         user_id, other_id, tenant_id, session_id = user.id, other_user.id, t.id, sess.id
 
@@ -256,7 +267,12 @@ async def test_get_audit_log_filters_by_accion(db_setup) -> None:
         user = await _make_auth_user(session, t.id, "filter2@test.com")
         await session.flush()
         sess = await _make_session(session, user.id, t.id)
-        await _create_role_with_permission(session, t.id, "AUDITOR3", "auditoria", "ver")
+        rol = await _create_role_with_permission(session, t.id, "AUDITOR3", "auditoria", "ver")
+        from datetime import date
+        session.add(Asignacion(
+            tenant_id=t.id, usuario_id=user.id, rol_id=rol.id,
+            contexto_tipo=ContextoTipo.GLOBAL, desde=date(2024, 1, 1),
+        ))
         await session.commit()
         user_id, tenant_id, session_id = user.id, t.id, sess.id
 
@@ -325,7 +341,12 @@ async def test_post_impersonation_start_creates_audit_entry(db_setup) -> None:
         session.add(target)
         await session.flush()
         sess = await _make_session(session, admin.id, t.id)
-        await _create_role_with_permission(session, t.id, "IMPERSONATOR", "impersonacion", "usar")
+        rol = await _create_role_with_permission(session, t.id, "IMPERSONATOR", "impersonacion", "usar")
+        from datetime import date
+        session.add(Asignacion(
+            tenant_id=t.id, usuario_id=admin.id, rol_id=rol.id,
+            contexto_tipo=ContextoTipo.GLOBAL, desde=date(2024, 1, 1),
+        ))
         await session.commit()
         admin_id, target_id, tenant_id, session_id = admin.id, target.id, t.id, sess.id
 
@@ -402,7 +423,12 @@ async def test_delete_impersonation_end_creates_audit_entry(db_setup) -> None:
         session.add(target)
         await session.flush()
         sess = await _make_session(session, admin.id, t.id)
-        await _create_role_with_permission(session, t.id, "IMPERSONATOR2", "impersonacion", "usar")
+        rol = await _create_role_with_permission(session, t.id, "IMPERSONATOR2", "impersonacion", "usar")
+        from datetime import date
+        session.add(Asignacion(
+            tenant_id=t.id, usuario_id=admin.id, rol_id=rol.id,
+            contexto_tipo=ContextoTipo.GLOBAL, desde=date(2024, 1, 1),
+        ))
         await session.commit()
         admin_id, target_id, tenant_id, session_id = admin.id, target.id, t.id, sess.id
 

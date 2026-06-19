@@ -28,8 +28,6 @@ import hashlib
 import hmac
 import os
 from typing import Sequence, Union
-from uuid import UUID
-
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy import text

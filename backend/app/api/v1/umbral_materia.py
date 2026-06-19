@@ -36,7 +36,7 @@ async def _get_umbral_service(
     return UmbralService(session, current_user.tenant_id)
 
 
-@router.get("", response_model=list[UmbralMateriaRead])
+@router.get("", response_model=list[UmbralMateriaRead], dependencies=[Depends(require_permission("calificaciones:ver"))])
 async def list_umbrales(
     materia_id: Annotated[UUID | None, Query(description="Filtrar por materia")] = None,
     limit: Annotated[int, Query(ge=1, le=200)] = 50,
@@ -45,7 +45,6 @@ async def list_umbrales(
     current_user: Usuario = Depends(get_current_user),
 ) -> list[UmbralMateriaRead]:
     """Listar umbrales con filtro opcional por materia."""
-    require_permission("calificaciones:ver")
     return await svc.list_umbrales(materia_id=materia_id, limit=limit, offset=offset)
 
 
@@ -53,6 +52,7 @@ async def list_umbrales(
     "",
     response_model=UmbralMateriaRead,
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(require_permission("calificaciones:importar"))],
 )
 async def create_umbral(
     data: UmbralMateriaCreate,
@@ -60,7 +60,6 @@ async def create_umbral(
     current_user: Usuario = Depends(get_current_user),
 ) -> UmbralMateriaRead:
     """Crear un nuevo umbral para materia/asignacion."""
-    require_permission("calificaciones:importar")
     try:
         return await svc.create_umbral(data.model_dump())
     except UmbralDuplicateError:
@@ -73,6 +72,7 @@ async def create_umbral(
 @router.put(
     "/{umbral_id}",
     response_model=UmbralMateriaRead,
+    dependencies=[Depends(require_permission("calificaciones:importar"))],
 )
 async def update_umbral(
     umbral_id: UUID,
@@ -81,7 +81,6 @@ async def update_umbral(
     current_user: Usuario = Depends(get_current_user),
 ) -> UmbralMateriaRead:
     """Actualizar un umbral existente."""
-    require_permission("calificaciones:importar")
     try:
         return await svc.update_umbral(umbral_id, data)
     except UmbralNotFoundError as e:

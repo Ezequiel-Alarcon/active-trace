@@ -9,7 +9,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.schemas import ForgotRequest, ResetRequest
 from app.auth.services.password_reset_service import PasswordResetService
-from app.auth.routers.auth import _tenant_lookup
 from app.core.dependencies import get_db
 
 router = APIRouter(prefix="/api/auth", tags=["PasswordReset"])
@@ -20,7 +19,7 @@ async def forgot(
     payload: ForgotRequest,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> dict[str, str]:
-    service = PasswordResetService(db, tenant_lookup=lambda c: _tenant_lookup(db, c))
+    service = PasswordResetService(db)
     await service.forgot(payload)
     return {"ok": "true"}
 
@@ -30,6 +29,6 @@ async def reset(
     payload: ResetRequest,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> dict[str, str]:
-    service = PasswordResetService(db, tenant_lookup=lambda c: _tenant_lookup(db, c))
+    service = PasswordResetService(db)
     await service.reset(payload)
     return {"ok": "true"}

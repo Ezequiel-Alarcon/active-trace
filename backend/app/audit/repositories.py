@@ -9,20 +9,26 @@ from uuid import UUID, uuid4
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.audit.models import AuditLog
-from app.repositories.base import TenantScopedRepository
 
-
-class AuditLogRepository(TenantScopedRepository[AuditLog]):
+# NOTE: does NOT inherit TenantScopedRepository to break the circular chain
+# app.repositories.base → app.models.__init__ → app.audit.models → app.audit.__init__
+# → app.audit.repositories → app.repositories.base.
+# All callers only use __init__() and create() — no base class methods are needed.
+class AuditLogRepository:
     """Append-only audit log repository.
 
     Contract: ONLY `create()` exists. No `update`, `delete`, or `soft_delete`.
     This is a hard constraint — the append-only audit guarantee depends on it.
+
+    NOTE: does NOT inherit TenantScopedRepository to avoid circular imports
+    (app.repositories → app.models → app.audit → app.repositories).
     """
 
-    __slots__ = ()
+    __slots__ = ("_session", "_tenant_id")
 
     def __init__(self, session: AsyncSession, tenant_id: UUID) -> None:
-        super().__init__(session, AuditLog, tenant_id)
+        self._session = session
+        self._tenant_id = tenant_id
 
     async def create(
         self,

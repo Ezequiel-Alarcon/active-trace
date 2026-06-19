@@ -36,6 +36,13 @@ _backend_root = _repo_root / "backend"
 if str(_backend_root) not in sys.path:
     sys.path.insert(0, str(_backend_root))
 
+import sqlalchemy as sa  # noqa: E402
+from sqlalchemy.ext.asyncio import create_async_engine  # noqa: E402
+
+from app.core.security.crypto import encrypt  # noqa: E402
+from app.core.security.hashing import hash_email_for_search  # noqa: E402
+from app.core.security.passwords import hash_password  # noqa: E402
+
 # ---------------------------------------------------------------------------
 # Defaults de entorno para dev (si no estan seteados externamente).
 # ---------------------------------------------------------------------------
@@ -47,17 +54,6 @@ _DEV_ENV_DEFAULTS: dict[str, str] = {
 
 for _k, _v in _DEV_ENV_DEFAULTS.items():
     os.environ.setdefault(_k, _v)
-
-# ---------------------------------------------------------------------------
-# Imports del proyecto (despues de setear el entorno).
-# ---------------------------------------------------------------------------
-import sqlalchemy as sa
-from sqlalchemy.ext.asyncio import create_async_engine
-
-from app.core.security.crypto import encrypt
-from app.core.security.hashing import hash_email_for_search
-from app.core.security.passwords import hash_password
-from app.rbac.constants import GLOBAL_TENANT_ID
 
 # ---------------------------------------------------------------------------
 # Constantes de dev

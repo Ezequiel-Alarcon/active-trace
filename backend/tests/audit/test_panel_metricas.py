@@ -17,6 +17,7 @@ from app.auth.models import AuthSession, AuthUser
 from app.core.security.hashing import hash_email_for_search
 from app.core.security.jwt import encode_access_token
 from app.main import app
+from app.models.asignacion import Asignacion, ContextoTipo
 from app.models.base import Base
 from app.models.tenant import Tenant, TenantEstado
 from app.rbac.models import Permiso, Rol, RolPermiso
@@ -114,7 +115,9 @@ def _mint_jwt(user_id, tenant_id, session_id):
     )
 
 
-async def _create_role_with_permission(session, tenant_id, role_name, modulo, accion):
+async def _create_role_with_permission(
+    session, tenant_id, role_name, modulo, accion, user_id=None,
+):
     rol = Rol(tenant_id=tenant_id, nombre=role_name, descripcion=f"{role_name} role")
     session.add(rol)
     await session.flush()
@@ -127,10 +130,17 @@ async def _create_role_with_permission(session, tenant_id, role_name, modulo, ac
     session.add(rp)
     await session.flush()
 
+    if user_id is not None:
+        from datetime import date
+        session.add(Asignacion(
+            tenant_id=tenant_id, usuario_id=user_id, rol_id=rol.id,
+            contexto_tipo=ContextoTipo.GLOBAL, desde=date(2024, 1, 1),
+        ))
+
     return rol
 
 
-async def _create_role_with_multiple_permissions(session, tenant_id, role_name, permissions):
+async def _create_role_with_multiple_permissions(session, tenant_id, role_name, permissions, user_id=None):
     rol = Rol(tenant_id=tenant_id, nombre=role_name, descripcion=f"{role_name} role")
     session.add(rol)
     await session.flush()
@@ -143,6 +153,13 @@ async def _create_role_with_multiple_permissions(session, tenant_id, role_name, 
         rp = RolPermiso(tenant_id=tenant_id, rol_id=rol.id, permiso_id=perm.id)
         session.add(rp)
         await session.flush()
+
+    if user_id is not None:
+        from datetime import date
+        session.add(Asignacion(
+            tenant_id=tenant_id, usuario_id=user_id, rol_id=rol.id,
+            contexto_tipo=ContextoTipo.GLOBAL, desde=date(2024, 1, 1),
+        ))
 
     return rol
 
@@ -202,7 +219,7 @@ async def test_actions_per_day_returns_grouped_counts(db_setup) -> None:
         t = await _seed_tenant(session)
         user = await _make_auth_user(session, t.id, "apd@test.com")
         sess = await _make_session(session, user.id, t.id)
-        await _create_role_with_permission(session, t.id, "VIEWER", "auditoria", "ver")
+        await _create_role_with_permission(session, t.id, "VIEWER", "auditoria", "ver", user_id=user.id)
         materia_id = uuid4()
         await _seed_audit_entries(session, t.id,
                                   actor_id=user.id,
@@ -240,7 +257,7 @@ async def test_actions_per_day_filters_by_actor(db_setup) -> None:
         session.add(other)
         await session.flush()
         sess = await _make_session(session, user.id, t.id)
-        await _create_role_with_permission(session, t.id, "VIEWER2", "auditoria", "ver")
+        await _create_role_with_permission(session, t.id, "VIEWER2", "auditoria", "ver", user_id=user.id)
 
         from app.audit.repositories import AuditLogRepository
         repo = AuditLogRepository(session, t.id)
@@ -275,7 +292,7 @@ async def test_actions_per_day_respects_tenant_scope(db_setup) -> None:
         await session.flush()
         user = await _make_auth_user(session, t.id, "apd3@test.com")
         sess = await _make_session(session, user.id, t.id)
-        await _create_role_with_permission(session, t.id, "VIEWER3", "auditoria", "ver")
+        await _create_role_with_permission(session, t.id, "VIEWER3", "auditoria", "ver", user_id=user.id)
 
         from app.audit.repositories import AuditLogRepository
         repo = AuditLogRepository(session, t.id)
@@ -310,7 +327,7 @@ async def test_comunicacion_status_returns_grouped_counts(db_setup) -> None:
         t = await _seed_tenant(session)
         user = await _make_auth_user(session, t.id, "coms@test.com")
         sess = await _make_session(session, user.id, t.id)
-        await _create_role_with_permission(session, t.id, "VIEWER4", "auditoria", "ver")
+        await _create_role_with_permission(session, t.id, "VIEWER4", "auditoria", "ver", user_id=user.id)
 
         from app.audit.repositories import AuditLogRepository
         repo = AuditLogRepository(session, t.id)
@@ -353,7 +370,7 @@ async def test_interactions_summary_returns_grouped_counts(db_setup) -> None:
         t = await _seed_tenant(session)
         user = await _make_auth_user(session, t.id, "inter@test.com")
         sess = await _make_session(session, user.id, t.id)
-        await _create_role_with_permission(session, t.id, "VIEWER5", "auditoria", "ver")
+        await _create_role_with_permission(session, t.id, "VIEWER5", "auditoria", "ver", user_id=user.id)
 
         from app.audit.repositories import AuditLogRepository
         repo = AuditLogRepository(session, t.id)
@@ -392,7 +409,7 @@ async def test_last_actions_returns_most_recent(db_setup) -> None:
         t = await _seed_tenant(session)
         user = await _make_auth_user(session, t.id, "last@test.com")
         sess = await _make_session(session, user.id, t.id)
-        await _create_role_with_permission(session, t.id, "VIEWER6", "auditoria", "ver")
+        await _create_role_with_permission(session, t.id, "VIEWER6", "auditoria", "ver", user_id=user.id)
 
         from app.audit.repositories import AuditLogRepository
         repo = AuditLogRepository(session, t.id)
@@ -426,7 +443,7 @@ async def test_last_actions_respects_limit(db_setup) -> None:
         t = await _seed_tenant(session)
         user = await _make_auth_user(session, t.id, "last2@test.com")
         sess = await _make_session(session, user.id, t.id)
-        await _create_role_with_permission(session, t.id, "VIEWER7", "auditoria", "ver")
+        await _create_role_with_permission(session, t.id, "VIEWER7", "auditoria", "ver", user_id=user.id)
 
         from app.audit.repositories import AuditLogRepository
         repo = AuditLogRepository(session, t.id)
@@ -501,7 +518,8 @@ async def test_admin_sees_all_data(db_setup) -> None:
         sess = await _make_session(session, user.id, t.id)
         await _create_role_with_multiple_permissions(
             session, t.id, "ADMIN",
-            [("auditoria", "ver"), ("auditoria", "ver_todos")]
+            [("auditoria", "ver"), ("auditoria", "ver_todos")],
+            user_id=user.id,
         )
 
         from app.audit.repositories import AuditLogRepository

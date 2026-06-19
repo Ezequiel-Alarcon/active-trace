@@ -24,6 +24,8 @@ from app.models.base import Base
 from app.models.mixins import TenantScopedMixin
 
 
+# TODO: (REVIEW) ADR-008 — Rol NEXO existe en la matriz pero sin permisos definidos.
+# Pendiente de definicion de negocio. No habilitar hasta que se defina el alcance.
 class Rol(TenantScopedMixin, Base):
     """A role in the RBAC catalog. Named uniquely within a tenant."""
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -30,28 +31,45 @@ from app.modules.comunicacion.services.preview import PreviewService
 
 router = APIRouter(prefix="/api/comunicaciones", tags=["comunicaciones"])
 
+# In-memory preview tracking (RN-16: preview-before-send).
+# Maps user_id string → timestamp of last /preview call.
+_user_preview_at: dict[str, float] = {}
+_PREVIEW_TTL_SECONDS = 900  # 15 minutes
 
-@router.post("/preview", response_model=PreviewResponse)
+
+def _check_preview_done(current_user_id: UUID) -> None:
+    key = str(current_user_id)
+    last = _user_preview_at.get(key)
+    if last is None or (time.time() - last) > _PREVIEW_TTL_SECONDS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Debe realizar una vista previa (/preview) antes de enviar mensajes",
+        )
+
+
+@router.post("/preview", response_model=PreviewResponse, dependencies=[Depends(require_permission("comunicacion:enviar"))])
 async def preview_mensaje(
     data: PreviewRequest,
     session: AsyncSession = Depends(get_db),
     current_user: Usuario = Depends(get_current_user),
 ) -> PreviewResponse:
     """Render message preview without persisting. Requires comunicacion:enviar."""
-    require_permission("comunicacion:enviar")
     svc = PreviewService()
     result = await svc.preview(data.asunto, data.cuerpo, data.destinatario)
+    # Mark preview done for this user (RN-16)
+    _user_preview_at[str(current_user.id)] = time.time()
     return PreviewResponse(**result)
 
 
-@router.post("", response_model=list[ComunicacionResponse], status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=list[ComunicacionResponse], status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_permission("comunicacion:enviar"))])
 async def enqueue_mensajes(
     data: list[ComunicacionCreate],
     session: AsyncSession = Depends(get_db),
     current_user: Usuario = Depends(get_current_user),
 ) -> list[ComunicacionResponse]:
     """Enqueue one or more messages. If recipient count exceeds threshold, requires approval."""
-    require_permission("comunicacion:enviar")
+
+    _check_preview_done(current_user.id)
 
     approval_svc = ApprovalService(session, current_user.tenant_id)
     requires_approval = await approval_svc.requires_approval(len(data))
@@ -74,7 +92,8 @@ async def enqueue_mensajes(
 
     await session.commit()
 
-    audit_emit(
+    await audit_emit(
+        session,
         AUDIT_COMUNICACION_ENVIAR,
         entity="comunicacion",
         tenant_id=current_user.tenant_id,
@@ -105,14 +124,13 @@ async def enqueue_mensajes(
     ]
 
 
-@router.get("/lotes/{lote_id}", response_model=LoteStatusResponse)
+@router.get("/lotes/{lote_id}", response_model=LoteStatusResponse, dependencies=[Depends(require_permission("comunicacion:enviar"))])
 async def get_lote_status(
     lote_id: UUID,
     session: AsyncSession = Depends(get_db),
     current_user: Usuario = Depends(get_current_user),
 ) -> LoteStatusResponse:
     """Get status summary of all messages in a lote."""
-    require_permission("comunicacion:enviar")
     repo = ComunicacionRepository(session, current_user.tenant_id)
     counts = await repo.count_by_lote_and_estado(lote_id)
     total = sum(counts.values())
@@ -128,7 +146,7 @@ async def get_lote_status(
     )
 
 
-@router.post("/lotes/{lote_id}/aprobar", status_code=status.HTTP_200_OK)
+@router.post("/lotes/{lote_id}/aprobar", status_code=status.HTTP_200_OK, dependencies=[Depends(require_permission("comunicacion:aprobar"))])
 async def approve_lote(
     lote_id: UUID,
     data: LoteAprobarRequest,
@@ -136,7 +154,6 @@ async def approve_lote(
     current_user: Usuario = Depends(get_current_user),
 ) -> LoteStatusResponse:
     """Approve a lote — transitions all Pendiente messages to Enviando for worker processing."""
-    require_permission("comunicacion:aprobar")
 
     repo = ComunicacionRepository(session, current_user.tenant_id)
     messages = await repo.get_by_lote_id(lote_id)
@@ -154,7 +171,8 @@ async def approve_lote(
     for msg in pendiente_msgs:
         msg.transition_to(ComunicacionEstado.ENVIANDO)
         await session.flush()
-        audit_emit(
+        await audit_emit(
+            session,
             AUDIT_COMUNICACION_APROBAR,
             entity="comunicacion",
             entity_id=msg.id,
@@ -177,7 +195,7 @@ async def approve_lote(
     )
 
 
-@router.post("/lotes/{lote_id}/rechazar", status_code=status.HTTP_200_OK)
+@router.post("/lotes/{lote_id}/rechazar", status_code=status.HTTP_200_OK, dependencies=[Depends(require_permission("comunicacion:aprobar"))])
 async def reject_lote(
     lote_id: UUID,
     data: LoteRechazarRequest,
@@ -185,7 +203,6 @@ async def reject_lote(
     current_user: Usuario = Depends(get_current_user),
 ) -> LoteStatusResponse:
     """Reject a lote — cancels all Pendiente messages."""
-    require_permission("comunicacion:aprobar")
 
     repo = ComunicacionRepository(session, current_user.tenant_id)
     messages = await repo.get_by_lote_id(lote_id)
@@ -196,7 +213,8 @@ async def reject_lote(
     await repo.bulk_cancel(lote_id, data.razon)
 
     for msg in messages:
-        audit_emit(
+        await audit_emit(
+            session,
             AUDIT_COMUNICACION_ENVIAR,
             entity="comunicacion",
             entity_id=msg.id,
@@ -219,14 +237,13 @@ async def reject_lote(
     )
 
 
-@router.get("/{comunicacion_id}", response_model=ComunicacionResponse)
+@router.get("/{comunicacion_id}", response_model=ComunicacionResponse, dependencies=[Depends(require_permission("comunicacion:enviar"))])
 async def get_mensaje(
     comunicacion_id: UUID,
     session: AsyncSession = Depends(get_db),
     current_user: Usuario = Depends(get_current_user),
 ) -> ComunicacionResponse:
     """Get a single message by ID."""
-    require_permission("comunicacion:enviar")
     repo = ComunicacionRepository(session, current_user.tenant_id)
     obj = await repo.get_by_id(comunicacion_id)
     if not obj:

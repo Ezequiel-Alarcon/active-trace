@@ -21,6 +21,8 @@ export type EstadoSemantico =
   | 'cancelado'
   | 'en-envio'
   | 'pendiente-cola'
+  | 'en-progreso'
+  | 'resuelta'
   | 'neutro';
 
 const CLASES_POR_ESTADO: Record<EstadoSemantico, string> = {
@@ -32,6 +34,8 @@ const CLASES_POR_ESTADO: Record<EstadoSemantico, string> = {
   cancelado: 'bg-amber-100 text-amber-700',
   'en-envio': 'bg-blue-100 text-blue-700',
   'pendiente-cola': 'bg-gray-100 text-gray-700',
+  'en-progreso': 'bg-blue-100 text-blue-700',
+  resuelta: 'bg-green-100 text-green-700',
   neutro: 'bg-gray-100 text-gray-700',
 };
 

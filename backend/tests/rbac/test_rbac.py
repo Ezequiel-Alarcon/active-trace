@@ -25,6 +25,7 @@ from app.core.security.jwt import encode_access_token
 from app.core.tenancy import TenantContext, set_tenant_context, reset_tenant_context
 from app.models.base import Base
 from app.models.tenant import Tenant, TenantEstado
+from app.models.asignacion import Asignacion, ContextoTipo
 from app.rbac.constants import GLOBAL_TENANT_ID
 from app.rbac.models import Permiso, Rol, RolPermiso
 from app.rbac.repositories import PermisoRepository, RolPermisoRepository, RolRepository
@@ -139,6 +140,15 @@ async def test_resolver_single_role_returns_that_roles_permissions(
         await session.commit()
 
     async with db_setup() as session:
+        from datetime import date
+        asig = Asignacion(
+            tenant_id=tid, usuario_id=user.id, rol_id=rol.id,
+            contexto_tipo=ContextoTipo.GLOBAL, desde=date(2024, 1, 1),
+        )
+        session.add(asig)
+        await session.commit()
+
+    async with db_setup() as session:
         resolver = PermissionResolver(session)
         permissions = await resolver.resolve(user.id, tid)
         assert "calificaciones:importar" in permissions
@@ -165,6 +175,18 @@ async def test_resolver_multiple_roles_returns_union(db_setup, tenant_a) -> None
 
     async with db_setup() as session:
         user = await _make_user(session, tid)
+        await session.commit()
+
+    async with db_setup() as session:
+        from datetime import date
+        session.add(Asignacion(
+            tenant_id=tid, usuario_id=user.id, rol_id=rol1.id,
+            contexto_tipo=ContextoTipo.GLOBAL, desde=date(2024, 1, 1),
+        ))
+        session.add(Asignacion(
+            tenant_id=tid, usuario_id=user.id, rol_id=rol2.id,
+            contexto_tipo=ContextoTipo.GLOBAL, desde=date(2024, 1, 1),
+        ))
         await session.commit()
 
     async with db_setup() as session:
@@ -195,6 +217,18 @@ async def test_resolver_cross_tenant_isolation(db_setup, tenant_a, tenant_b) -> 
     async with db_setup() as session:
         user_a = await _make_user(session, tenant_a, "usera")
         user_b = await _make_user(session, tenant_b, "userb")
+        await session.commit()
+
+    async with db_setup() as session:
+        from datetime import date
+        session.add(Asignacion(
+            tenant_id=tenant_a, usuario_id=user_a.id, rol_id=rol_a.id,
+            contexto_tipo=ContextoTipo.GLOBAL, desde=date(2024, 1, 1),
+        ))
+        session.add(Asignacion(
+            tenant_id=tenant_b, usuario_id=user_b.id, rol_id=rol_b.id,
+            contexto_tipo=ContextoTipo.GLOBAL, desde=date(2024, 1, 1),
+        ))
         await session.commit()
 
     async with db_setup() as session:
@@ -231,6 +265,18 @@ async def test_resolver_soft_deleted_role_excluded(db_setup, tenant_a) -> None:
         await session.commit()
 
     async with db_setup() as session:
+        from datetime import date
+        session.add(Asignacion(
+            tenant_id=tid, usuario_id=user.id, rol_id=rol_active.id,
+            contexto_tipo=ContextoTipo.GLOBAL, desde=date(2024, 1, 1),
+        ))
+        session.add(Asignacion(
+            tenant_id=tid, usuario_id=user.id, rol_id=rol_deleted.id,
+            contexto_tipo=ContextoTipo.GLOBAL, desde=date(2024, 1, 1),
+        ))
+        await session.commit()
+
+    async with db_setup() as session:
         resolver = PermissionResolver(session)
         permissions = await resolver.resolve(user.id, tid)
         assert "calificaciones:importar" in permissions
@@ -253,6 +299,14 @@ async def test_resolver_cache_hit_avoids_db_query(db_setup, tenant_a) -> None:
 
     async with db_setup() as session:
         user = await _make_user(session, tid)
+        await session.commit()
+
+    async with db_setup() as session:
+        from datetime import date
+        session.add(Asignacion(
+            tenant_id=tid, usuario_id=user.id, rol_id=rol.id,
+            contexto_tipo=ContextoTipo.GLOBAL, desde=date(2024, 1, 1),
+        ))
         await session.commit()
 
     async with db_setup() as session:
@@ -294,6 +348,18 @@ async def test_resolver_global_tenant_permissions_always_included(
 
     async with db_setup() as session:
         user = await _make_user(session, tid)
+        await session.commit()
+
+    async with db_setup() as session:
+        from datetime import date
+        session.add(Asignacion(
+            tenant_id=tid, usuario_id=user.id, rol_id=rol_local.id,
+            contexto_tipo=ContextoTipo.GLOBAL, desde=date(2024, 1, 1),
+        ))
+        session.add(Asignacion(
+            tenant_id=tid, usuario_id=user.id, rol_id=rol_global.id,
+            contexto_tipo=ContextoTipo.GLOBAL, desde=date(2024, 1, 1),
+        ))
         await session.commit()
 
     async with db_setup() as session:

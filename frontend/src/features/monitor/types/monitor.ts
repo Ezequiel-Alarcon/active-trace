@@ -23,4 +23,9 @@ export interface MonitorFilters {
   regional?: string;
   actividad?: string;
   minimo_cumplido?: number | null;
+  fecha_desde?: string;
+  fecha_hasta?: string;
+  estado?: string;
+  materia?: string;
+  busqueda?: string;
 }

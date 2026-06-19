@@ -17,6 +17,15 @@ El sistema SHALL exponer una paleta centralizada de tokens visuales (color, espa
 - **WHEN** se necesita cambiar el color del acento primario
 - **THEN** SHALL bastar editar la definición de tokens (un único lugar) sin tocar las páginas
 
+#### Scenario: Nuevos estados semánticos para tareas y coloquios
+
+- **WHEN** se usa <StatusBadge estado="en-progreso" /> para una tarea
+- **THEN** el sistema SHALL mostrar el badge con color azul (mismo que en-envio)
+- **WHEN** se usa <StatusBadge estado="resuelta" /> para una tarea
+- **THEN** el sistema SHALL mostrar el badge con color verde (mismo que aprobado)
+- **WHEN** se usa <StatusBadge estado="convocado" /> para un coloquio
+- **THEN** el sistema SHALL mostrar el badge con color gris (mismo que neutro)
+
 ### Requirement: Componente Button reutilizable
 
 El sistema SHALL proveer un componente `Button` con variantes `primary` (azul `blue-600`), `secondary` (gris) y `danger` (rojo), que soporte estado `disabled` y que sea PascalCase, sin `any`, menor a 200 LOC y sin estilos inline.

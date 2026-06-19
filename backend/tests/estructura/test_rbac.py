@@ -27,6 +27,7 @@ from app.core.security.passwords import hash_password
 from app.main import app
 from app.models.base import Base
 from app.models.tenant import Tenant, TenantEstado
+from app.models.asignacion import Asignacion, ContextoTipo
 from app.rbac.constants import GLOBAL_TENANT_ID
 
 pytestmark = [pytest.mark.asyncio, pytest.mark.no_db]
@@ -135,8 +136,15 @@ async def _setup_with_permission(db_setup) -> tuple[str, UUID, UUID]:
             id=sid,
         )
         session.add(s)
-        await session.commit()
 
+        # Asignacion: link user -> admin role
+        from datetime import date
+        session.add(Asignacion(
+            tenant_id=tid, usuario_id=uid, rol_id=admin_rol.id,
+            contexto_tipo=ContextoTipo.GLOBAL, desde=date(2024, 1, 1),
+        ))
+
+        await session.commit()
         token = encode_access_token(user_id=uid, tenant_id=tid, session_id=sid, jti=uuid4())
         return token, tid, uid
 

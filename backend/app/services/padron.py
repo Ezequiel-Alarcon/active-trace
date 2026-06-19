@@ -8,15 +8,11 @@ from __future__ import annotations
 from uuid import UUID
 
 from fastapi import HTTPException
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.audit import PADRON_CARGAR, PADRON_VACIAR, audit_emit
 from app.core.security.hashing import hash_email_for_search
-from app.models.asignacion import Asignacion
 from app.models.padron import VersionPadron
-from app.rbac.constants import GLOBAL_TENANT_ID
-from app.rbac.models import Rol
 from app.repositories.padron import PadronRepository
 from app.schemas.padron import (
     PadronPreviewResponse,
@@ -116,9 +112,11 @@ class PadronService:
             version_id_except=version.id,
         )
 
-        audit_emit(
+        await audit_emit(
+            self._session,
             PADRON_CARGAR,
             tenant_id=self._tenant_id,
+            actor_id=cargado_por,
             filas_afectadas=len(data.entradas),
             detalle={"materia_id": str(data.materia_id), "cohorte_id": str(data.cohorte_id)},
         )
@@ -127,20 +125,7 @@ class PadronService:
 
     async def _is_global_vaciar(self, user_id: UUID) -> bool:
         """Return True if the user has a COORDINADOR or ADMIN role in this tenant."""
-        stmt = (
-            select(Rol.nombre)
-            .join(Asignacion, Asignacion.rol_id == Rol.id)
-            .where(Asignacion.tenant_id == self._tenant_id)
-            .where(Asignacion.usuario_id == user_id)
-            .where(Asignacion.deleted_at.is_(None))
-            .where(
-                (Rol.tenant_id == self._tenant_id) | (Rol.tenant_id == GLOBAL_TENANT_ID)
-            )
-            .where(Rol.deleted_at.is_(None))
-        )
-        result = await self._session.execute(stmt)
-        role_names = {row[0] for row in result.all()}
-        return bool(role_names & _GLOBAL_VACIAR_ROLES)
+        return await self._repo.user_has_global_role(user_id, _GLOBAL_VACIAR_ROLES)
 
     async def vaciar_datos(
         self, materia_id: UUID, cohorte_id: UUID, current_user: object,
@@ -174,9 +159,11 @@ class PadronService:
                     )
 
         count = await self._repo.vaciar_datos(materia_id, cohorte_id)
-        audit_emit(
+        await audit_emit(
+            self._session,
             PADRON_VACIAR,
             tenant_id=self._tenant_id,
+            actor_id=user_id,
             filas_afectadas=count,
             detalle={
                 "materia_id": str(materia_id),

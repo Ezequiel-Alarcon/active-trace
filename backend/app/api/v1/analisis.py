@@ -134,6 +134,7 @@ async def get_notas_finales(
 @router.get(
     "/exportacion/tps-sin-corregir",
     response_model=TpsSinCorregirResponse,
+    dependencies=[Depends(require_permission("reportes:exportar"))],
 )
 async def get_tps_sin_corregir(
     materia_id: Annotated[UUID | None, Query(description="Filtrar por materia")] = None,
@@ -142,7 +143,6 @@ async def get_tps_sin_corregir(
     current_user: Usuario = Depends(get_current_user),
 ) -> TpsSinCorregirResponse:
     """Alumnos con actividades esperadas pero sin nota (para re-importar)."""
-    require_permission("reportes:exportar")
     tps = await svc.get_tps_sin_corregir(materia_id=materia_id, limit=limit)
     return TpsSinCorregirResponse(total=len(tps), alumnos=tps)
 
@@ -155,13 +155,13 @@ async def get_tps_sin_corregir(
 @router.get(
     "/monitores/general",
     response_model=MonitoreoGeneralResponse,
+    dependencies=[Depends(require_permission("analisis:ver"))],
 )
 async def get_monitor_general(
     svc: AnalisisService = Depends(_get_service),
     current_user: Usuario = Depends(get_current_user),
 ) -> MonitoreoGeneralResponse:
     """Monitor general para profesor: sus alumnos en sus materias."""
-    require_permission("analisis:ver")
     datos = await svc.get_monitor_general(current_user.id)
     return MonitoreoGeneralResponse(datos=datos)
 
@@ -169,13 +169,13 @@ async def get_monitor_general(
 @router.get(
     "/monitores/seguimiento",
     response_model=MonitoreoGeneralResponse,
+    dependencies=[Depends(require_permission("analisis:ver"))],
 )
 async def get_monitor_seguimiento(
     svc: AnalisisService = Depends(_get_service),
     current_user: Usuario = Depends(get_current_user),
 ) -> MonitoreoGeneralResponse:
     """Monitor de seguimiento para tutor: sus tutorados."""
-    require_permission("analisis:ver")
     datos = await svc.get_monitor_seguimiento(current_user.id)
     return MonitoreoGeneralResponse(datos=datos)
 
@@ -183,6 +183,7 @@ async def get_monitor_seguimiento(
 @router.get(
     "/monitores/coordinacion",
     response_model=MonitoreoCoordinacionResponse,
+    dependencies=[Depends(require_permission("reportes:ver"))],
 )
 async def get_monitor_coordinacion(
     desde: Annotated[str, Query(description="Fecha inicio (ISO)")],
@@ -191,7 +192,6 @@ async def get_monitor_coordinacion(
     current_user: Usuario = Depends(get_current_user),
 ) -> MonitoreoCoordinacionResponse:
     """Monitor para coordinación/admin con rango de fechas (máx 365 días)."""
-    require_permission("reportes:ver")
     try:
         datos = await svc.get_monitor_coordinacion(desde, hasta)
     except FechaInvalidaError as e:

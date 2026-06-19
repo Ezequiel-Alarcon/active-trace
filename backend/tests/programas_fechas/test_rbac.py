@@ -19,6 +19,7 @@ from app.core.security.hashing import hash_email_for_search
 from app.core.security.jwt import encode_access_token
 from app.core.security.passwords import hash_password
 from app.models.tenant import Tenant, TenantEstado
+from app.models.asignacion import Asignacion, ContextoTipo
 from app.rbac.models import Permiso, Rol, RolPermiso
 from app.routers.programas_fechas import router as programas_fechas_router
 
@@ -235,6 +236,11 @@ async def test_list_programas_with_perm_returns_200(app_client, db_setup) -> Non
         session.add(RolPermiso(tenant_id=tid, rol_id=rol.id, permiso_id=perm.id))
         user = await _create_auth_user(session, tid)
         sess = await _create_auth_session(session, tid, user.id)
+        from datetime import date
+        session.add(Asignacion(
+            tenant_id=tid, usuario_id=user.id, rol_id=rol.id,
+            contexto_tipo=ContextoTipo.GLOBAL, desde=date(2024, 1, 1),
+        ))
         await session.commit()
         token = _mint_jwt(user.id, tid, sess.id)
 
@@ -266,6 +272,11 @@ async def test_create_programa_with_perm_returns_201(app_client, db_setup) -> No
         session.add(RolPermiso(tenant_id=tid, rol_id=rol.id, permiso_id=perm.id))
         user = await _create_auth_user(session, tid)
         sess = await _create_auth_session(session, tid, user.id)
+
+        session.add(Asignacion(
+            tenant_id=tid, usuario_id=user.id, rol_id=rol.id,
+            contexto_tipo=ContextoTipo.GLOBAL, desde=date(2024, 1, 1),
+        ))
 
         carrera = Carrera(tenant_id=tid, codigo="ING-INF", nombre="Ingenieria", estado=CarreraEstado.ACTIVA)
         session.add(carrera)

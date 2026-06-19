@@ -10,6 +10,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.audit.repositories import AuditLogRepository
 from app.models.liquidacion import FacturaEstado, Liquidacion, LiquidacionEstado
+from app.models.usuario import Usuario
+from app.repositories.base import TenantScopedRepository
 from app.repositories.liquidaciones import FacturaRepository, GrillaSalarialRepository, LiquidacionRepository
 from app.schemas.liquidaciones import (
     FacturaCreate,
@@ -114,6 +116,7 @@ class LiquidacionService:
         self._tenant_id = tenant_id
         self._repo = LiquidacionRepository(session, tenant_id)
         self._grilla = GrillaSalarialRepository(session, tenant_id)
+        self._usuario_repo = TenantScopedRepository(session, Usuario, tenant_id)
 
     async def calcular(self, data: LiquidacionCalcularRequest) -> LiquidacionResultado:
         ref = _periodo_ref(data.periodo)
@@ -125,6 +128,21 @@ class LiquidacionService:
         for row in asignaciones:
             asignacion = row["Asignacion"]
             grouped[(asignacion.usuario_id, row["rol"], bool(row["facturante"]))].append(row)
+
+        # RN-26: Verificar que todos los docentes tengan datos bancarios registrados
+        unique_user_ids = {uid for uid, _, _ in grouped.keys()}
+        for uid in unique_user_ids:
+            user = await self._usuario_repo.get_by_id(uid)
+            if user is None:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Usuario {uid} no encontrado para liquidar",
+                )
+            if not user.cbu_enc and not (user.banco and user.alias_cbu_enc):
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail=f"El docente {user.nombre} {user.apellidos} no tiene CBU ni datos bancarios (banco+alias) registrados",
+                )
 
         rows = []
         for (usuario_id, rol, facturante), group in grouped.items():

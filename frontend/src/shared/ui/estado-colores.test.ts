@@ -31,7 +31,17 @@ describe('clasesEstado', () => {
     expect(clasesEstado('pendiente')).toBe(clasesEstado('cancelado'));
   });
 
-  it('1.1 — los 5 colores semánticos son distintos entre sí', () => {
+  it('1.1 — en-progreso resuelve a azul', () => {
+    expect(clasesEstado('en-progreso')).toBe('bg-blue-100 text-blue-700');
+    expect(clasesEstado('en-progreso')).toBe(clasesEstado('en-envio'));
+  });
+
+  it('1.1 — resuelta resuelve a verde', () => {
+    expect(clasesEstado('resuelta')).toBe('bg-green-100 text-green-700');
+    expect(clasesEstado('resuelta')).toBe(clasesEstado('aprobado'));
+  });
+
+  it('1.1 — los estados agregados no rompen la consistencia', () => {
     const colores = new Set([
       clasesEstado('atrasado'),
       clasesEstado('aprobado'),
