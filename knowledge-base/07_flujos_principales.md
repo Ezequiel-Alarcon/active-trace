@@ -208,7 +208,7 @@ Flujo exclusivo del rol FINANZAS para calcular y cerrar las liquidaciones de hon
 1. **Selección de período** (`liquidaciones:calcular`): el usuario FINANZAS selecciona el período a liquidar.
 2. **Cálculo automático**: el sistema calcula por docente:
    - Monto base (según la grilla salarial del rol).
-   - Plus por comisiones adicionales.
+   - Plus por cada comisión activa cuya materia tenga una clave de Plus del catálogo fijo del programa. Las materias sin clave no suman Plus.
    - Total = Base + Plus ([RN-21]).
 3. **Vista previa** (`liquidaciones:ver`): el usuario verifica la tabla antes de cualquier acción irreversible.
 4. **Exportación** (`liquidaciones:exportar`): genera la planilla de liquidación para uso externo (pago o presentación).

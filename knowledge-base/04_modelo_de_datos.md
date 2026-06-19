@@ -463,7 +463,9 @@ SalarioPlus {
 
 **Reglas**:
 - Un docente puede acumular plus de distintos grupos si dicta materias de varios de ellos.
-- La clave `grupo` mapea a un conjunto de materias (definido en configuración del tenant).
+- La clave `grupo` pertenece a un catálogo fijo definido por el programa/sistema, común a todas las instituciones.
+- Cada materia puede asociarse a una clave `grupo` existente o quedar sin Plus. Una materia sin grupo no genera adicional.
+- Las instituciones se adaptan al catálogo del programa: no crean claves de Plus propias.
 
 ---
 

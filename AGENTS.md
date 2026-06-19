@@ -69,7 +69,7 @@ La fuente de verdad del dominio vive en `knowledge-base/` (agnóstica de tecnolo
 
 > ⚠️ **Roles del dominio**: ALUMNO · TUTOR · PROFESOR · COORDINADOR · NEXO · ADMIN · FINANZAS. Leé `03_actores_y_roles.md` para internalizar el modelo de permisos ANTES de cualquier implementación.
 
-> ⚠️ **Preguntas ALTA pendientes** (resolver antes de tocar el dominio afectado): **PA-01** catálogo de materias (Materia vs InstanciaDictado), **PA-07** cohortes ↔ carrera, **PA-22**/**PA-23** claves de Plus y acumulación en liquidaciones, **PA-25** semántica del rol NEXO. Ver [10_preguntas_abiertas.md](knowledge-base/10_preguntas_abiertas.md). No codees el módulo de liquidaciones (C-18) ni el de estructura académica (C-06) sin cerrar las preguntas que los bloquean.
+> ⚠️ **Preguntas ALTA pendientes** (resolver antes de tocar el dominio afectado): **PA-01** catálogo de materias (Materia vs InstanciaDictado), **PA-07** cohortes ↔ carrera, **PA-25** semántica del rol NEXO. Ver [10_preguntas_abiertas.md](knowledge-base/10_preguntas_abiertas.md). **PA-22/PA-23 ya están cerradas**: las claves de Plus son catálogo fijo del programa y el Plus se acumula por comisión activa. No codees el dominio afectado por una pregunta pendiente sin cerrarla antes.
 
 ---
 

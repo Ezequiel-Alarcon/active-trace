@@ -504,8 +504,8 @@ Incluye RF-57 a RF-60.
 ### Heredadas de la KB
 
 - ~~**OQ-01**~~ — ✅ **CERRADA**: modelo **Materia (catálogo único) + Dictado (instancia por carrera×cohorte)**. Ver [ADR-006 en ARQUITECTURA.md §10](./ARQUITECTURA.md).
-- **OQ-11** — ¿Cómo se mapean las claves de Plus a familias de materias? — [PA-22](../knowledge-base/10_preguntas_abiertas.md#pa-22).
-- **OQ-12** — ¿Cómo se calcula el Plus si un docente tiene N comisiones de la misma clave? — [PA-23](../knowledge-base/10_preguntas_abiertas.md#pa-23).
+- ~~**OQ-11**~~ — ✅ **CERRADA**: las claves de Plus son catálogo fijo del programa/sistema; cada materia se asocia a una clave existente o queda sin Plus. Ver RN-33/RN-34.
+- ~~**OQ-12**~~ — ✅ **CERRADA**: el Plus se acumula por comisión activa (`N × Plus(clave, rol)`), sin tope inicial. Ver RN-33/RN-34.
 - **OQ-13** — ¿Cuál es la semántica del rol NEXO (regional, programa, enlace con el alumno)? — [PA-25](../knowledge-base/10_preguntas_abiertas.md#pa-25).
 
 ### Específicas del PRD
@@ -566,5 +566,5 @@ Incluye RF-57 a RF-60.
 ## Siguiente paso recomendado
 
 1. **Revisar este PRD con stakeholders** (dueño del producto, COORDINADOR académico, FINANZAS, IT).
-2. **Cerrar las Open Questions** (especialmente OQ-01 que bloquea el modelo de datos, y OQ-11/12/13 que bloquean liquidaciones).
+2. **Cerrar las Open Questions** pendientes (especialmente OQ-13/PA-25, que afecta permisos y tratamiento operativo de NEXO).
 3. **Definir métricas baseline** (cuántos atrasados se detectan hoy, cuánto tarda el setup, etc.) para medir el impacto del MVP.

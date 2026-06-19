@@ -296,6 +296,7 @@ Estas tres decisiones tocan transversalmente el sistema (cada tabla, cada reques
 - **ADR-001 (auth propio)**: no acopla el arranque a la configuración de Moodle de IT; ADMIN y FINANZAS pueden no ser usuarios de Moodle; el equipo controla el flujo completo. El SSO de alumnos llega cuando se construye el portal del alumno (Fase 2).
 - **ADR-002 (row-level)**: con un solo tenant inicial, DB-per-tenant sería sobre-ingeniería (complejidad de migraciones, backups y pooling sin beneficio). Row-level cubre el aislamiento requerido y es el patrón estándar de SaaS a esta escala.
 - **ADR-006 (Materia + Dictado)**: una misma materia se dicta en múltiples carreras/cohortes; separar catálogo de instancia evita duplicar definiciones y materializa el requisito de catálogo único con scoping.
+- **Decisión de producto — Plus de liquidación**: las claves de Plus son catálogo fijo del programa/sistema, no configurable por institución; cada materia puede mapear a una clave existente o quedar sin Plus. El Plus se acumula por comisión activa (`N × Plus(clave, rol)`) sin tope inicial.
 
 ### Decisiones pendientes — SE DEFINEN DURANTE EL DESARROLLO
 
@@ -306,7 +307,6 @@ Estas tres decisiones tocan transversalmente el sistema (cada tabla, cada reques
 | ADR-003 | Worker propio (asyncio/Celery/ARQ) vs N8N para la cola de comunicaciones | Al construir el módulo de comunicaciones |
 | ADR-004 | Impersonation: token de sesión separado vs claim adicional en el JWT | Al implementar la feature de impersonation |
 | ADR-005 | Estrategia de versionado de padrón (snapshot completo vs deltas) | Al construir el módulo de ingesta |
-| ADR-007 | Fórmula de cálculo de Plus en liquidación (N comisiones, claves de Plus) | Antes de cerrar el módulo FINANZAS — **requiere definición del área de finanzas** |
 | ADR-008 | Semántica y permisos del rol NEXO | Al poblar la matriz RBAC de NEXO (es data, no código) — **requiere definición de negocio** |
 
 ---
