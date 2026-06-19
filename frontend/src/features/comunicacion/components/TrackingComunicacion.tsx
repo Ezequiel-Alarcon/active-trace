@@ -1,4 +1,5 @@
 import { useLoteStatus } from '../hooks/useComunicacion';
+import { Card, StatusBadge, type EstadoSemantico } from '@/shared/ui';
 
 interface TrackingComunicacionProps {
   loteId: string;
@@ -18,6 +19,15 @@ export default function TrackingComunicacion({ loteId }: TrackingComunicacionPro
   const terminales = data.enviados + data.errores + data.cancelados;
   const allDone = terminales >= data.total && data.total > 0;
 
+  // Estados de cola con su color semántico centralizado (spec frontend-ui-restyle).
+  const celdas: { label: string; count: number; estado: EstadoSemantico }[] = [
+    { label: 'Pendiente', count: data.pendientes, estado: 'pendiente-cola' },
+    { label: 'En envío', count: data.enviando, estado: 'en-envio' },
+    { label: 'Enviado', count: data.enviados, estado: 'enviado' },
+    { label: 'Fallido', count: data.errores, estado: 'fallido' },
+    { label: 'Cancelado', count: data.cancelados, estado: 'cancelado' },
+  ];
+
   return (
     <div className="flex flex-col gap-4">
       <h2 className="text-lg font-medium text-gray-800">Estado del envío</h2>
@@ -32,27 +42,13 @@ export default function TrackingComunicacion({ loteId }: TrackingComunicacionPro
         </div>
       )}
 
-      <div className="grid grid-cols-5 gap-3 text-center text-sm">
-        <div className="p-3 rounded border border-gray-200 bg-gray-50">
-          <div className="text-2xl font-semibold text-gray-700">{data.pendientes}</div>
-          <div className="text-gray-500">Pendiente</div>
-        </div>
-        <div className="p-3 rounded border border-yellow-200 bg-yellow-50">
-          <div className="text-2xl font-semibold text-yellow-700">{data.enviando}</div>
-          <div className="text-yellow-600">En envío</div>
-        </div>
-        <div className="p-3 rounded border border-green-200 bg-green-50">
-          <div className="text-2xl font-semibold text-green-700">{data.enviados}</div>
-          <div className="text-green-600">OK</div>
-        </div>
-        <div className="p-3 rounded border border-red-200 bg-red-50">
-          <div className="text-2xl font-semibold text-red-700">{data.errores}</div>
-          <div className="text-red-600">Fallido</div>
-        </div>
-        <div className="p-3 rounded border border-gray-200 bg-gray-100">
-          <div className="text-2xl font-semibold text-gray-600">{data.cancelados}</div>
-          <div className="text-gray-500">Cancelado</div>
-        </div>
+      <div className="grid grid-cols-5 gap-3">
+        {celdas.map((c) => (
+          <Card key={c.label} className="flex flex-col items-center gap-1 text-center">
+            <span className="text-2xl font-semibold text-gray-800">{c.count}</span>
+            <StatusBadge estado={c.estado}>{c.label}</StatusBadge>
+          </Card>
+        ))}
       </div>
 
       <p className="text-xs text-gray-400">Lote ID: {loteId}</p>

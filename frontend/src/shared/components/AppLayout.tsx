@@ -27,7 +27,10 @@ export default function AppLayout() {
   return (
     <div className="min-h-screen flex flex-col">
       <header className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between">
-        <span className="font-semibold text-gray-800">Active Trace</span>
+        <div className="flex items-center gap-2">
+          <span className="h-5 w-5 rounded bg-blue-600" aria-hidden="true" />
+          <span className="font-semibold text-gray-800">Active Trace</span>
+        </div>
         <div className="flex items-center gap-4">
           {session && (
             <span className="text-sm text-gray-500">
@@ -55,7 +58,7 @@ export default function AppLayout() {
               to={item.to}
               end
               className={({ isActive }) =>
-                `px-4 py-2 text-sm rounded mx-2 ${
+                `px-4 py-2 text-sm rounded mx-2 transition-colors ${
                   isActive
                     ? 'bg-blue-100 text-blue-700 font-medium'
                     : 'text-gray-700 hover:bg-gray-100'

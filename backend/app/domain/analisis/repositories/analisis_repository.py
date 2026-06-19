@@ -63,6 +63,9 @@ class AnalisisRepository:
             # Need cohorte filter - use VersionPadron join
             pass
 
+        # TODO: (FIX) Stub: construye entradas_stmt pero nunca lo ejecuta — retorna [] siempre.
+        #   Falta ejecutar la query, derivar la lista esperada de actividades por alumno y comparar
+        #   contra el umbral de la materia para determinar "atrasado". C-11 incompleto.
         return []
 
     async def get_ranking(
@@ -71,6 +74,9 @@ class AnalisisRepository:
         limit: int = 50,
     ) -> list[dict]:
         """Ranking de alumnos por cantidad de actividades aprobadas."""
+        # TODO: (REVIEW) Bug conocido (CHANGES.md §C-11): "aprobadas" cuenta calificaciones con nota,
+        #   no necesariamente APROBADAS según el umbral de la materia. Además el router get_ranking
+        #   ni siquiera invoca este método (devuelve [] hardcodeado). Verificar semántica al completar C-11.
         # Subquery: solo calificaciones con nota (filtra antes de contar)
         calif_aprobadas = (
             select(

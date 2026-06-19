@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMonitorSeguimiento } from '../hooks/useMonitorSeguimiento';
 import type { MonitorFilters, MonitorEntry } from '../types/monitor';
+import { Button, DataTable, FilterBar, type Column } from '@/shared/ui';
 
 const filterSchema = z.object({
   alumno: z.string().optional(),
@@ -24,6 +25,8 @@ const EMPTY_FILTERS: FilterFormValues = {
   actividad: '',
   minimo_cumplido: null,
 };
+
+const INPUT_CLASS = 'border border-gray-300 rounded px-3 py-1.5 text-sm';
 
 /**
  * Monitor de seguimiento de alumnos asignados.
@@ -56,87 +59,46 @@ export default function MonitorSeguimiento() {
 
   const datos: MonitorEntry[] = data?.datos ?? [];
 
+  const columns: Column<MonitorEntry>[] = [
+    { header: 'Alumno', render: (d) => String(d.nombre ?? '—') },
+    { header: 'Email', render: (d) => <span className="text-gray-500">{String(d.email ?? '—')}</span> },
+    { header: 'Comisión', render: (d) => String(d.comision ?? '—') },
+  ];
+
   return (
     <div className="flex flex-col gap-6">
       {/* Filter form */}
-      <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-3 gap-3">
-        <input
-          {...register('alumno')}
-          placeholder="Alumno"
-          className="border border-gray-300 rounded px-3 py-1.5 text-sm"
-        />
-        <input
-          {...register('correo')}
-          placeholder="Correo"
-          className="border border-gray-300 rounded px-3 py-1.5 text-sm"
-        />
-        <input
-          {...register('comision')}
-          placeholder="Comisión"
-          className="border border-gray-300 rounded px-3 py-1.5 text-sm"
-        />
-        <input
-          {...register('regional')}
-          placeholder="Regional"
-          className="border border-gray-300 rounded px-3 py-1.5 text-sm"
-        />
-        <input
-          {...register('actividad')}
-          placeholder="Actividad"
-          className="border border-gray-300 rounded px-3 py-1.5 text-sm"
-        />
-        <input
-          {...register('minimo_cumplido')}
-          type="number"
-          placeholder="Mínimo cumplido (%)"
-          className="border border-gray-300 rounded px-3 py-1.5 text-sm"
-        />
-        <div className="col-span-3 flex gap-2">
-          <button
-            type="submit"
-            className="px-4 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
-            Filtrar
-          </button>
-          <button
-            type="button"
-            onClick={handleClear}
-            className="px-4 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-50"
-          >
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <FilterBar>
+          <input {...register('alumno')} placeholder="Alumno" className={INPUT_CLASS} />
+          <input {...register('correo')} placeholder="Correo" className={INPUT_CLASS} />
+          <input {...register('comision')} placeholder="Comisión" className={INPUT_CLASS} />
+          <input {...register('regional')} placeholder="Regional" className={INPUT_CLASS} />
+          <input {...register('actividad')} placeholder="Actividad" className={INPUT_CLASS} />
+          <input
+            {...register('minimo_cumplido')}
+            type="number"
+            placeholder="Mínimo cumplido (%)"
+            className={INPUT_CLASS}
+          />
+          <Button type="submit">Filtrar</Button>
+          <Button type="button" variant="secondary" onClick={handleClear}>
             Limpiar filtros
-          </button>
-        </div>
+          </Button>
+        </FilterBar>
       </form>
 
       {/* Results */}
       {isLoading && <p className="text-sm text-gray-500">Cargando monitor…</p>}
       {isError && <p role="alert" className="text-sm text-red-600">Error al cargar el monitor.</p>}
 
-      {!isLoading && !isError && datos.length === 0 && (
-        <div role="status" className="p-4 bg-gray-50 rounded border border-gray-200 text-sm text-gray-500">
-          No hay alumnos que coincidan con los filtros aplicados.
-        </div>
-      )}
-
-      {datos.length > 0 && (
-        <table className="w-full text-sm border-collapse">
-          <thead>
-            <tr className="border-b border-gray-200">
-              <th className="py-2 text-left font-medium text-gray-700">Alumno</th>
-              <th className="py-2 text-left font-medium text-gray-700">Email</th>
-              <th className="py-2 text-left font-medium text-gray-700">Comisión</th>
-            </tr>
-          </thead>
-          <tbody>
-            {datos.map((d, idx) => (
-              <tr key={String(d.usuario_id ?? idx)} className="border-b border-gray-100 hover:bg-gray-50">
-                <td className="py-2">{String(d.nombre ?? '—')}</td>
-                <td className="py-2 text-gray-500">{String(d.email ?? '—')}</td>
-                <td className="py-2">{String(d.comision ?? '—')}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {!isLoading && !isError && (
+        <DataTable
+          rows={datos}
+          columns={columns}
+          rowKey={(d, idx) => String(d.usuario_id ?? idx)}
+          emptyMessage="No hay alumnos que coincidan con los filtros aplicados."
+        />
       )}
     </div>
   );

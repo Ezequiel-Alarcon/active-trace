@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { usePreviewImport, useConfirmImport } from '../hooks/useImportarCalificaciones';
 import type { CalificacionPreviewResponse } from '../types/calificaciones';
+import { Button, Card } from '@/shared/ui';
 
 interface ImportarCalificacionesFormProps {
   comisionId: string;
@@ -120,25 +121,24 @@ export default function ImportarCalificacionesForm({
             {(previewMutation.error as Error).message ?? 'Error al procesar el archivo.'}
           </p>
         )}
-        <button
-          type="button"
+        <Button
           disabled={!file || previewMutation.isPending}
           onClick={handleUpload}
-          className="self-start px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+          className="self-start"
         >
           {previewMutation.isPending ? 'Procesando…' : 'Ver preview'}
-        </button>
+        </Button>
       </div>
 
       {/* Step 2+3: preview + activity selection + umbral */}
       {preview && (
         <form onSubmit={handleSubmit(onConfirm)} className="flex flex-col gap-6">
           {/* Preview summary */}
-          <div className="p-4 bg-gray-50 rounded border border-gray-200">
+          <Card>
             <p className="text-sm text-gray-700">
               Archivo: <strong>{preview.filename}</strong> · {preview.total} filas detectadas
             </p>
-          </div>
+          </Card>
 
           {/* Activity selection */}
           <fieldset className="flex flex-col gap-2">
@@ -177,13 +177,13 @@ export default function ImportarCalificacionesForm({
             )}
           </div>
 
-          <button
+          <Button
             type="submit"
             disabled={selectedAsignaciones.size === 0 || confirmMutation.isPending}
-            className="self-start px-4 py-2 text-sm bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
+            className="self-start"
           >
             {confirmMutation.isPending ? 'Confirmando…' : 'Confirmar y analizar'}
-          </button>
+          </Button>
 
           {/* Keep file picker accessible even after preview — per spec */}
           <p className="text-xs text-gray-400">

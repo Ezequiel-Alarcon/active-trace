@@ -65,6 +65,7 @@ La fuente de verdad del dominio vive en `knowledge-base/` (agnóstica de tecnolo
 | [11_historias_de_usuario.md](knowledge-base/11_historias_de_usuario.md) | Historias (Connextra) + criterios de aceptación |
 | [docs/PRD.md](docs/PRD.md) | Requerimientos de producto y RNF |
 | [docs/ARQUITECTURA.md](docs/ARQUITECTURA.md) | Stack, Clean Architecture, estructura de directorios, seguridad |
+| [docs/DESIGN-SYSTEM.md](docs/DESIGN-SYSTEM.md) | ⚠️ ANTES de escribir/re-estilar UI frontend: capa `@/shared/ui`, colores semánticos, reglas de estilado, flujo de restyle |
 
 > ⚠️ **Roles del dominio**: ALUMNO · TUTOR · PROFESOR · COORDINADOR · NEXO · ADMIN · FINANZAS. Leé `03_actores_y_roles.md` para internalizar el modelo de permisos ANTES de cualquier implementación.
 

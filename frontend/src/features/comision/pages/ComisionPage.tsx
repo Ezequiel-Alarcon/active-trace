@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import ComisionSelector from '../components/ComisionSelector';
 import { useComisionesDisponibles } from '../hooks/useComisionesDisponibles';
+import { PageHeader } from '@/shared/ui';
 
 const COMISION_VIEWS = [
   { label: 'Importar calificaciones', to: 'importar' },
@@ -24,7 +25,7 @@ export default function ComisionPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-semibold text-gray-800">Comisión</h1>
+      <PageHeader title="Comisión" />
 
       {isLoading ? (
         <p className="text-sm text-gray-500">Cargando comisiones…</p>
@@ -47,7 +48,7 @@ export default function ComisionPage() {
                 key={v.to}
                 to={v.to}
                 className={({ isActive }) =>
-                  `px-3 py-1 text-sm rounded ${
+                  `px-3 py-1 text-sm rounded transition-colors ${
                     isActive
                       ? 'bg-blue-100 text-blue-700 font-medium'
                       : 'text-gray-600 hover:bg-gray-100'

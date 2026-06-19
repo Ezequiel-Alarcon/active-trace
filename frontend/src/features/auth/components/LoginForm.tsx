@@ -1,6 +1,7 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { Button, TextField } from '@/shared/ui';
 import { useLogin } from '../hooks/useLogin';
 
 const loginSchema = z.object({
@@ -45,24 +46,16 @@ export default function LoginForm() {
           Ingresá el código de 6 dígitos de tu app de autenticación.
         </p>
 
-        <div className="flex flex-col gap-1">
-          <label htmlFor="totp_code" className="text-sm font-medium">
-            Código TOTP
-          </label>
-          <input
-            id="totp_code"
-            type="text"
-            inputMode="numeric"
-            maxLength={6}
-            {...twoFaForm.register('totp_code')}
-            className="border rounded px-3 py-2 text-center tracking-widest"
-          />
-          {twoFaForm.formState.errors.totp_code && (
-            <span className="text-red-600 text-xs">
-              {twoFaForm.formState.errors.totp_code.message}
-            </span>
-          )}
-        </div>
+        <TextField
+          id="totp_code"
+          label="Código TOTP"
+          type="text"
+          inputMode="numeric"
+          maxLength={6}
+          className="text-center tracking-widest"
+          error={twoFaForm.formState.errors.totp_code?.message}
+          {...twoFaForm.register('totp_code')}
+        />
 
         {error && (
           <p role="alert" className="text-red-600 text-sm">
@@ -70,13 +63,9 @@ export default function LoginForm() {
           </p>
         )}
 
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50"
-        >
+        <Button type="submit" disabled={isLoading}>
           {isLoading ? 'Verificando…' : 'Verificar'}
-        </button>
+        </Button>
       </form>
     );
   }
@@ -89,56 +78,29 @@ export default function LoginForm() {
     >
       <h2 className="text-xl font-semibold">Iniciar sesión</h2>
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="tenant_codigo" className="text-sm font-medium">
-          Código de institución
-        </label>
-        <input
-          id="tenant_codigo"
-          type="text"
-          {...credentialsForm.register('tenant_codigo')}
-          className="border rounded px-3 py-2"
-        />
-        {credentialsForm.formState.errors.tenant_codigo && (
-          <span className="text-red-600 text-xs">
-            {credentialsForm.formState.errors.tenant_codigo.message}
-          </span>
-        )}
-      </div>
+      <TextField
+        id="tenant_codigo"
+        label="Código de institución"
+        type="text"
+        error={credentialsForm.formState.errors.tenant_codigo?.message}
+        {...credentialsForm.register('tenant_codigo')}
+      />
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="email" className="text-sm font-medium">
-          Email
-        </label>
-        <input
-          id="email"
-          type="email"
-          {...credentialsForm.register('email')}
-          className="border rounded px-3 py-2"
-        />
-        {credentialsForm.formState.errors.email && (
-          <span className="text-red-600 text-xs">
-            {credentialsForm.formState.errors.email.message}
-          </span>
-        )}
-      </div>
+      <TextField
+        id="email"
+        label="Email"
+        type="email"
+        error={credentialsForm.formState.errors.email?.message}
+        {...credentialsForm.register('email')}
+      />
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="password" className="text-sm font-medium">
-          Contraseña
-        </label>
-        <input
-          id="password"
-          type="password"
-          {...credentialsForm.register('password')}
-          className="border rounded px-3 py-2"
-        />
-        {credentialsForm.formState.errors.password && (
-          <span className="text-red-600 text-xs">
-            {credentialsForm.formState.errors.password.message}
-          </span>
-        )}
-      </div>
+      <TextField
+        id="password"
+        label="Contraseña"
+        type="password"
+        error={credentialsForm.formState.errors.password?.message}
+        {...credentialsForm.register('password')}
+      />
 
       {error && (
         <p role="alert" className="text-red-600 text-sm">
@@ -146,13 +108,9 @@ export default function LoginForm() {
         </p>
       )}
 
-      <button
-        type="submit"
-        disabled={isLoading}
-        className="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50"
-      >
+      <Button type="submit" disabled={isLoading}>
         {isLoading ? 'Ingresando…' : 'Ingresar'}
-      </button>
+      </Button>
 
       <a href="/forgot" className="text-sm text-blue-600 hover:underline text-center">
         ¿Olvidaste tu contraseña?

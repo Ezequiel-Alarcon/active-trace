@@ -54,6 +54,9 @@ async def get_atrasados(
 ) -> AtrasadosResponse:
     """Alumnos con actividades faltantes o no aprobadas."""
     require_permission("analisis:ver")
+    # TODO: (FIX) Stub: ignora la DB y devuelve vacío hardcodeado — Atrasados NUNCA muestra datos.
+    #   El router no llama a svc/AnalisisRepository.get_alumnos_atrasados (que además es otro stub).
+    #   C-11 quedó incompleto pese a estar archivado (ver openspec/changes/archive/...-c-11-...).
     return AtrasadosResponse(total=0, limit=limit, offset=offset, alumnos=[])
 
 
@@ -69,6 +72,8 @@ async def get_ranking(
 ) -> RankingResponse:
     """Ranking de alumnos por cantidad de actividades aprobadas."""
     require_permission("analisis:ver")
+    # TODO: (FIX) Stub: devuelve rankings=[] hardcodeado; no llama a svc.get_ranking.
+    #   Además el repo get_ranking tiene un bug conocido de conteo (ver CHANGES.md §C-11). Ranking nunca muestra datos.
     return RankingResponse(
         materia_id=materia_id,
         materia_nombre="",
@@ -93,6 +98,8 @@ async def get_reporte_materia(
     """Reporte completo del estado de una materia."""
     require_permission("reportes:ver")
     reporte = await svc.get_reporte_materia(materia_id)
+    # TODO: (FIX) Parcial: trae el conteo del service pero devuelve alumnos=[] y nombres vacíos.
+    #   La vista de Reportes del frontend queda como placeholder informativo permanente.
     return ReporteMateriaResponse(
         materia_id=materia_id,
         materia_nombre="",
@@ -116,6 +123,8 @@ async def get_notas_finales(
     """Notas finales agrupadas por materia."""
     require_permission("reportes:ver")
     notas = await svc.get_notas_finales()
+    # TODO: (FIX) Trae notas del service pero las DESCARTA (notas=[]); total=len(notas) queda inconsistente
+    #   con una lista vacía. Notas finales nunca muestra filas.
     return NotasFinalesResponse(total=len(notas), limit=limit, offset=offset, notas=[])
 
 

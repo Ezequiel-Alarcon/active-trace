@@ -3,6 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useForgot } from '../hooks/useForgot';
 import { Link } from 'react-router-dom';
+import { Button, TextField } from '@/shared/ui';
 
 const forgotSchema = z.object({
   tenant_codigo: z.string().min(1, 'El código de institución es obligatorio'),
@@ -41,47 +42,25 @@ export default function ForgotPasswordForm() {
     >
       <h2 className="text-xl font-semibold">Recuperar contraseña</h2>
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="tenant_codigo" className="text-sm font-medium">
-          Código de institución
-        </label>
-        <input
-          id="tenant_codigo"
-          type="text"
-          {...form.register('tenant_codigo')}
-          className="border rounded px-3 py-2"
-        />
-        {form.formState.errors.tenant_codigo && (
-          <span className="text-red-600 text-xs">
-            {form.formState.errors.tenant_codigo.message}
-          </span>
-        )}
-      </div>
+      <TextField
+        id="tenant_codigo"
+        label="Código de institución"
+        type="text"
+        error={form.formState.errors.tenant_codigo?.message}
+        {...form.register('tenant_codigo')}
+      />
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="email" className="text-sm font-medium">
-          Email
-        </label>
-        <input
-          id="email"
-          type="email"
-          {...form.register('email')}
-          className="border rounded px-3 py-2"
-        />
-        {form.formState.errors.email && (
-          <span className="text-red-600 text-xs">
-            {form.formState.errors.email.message}
-          </span>
-        )}
-      </div>
+      <TextField
+        id="email"
+        label="Email"
+        type="email"
+        error={form.formState.errors.email?.message}
+        {...form.register('email')}
+      />
 
-      <button
-        type="submit"
-        disabled={isLoading}
-        className="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50"
-      >
+      <Button type="submit" disabled={isLoading}>
         {isLoading ? 'Enviando…' : 'Enviar instrucciones'}
-      </button>
+      </Button>
 
       <Link to="/login" className="text-sm text-blue-600 hover:underline text-center">
         Volver al inicio de sesión

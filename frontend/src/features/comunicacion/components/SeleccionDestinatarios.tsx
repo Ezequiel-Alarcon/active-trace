@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Button } from '@/shared/ui';
 
 interface SeleccionDestinatariosProps {
   comisionId: string;
@@ -25,14 +26,9 @@ export default function SeleccionDestinatarios({
         Luego presioná "Continuar".
       </p>
       <div className="flex gap-2">
-        <button
-          type="button"
-          disabled={emails.length === 0}
-          onClick={() => onNext(emails)}
-          className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-        >
+        <Button disabled={emails.length === 0} onClick={() => onNext(emails)}>
           Continuar ({emails.length} destinatario{emails.length !== 1 ? 's' : ''})
-        </button>
+        </Button>
       </div>
       {/* Placeholder: in practice the parent page (ComunicarPage) passes selected emails from TablaAtrasados */}
       <p className="text-xs text-gray-400">

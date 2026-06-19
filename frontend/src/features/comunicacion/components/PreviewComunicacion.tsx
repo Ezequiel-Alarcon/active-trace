@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { usePreviewMensaje, useEnqueueMensajes } from '../hooks/useComunicacion';
+import { Button, Card } from '@/shared/ui';
 
 interface PreviewComunicacionProps {
   destinatarios: string[];
@@ -58,7 +59,7 @@ export default function PreviewComunicacion({
       )}
 
       {previewMutation.isSuccess && (
-        <div className="p-4 bg-gray-50 rounded border border-gray-200 flex flex-col gap-2">
+        <Card className="flex flex-col gap-2">
           <p className="text-sm font-medium text-gray-700">
             Asunto: {previewMutation.data.asunto}
           </p>
@@ -68,25 +69,19 @@ export default function PreviewComunicacion({
           <p className="text-xs text-gray-400">
             (Personalizado para cada destinatario al confirmar)
           </p>
-        </div>
+        </Card>
       )}
 
       <div className="flex gap-2">
-        <button
-          type="button"
-          onClick={onBack}
-          className="px-4 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50"
-        >
+        <Button variant="secondary" onClick={onBack}>
           Volver
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
           disabled={destinatarios.length === 0 || enqueueMutation.isPending}
           onClick={handleConfirm}
-          className="px-4 py-2 text-sm bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
         >
           {enqueueMutation.isPending ? 'Enviando…' : 'Confirmar envío'}
-        </button>
+        </Button>
       </div>
     </div>
   );

@@ -148,6 +148,9 @@ async def import_confirm(
 ) -> CalificacionConfirmResponse:
     """Persistir las filas validas del preview token."""
     require_permission("calificaciones:importar")
+    # TODO: (FIX) Bug: Depends() se usa en el cuerpo de la función, no como parámetro. No resuelve la
+    #   dependencia → svc_tuple es un objeto Depends, y svc_tuple[0] rompe en runtime. import/confirm NO persiste.
+    #   Debe inyectarse como parámetro del endpoint (igual que en import_preview).
     svc_tuple: tuple[ImportService, dict[str, UUID], set[UUID], set[UUID]] = Depends(_get_import_service)
     svc = svc_tuple[0]
     try:

@@ -16,7 +16,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      include: ['src/features/auth/**', 'src/shared/services/**'],
+      include: ['src/features/auth/**', 'src/shared/services/**', 'src/shared/ui/**'],
       thresholds: {
         lines: 80,
         functions: 80,

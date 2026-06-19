@@ -56,6 +56,9 @@ main_router.include_router(programas_fechas_router)
 main_router.include_router(padrones_router)
 main_router.include_router(calificaciones_router)
 main_router.include_router(umbral_materia_router)
+# TODO: (FEAT) Falta el router /api/comisiones que el frontend (useComisionesDisponibles)
+#   consume para poblar el selector del workspace de Comisión. Sin él, no se puede seleccionar
+#   comisión ni arrancar el flujo de importación en la UI. Hoy solo existe mockeado en tests (STUB_COMISIONES).
 main_router.include_router(analisis_router)
 main_router.include_router(audit_router)
 main_router.include_router(impersonation_router)

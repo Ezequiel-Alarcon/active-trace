@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTpsSinCorregir, useUploadFinalizacion } from '../hooks/useEntregas';
-import type { TpSinCorregirEntry } from '../types/entregas';
+import { Button, DataTable, StatusBadge, type Column } from '@/shared/ui';
 
 interface EntregasSinCorregirProps {
   comisionId: string;
@@ -14,7 +14,7 @@ export default function EntregasSinCorregir({ comisionId: _comisionId }: Entrega
   const { data, isLoading, refetch } = useTpsSinCorregir();
   const uploadMutation = useUploadFinalizacion();
 
-  const alumnos: TpSinCorregirEntry[] = data?.alumnos ?? [];
+  const alumnos = data?.alumnos ?? [];
   const hasData = alumnos.length > 0;
 
   async function handleUpload() {
@@ -38,6 +38,12 @@ export default function EntregasSinCorregir({ comisionId: _comisionId }: Entrega
     URL.revokeObjectURL(url);
   }
 
+  const columns: Column<(typeof alumnos)[number]>[] = [
+    { header: 'Usuario ID', render: (a) => <span className="text-gray-500">{a.usuario_id ?? '—'}</span> },
+    { header: 'Materia', render: (a) => a.materia_nombre ?? a.materia_id },
+    { header: 'Estado', render: () => <StatusBadge estado="pendiente">Sin corregir</StatusBadge> },
+  ];
+
   return (
     <div className="flex flex-col gap-6">
       <h2 className="text-lg font-semibold text-gray-800">Entregas sin corregir</h2>
@@ -54,54 +60,35 @@ export default function EntregasSinCorregir({ comisionId: _comisionId }: Entrega
           onChange={(e) => setFile(e.target.files?.[0] ?? null)}
           className="text-sm"
         />
-        <button
-          type="button"
+        <Button
           disabled={!file || uploadMutation.isPending}
           onClick={handleUpload}
-          className="self-start px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+          className="self-start"
         >
           {uploadMutation.isPending ? 'Procesando…' : 'Cruzar con calificaciones'}
-        </button>
+        </Button>
       </div>
 
-      {/* Table */}
       {/* Export button — always rendered, disabled when no data */}
       <div className="flex justify-end">
-        <button
-          type="button"
-          onClick={handleExport}
-          disabled={!hasData}
-          className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
-        >
+        <Button variant="secondary" onClick={handleExport} disabled={!hasData}>
           Exportar CSV
-        </button>
+        </Button>
       </div>
 
       {isLoading ? (
         <p className="text-sm text-gray-500">Cargando entregas…</p>
-      ) : !hasData ? (
-        <div role="status" className="p-4 bg-gray-50 rounded border border-gray-200 text-sm text-gray-500">
-          No se detectaron entregas sin corregir.
-        </div>
       ) : (
         <div className="flex flex-col gap-2">
-          <p className="text-sm text-gray-600">{alumnos.length} entrega(s) sin corregir</p>
-          <table className="w-full text-sm border-collapse">
-            <thead>
-              <tr className="border-b border-gray-200">
-                <th className="py-2 text-left font-medium text-gray-700">Usuario ID</th>
-                <th className="py-2 text-left font-medium text-gray-700">Materia</th>
-              </tr>
-            </thead>
-            <tbody>
-              {alumnos.map((a, idx) => (
-                <tr key={`${a.usuario_id ?? 'null'}-${idx}`} className="border-b border-gray-100">
-                  <td className="py-2 text-gray-500">{a.usuario_id ?? '—'}</td>
-                  <td className="py-2">{a.materia_nombre ?? a.materia_id}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          {hasData && (
+            <p className="text-sm text-gray-600">{alumnos.length} entrega(s) sin corregir</p>
+          )}
+          <DataTable
+            rows={alumnos}
+            columns={columns}
+            rowKey={(a, idx) => `${a.usuario_id ?? 'null'}-${idx}`}
+            emptyMessage="No se detectaron entregas sin corregir."
+          />
         </div>
       )}
     </div>

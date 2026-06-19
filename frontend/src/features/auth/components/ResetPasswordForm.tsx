@@ -3,6 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useSearchParams, Link } from 'react-router-dom';
 import { useReset } from '../hooks/useReset';
+import { Button, TextField } from '@/shared/ui';
 
 const resetSchema = z.object({
   new_password: z
@@ -49,39 +50,21 @@ export default function ResetPasswordForm() {
     >
       <h2 className="text-xl font-semibold">Nueva contraseña</h2>
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="new_password" className="text-sm font-medium">
-          Nueva contraseña
-        </label>
-        <input
-          id="new_password"
-          type="password"
-          {...form.register('new_password')}
-          className="border rounded px-3 py-2"
-        />
-        {form.formState.errors.new_password && (
-          <span className="text-red-600 text-xs">
-            {form.formState.errors.new_password.message}
-          </span>
-        )}
-      </div>
+      <TextField
+        id="new_password"
+        label="Nueva contraseña"
+        type="password"
+        error={form.formState.errors.new_password?.message}
+        {...form.register('new_password')}
+      />
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="confirm_password" className="text-sm font-medium">
-          Confirmá la contraseña
-        </label>
-        <input
-          id="confirm_password"
-          type="password"
-          {...form.register('confirm_password')}
-          className="border rounded px-3 py-2"
-        />
-        {form.formState.errors.confirm_password && (
-          <span className="text-red-600 text-xs">
-            {form.formState.errors.confirm_password.message}
-          </span>
-        )}
-      </div>
+      <TextField
+        id="confirm_password"
+        label="Confirmá la contraseña"
+        type="password"
+        error={form.formState.errors.confirm_password?.message}
+        {...form.register('confirm_password')}
+      />
 
       {error && (
         <div role="alert" className="text-red-600 text-sm flex flex-col gap-1">
@@ -92,13 +75,9 @@ export default function ResetPasswordForm() {
         </div>
       )}
 
-      <button
-        type="submit"
-        disabled={isLoading || !token}
-        className="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50"
-      >
+      <Button type="submit" disabled={isLoading || !token}>
         {isLoading ? 'Guardando…' : 'Guardar contraseña'}
-      </button>
+      </Button>
     </form>
   );
 }

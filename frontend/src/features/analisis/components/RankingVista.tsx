@@ -1,4 +1,5 @@
 import { useRanking } from '../hooks/useRanking';
+import { DataTable, StatusBadge, type Column } from '@/shared/ui';
 
 interface RankingVistaProps {
   comisionId: string;
@@ -19,44 +20,42 @@ export default function RankingVista({ comisionId: _comisionId }: RankingVistaPr
 
   const rankings = (data?.rankings ?? []).filter((r) => r.cantidad_aprobadas > 0);
 
-  if (rankings.length === 0) {
-    return (
-      <div role="status" className="p-4 bg-gray-50 rounded border border-gray-200 text-sm text-gray-500">
-        No hay alumnos con actividades aprobadas.
-      </div>
-    );
-  }
+  const columns: Column<(typeof rankings)[number]>[] = [
+    { header: '#', render: (r) => r.posicion },
+    {
+      header: 'Alumno',
+      render: (r) => (
+        <div>
+          <div>{r.nombre}</div>
+          <div className="text-gray-400 text-xs">{r.email}</div>
+        </div>
+      ),
+    },
+    {
+      header: 'Aprobadas',
+      render: (r) => <StatusBadge estado="aprobado">{r.cantidad_aprobadas}</StatusBadge>,
+    },
+    {
+      header: 'Total',
+      render: (r) => <span className="text-gray-500">{r.cantidad_totales}</span>,
+      className: 'text-right',
+    },
+    {
+      header: 'Promedio',
+      render: (r) => (r.nota_promedio != null ? r.nota_promedio.toFixed(1) : '—'),
+      className: 'text-right',
+    },
+  ];
 
   return (
     <div className="flex flex-col gap-3">
       <h2 className="text-lg font-medium text-gray-800">Ranking de actividades aprobadas</h2>
-      <table className="w-full text-sm border-collapse">
-        <thead>
-          <tr className="border-b border-gray-200">
-            <th className="py-2 text-left font-medium text-gray-700">#</th>
-            <th className="py-2 text-left font-medium text-gray-700">Alumno</th>
-            <th className="py-2 text-right font-medium text-gray-700">Aprobadas</th>
-            <th className="py-2 text-right font-medium text-gray-700">Total</th>
-            <th className="py-2 text-right font-medium text-gray-700">Promedio</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rankings.map((r) => (
-            <tr key={r.usuario_id} className="border-b border-gray-100 hover:bg-gray-50">
-              <td className="py-2">{r.posicion}</td>
-              <td className="py-2">
-                <div>{r.nombre}</div>
-                <div className="text-gray-400 text-xs">{r.email}</div>
-              </td>
-              <td className="py-2 text-right font-medium">{r.cantidad_aprobadas}</td>
-              <td className="py-2 text-right text-gray-500">{r.cantidad_totales}</td>
-              <td className="py-2 text-right text-gray-500">
-                {r.nota_promedio != null ? r.nota_promedio.toFixed(1) : '—'}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <DataTable
+        rows={rankings}
+        columns={columns}
+        rowKey={(r) => r.usuario_id}
+        emptyMessage="No hay alumnos con actividades aprobadas."
+      />
     </div>
   );
 }
