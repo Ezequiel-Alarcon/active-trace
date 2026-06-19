@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from datetime import date as DateType
 
-from sqlalchemy import Date, Index, String, Text
+from sqlalchemy import Boolean, Date, Index, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base
@@ -33,6 +33,7 @@ class Usuario(Base, TenantScopedMixin):
     fecha_nacimiento: Mapped[DateType | None] = mapped_column(Date, nullable=True)
     genero: Mapped[str | None] = mapped_column(String(16), nullable=True)
     observaciones: Mapped[str | None] = mapped_column(Text, nullable=True)
+    facturante: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default="false")
 
     __table_args__ = (
         Index("ix_usuario_tenant_email_hash", "tenant_id", "email_hash", unique=True),

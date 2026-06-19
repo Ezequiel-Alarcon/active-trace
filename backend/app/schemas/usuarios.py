@@ -32,6 +32,7 @@ class UsuarioCreate(BaseModel):
     fecha_nacimiento: date | None = None
     genero: str | None = None
     observaciones: str | None = None
+    facturante: bool = False
 
 
 class UsuarioUpdate(BaseModel):
@@ -51,6 +52,7 @@ class UsuarioUpdate(BaseModel):
     fecha_nacimiento: date | None = None
     genero: str | None = None
     observaciones: str | None = None
+    facturante: bool | None = None
 
 
 class UsuarioResponse(BaseModel):
@@ -72,6 +74,7 @@ class UsuarioResponse(BaseModel):
     fecha_nacimiento: date | None = None
     genero: str | None = None
     observaciones: str | None = None
+    facturante: bool = False
     created_at: datetime
     updated_at: datetime
 
@@ -102,6 +105,9 @@ class AsignacionCreate(BaseModel):
     responsable_id: UUID | None = None
     desde: date
     hasta: date | None = None
+    materia_id: UUID | None = None
+    cohorte_id: UUID | None = None
+    comisiones: list[str] = []
 
 
 class AsignacionUpdate(BaseModel):
@@ -113,6 +119,9 @@ class AsignacionUpdate(BaseModel):
     responsable_id: UUID | None = None
     desde: date | None = None
     hasta: date | None = None
+    materia_id: UUID | None = None
+    cohorte_id: UUID | None = None
+    comisiones: list[str] | None = None
 
 
 class AsignacionResponse(BaseModel):
@@ -127,6 +136,9 @@ class AsignacionResponse(BaseModel):
     responsable_id: UUID | None = None
     desde: date
     hasta: date | None = None
+    materia_id: UUID | None = None
+    cohorte_id: UUID | None = None
+    comisiones: list[str] = []
     estado_vigencia: str
     created_at: datetime
     updated_at: datetime

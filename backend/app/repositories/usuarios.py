@@ -62,6 +62,7 @@ def decrypt_usuario_fields(usuario: Usuario) -> dict[str, Any]:
         "fecha_nacimiento": usuario.fecha_nacimiento,
         "genero": usuario.genero,
         "observaciones": usuario.observaciones,
+        "facturante": usuario.facturante,
         "created_at": usuario.created_at,
         "updated_at": usuario.updated_at,
     }

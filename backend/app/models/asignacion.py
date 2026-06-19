@@ -11,6 +11,7 @@ from datetime import date as DateType
 from uuid import UUID
 
 from sqlalchemy import Date, Enum, Index
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PgUUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -44,6 +45,9 @@ class Asignacion(Base, TenantScopedMixin):
         PgUUID(as_uuid=True),
         nullable=True,
     )
+    materia_id: Mapped[UUID | None] = mapped_column(PgUUID(as_uuid=True), nullable=True)
+    cohorte_id: Mapped[UUID | None] = mapped_column(PgUUID(as_uuid=True), nullable=True)
+    comisiones: Mapped[list[str]] = mapped_column(JSONB, nullable=False, default=list, server_default="[]")
     responsable_id: Mapped[UUID | None] = mapped_column(
         PgUUID(as_uuid=True),
         nullable=True,
@@ -54,6 +58,8 @@ class Asignacion(Base, TenantScopedMixin):
     __table_args__ = (
         Index("ix_asignacion_tenant_usuario", "tenant_id", "usuario_id"),
         Index("ix_asignacion_tenant_rol", "tenant_id", "rol_id"),
+        Index("ix_asignacion_tenant_materia", "tenant_id", "materia_id"),
+        Index("ix_asignacion_tenant_cohorte", "tenant_id", "cohorte_id"),
         Index("ix_asignacion_tenant_contexto", "tenant_id", "contexto_tipo", "contexto_id"),
         Index("ix_asignacion_tenant_deleted", "tenant_id", "deleted_at"),
     )

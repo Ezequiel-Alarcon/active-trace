@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import enum
 
-from sqlalchemy import Enum, Index, String
+from sqlalchemy import Enum, ForeignKey, Index, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base
@@ -26,6 +26,11 @@ class Materia(Base, TenantScopedMixin):
 
     codigo: Mapped[str] = mapped_column(String(64), nullable=False)
     nombre: Mapped[str] = mapped_column(String(255), nullable=False)
+    plus_grupo: Mapped[str | None] = mapped_column(
+        String(32),
+        ForeignKey("plus_categoria.grupo", ondelete="RESTRICT"),
+        nullable=True,
+    )
     estado: Mapped[MateriaEstado] = mapped_column(
         Enum(MateriaEstado, name="materia_estado", values_callable=lambda x: [m.value for m in x]),
         nullable=False,
@@ -34,5 +39,6 @@ class Materia(Base, TenantScopedMixin):
 
     __table_args__ = (
         Index("ix_materia_tenant_codigo", "tenant_id", "codigo", unique=True),
+        Index("ix_materia_plus_grupo", "plus_grupo"),
         Index("ix_materia_tenant_deleted", "tenant_id", "deleted_at"),
     )

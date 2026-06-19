@@ -21,6 +21,15 @@ from app.audit.models import AuditLog  # noqa: F401
 from app.models.avisos import Aviso, AcknowledgmentAviso, AlcanceAviso, SeveridadAviso  # noqa: F401
 from app.models.tarea import ComentarioTarea, EstadoTarea, Tarea  # noqa: F401
 from app.models.mensaje_interno import MensajeInterno  # noqa: F401
+from app.models.liquidacion import (  # noqa: F401
+    Factura,
+    FacturaEstado,
+    Liquidacion,
+    LiquidacionEstado,
+    PlusCategoria,
+    SalarioBase,
+    SalarioPlus,
+)
 
 # NOTE: Comunicacion vive en app.modules.comunicacion.models.
 # NO importar aquí porque comunicacion.py importa TenantScopedMixin
@@ -48,4 +57,6 @@ __all__ = [
     "FechaAcademica", "TipoFechaAcademica",
     "Aviso", "AcknowledgmentAviso", "AlcanceAviso", "SeveridadAviso",
     "Tarea", "ComentarioTarea", "EstadoTarea",
+    "PlusCategoria", "SalarioBase", "SalarioPlus", "Liquidacion", "LiquidacionEstado",
+    "Factura", "FacturaEstado",
 ]

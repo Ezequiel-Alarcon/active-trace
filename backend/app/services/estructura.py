@@ -14,6 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.carrera import Carrera, CarreraEstado
 from app.models.cohorte import Cohorte, CohorteEstado
 from app.models.materia import Materia, MateriaEstado
+from app.repositories.liquidaciones import GrillaSalarialRepository
 from app.repositories.base import get_tenant_repository
 from app.schemas.estructura import (
     CarreraCreate,
@@ -213,6 +214,11 @@ class EstructuraService:
     # ── Materia ──────────────────────────────────────────────────────
 
     async def create_materia(self, data: MateriaCreate) -> Materia:
+        if data.plus_grupo is not None:
+            grilla = GrillaSalarialRepository(self._session, self._tenant_id)
+            await grilla.ensure_plus_catalogue()
+            if await grilla.get_plus_categoria(data.plus_grupo) is None:
+                raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Clave Plus inexistente")
         repo = get_tenant_repository(Materia, self._session)
         existing = await repo.list(filters=[Materia.codigo == data.codigo])
         if existing:
@@ -224,6 +230,7 @@ class EstructuraService:
             "tenant_id": self._tenant_id,
             "codigo": data.codigo,
             "nombre": data.nombre,
+            "plus_grupo": data.plus_grupo,
         })
         return obj
 
@@ -246,6 +253,12 @@ class EstructuraService:
             update_data["nombre"] = data.nombre
         if data.estado is not None:
             update_data["estado"] = MateriaEstado(data.estado)
+        if data.plus_grupo is not None:
+            grilla = GrillaSalarialRepository(self._session, self._tenant_id)
+            await grilla.ensure_plus_catalogue()
+            if await grilla.get_plus_categoria(data.plus_grupo) is None:
+                raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Clave Plus inexistente")
+            update_data["plus_grupo"] = data.plus_grupo
 
         if update_data:
             obj = await repo.update(obj, update_data)

@@ -39,6 +39,8 @@ from app.routers.coloquios import router as coloquios_router
 from app.routers.tareas import router as tareas_router
 from app.routers.perfil import router as perfil_router
 from app.routers.mensajes import router as mensajes_router
+from app.routers.liquidaciones import router as liquidaciones_router
+from app.routers.facturas import router as facturas_router
 
 main_router = APIRouter()
 main_router.include_router(health_router)
@@ -68,3 +70,5 @@ main_router.include_router(coloquios_router)
 main_router.include_router(tareas_router)
 main_router.include_router(perfil_router)
 main_router.include_router(mensajes_router)
+main_router.include_router(liquidaciones_router)
+main_router.include_router(facturas_router)

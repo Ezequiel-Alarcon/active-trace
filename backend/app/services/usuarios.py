@@ -220,6 +220,9 @@ class AsignacionService:
             rol_id=obj.rol_id,
             contexto_tipo=obj.contexto_tipo.value,
             contexto_id=obj.contexto_id,
+            materia_id=obj.materia_id,
+            cohorte_id=obj.cohorte_id,
+            comisiones=obj.comisiones,
             responsable_id=obj.responsable_id,
             desde=obj.desde,
             hasta=obj.hasta,
@@ -229,8 +232,8 @@ class AsignacionService:
         )
 
     async def get_by_id(self, asignacion_id: UUID) -> AsignacionResponse:
-        repo = self._repo()
-        obj = await repo.get_by_id(asignacion_id)
+        asignacion_repo = self._repo()
+        obj = await asignacion_repo.get_by_id(asignacion_id)
         if obj is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -243,6 +246,9 @@ class AsignacionService:
             rol_id=obj.rol_id,
             contexto_tipo=obj.contexto_tipo.value,
             contexto_id=obj.contexto_id,
+            materia_id=obj.materia_id,
+            cohorte_id=obj.cohorte_id,
+            comisiones=obj.comisiones,
             responsable_id=obj.responsable_id,
             desde=obj.desde,
             hasta=obj.hasta,
@@ -286,6 +292,9 @@ class AsignacionService:
                     rol_id=obj.rol_id,
                     contexto_tipo=obj.contexto_tipo.value,
                     contexto_id=obj.contexto_id,
+                    materia_id=obj.materia_id,
+                    cohorte_id=obj.cohorte_id,
+                    comisiones=obj.comisiones,
                     responsable_id=obj.responsable_id,
                     desde=obj.desde,
                     hasta=obj.hasta,
@@ -329,6 +338,21 @@ class AsignacionService:
             await self._validate_responsable(data.responsable_id)
             update_data["responsable_id"] = data.responsable_id
 
+        if data.materia_id is not None:
+            materia_repo = get_tenant_repository(Materia, self._session)
+            if await materia_repo.get_by_id(data.materia_id) is None:
+                raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="La materia especificada no existe")
+            update_data["materia_id"] = data.materia_id
+
+        if data.cohorte_id is not None:
+            cohorte_repo = get_tenant_repository(Cohorte, self._session)
+            if await cohorte_repo.get_by_id(data.cohorte_id) is None:
+                raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="La cohorte especificada no existe")
+            update_data["cohorte_id"] = data.cohorte_id
+
+        if data.comisiones is not None:
+            update_data["comisiones"] = data.comisiones
+
         if data.desde is not None:
             update_data["desde"] = data.desde
 
@@ -354,6 +378,9 @@ class AsignacionService:
             rol_id=obj.rol_id,
             contexto_tipo=obj.contexto_tipo.value,
             contexto_id=obj.contexto_id,
+            materia_id=obj.materia_id,
+            cohorte_id=obj.cohorte_id,
+            comisiones=obj.comisiones,
             responsable_id=obj.responsable_id,
             desde=obj.desde,
             hasta=obj.hasta,

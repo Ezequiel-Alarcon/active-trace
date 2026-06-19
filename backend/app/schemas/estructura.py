@@ -19,6 +19,7 @@ class CarreraCreate(BaseModel):
 
     codigo: str
     nombre: str
+    plus_grupo: str | None = None
 
 
 class CarreraUpdate(BaseModel):
@@ -27,6 +28,7 @@ class CarreraUpdate(BaseModel):
     codigo: str | None = None
     nombre: str | None = None
     estado: str | None = None
+    plus_grupo: str | None = None
 
 
 class CarreraResponse(BaseModel):
@@ -85,6 +87,7 @@ class MateriaCreate(BaseModel):
 
     codigo: str
     nombre: str
+    plus_grupo: str | None = None
 
 
 class MateriaUpdate(BaseModel):
@@ -93,6 +96,7 @@ class MateriaUpdate(BaseModel):
     codigo: str | None = None
     nombre: str | None = None
     estado: str | None = None
+    plus_grupo: str | None = None
 
 
 class MateriaResponse(BaseModel):
@@ -103,5 +107,6 @@ class MateriaResponse(BaseModel):
     codigo: str
     nombre: str
     estado: str
+    plus_grupo: str | None = None
     created_at: datetime
     updated_at: datetime
