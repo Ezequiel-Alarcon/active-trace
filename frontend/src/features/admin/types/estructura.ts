@@ -18,10 +18,14 @@ export interface UpdateCarreraRequest {
   estado?: 'Activa' | 'Inactiva';
 }
 
+// TODO: (BUG) El backend CohorteResponse no tiene campo 'carrera_nombre'.
+// El campo existe en el servicio pero no en el schema de respuesta.
+// El frontend espera carrera_nombre que el backend no devuelve.
+// Ver backend/app/schemas/estructura.py:CohorteResponse
 export interface Cohorte {
   id: string;
   carrera_id: string;
-  carrera_nombre: string;
+  carrera_nombre: string; // TODO: (FIX) Verificar si el backend realmente devuelve este campo
   nombre: string;
   anio: number;
   vig_desde: string;

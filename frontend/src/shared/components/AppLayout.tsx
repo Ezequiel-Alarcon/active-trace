@@ -20,6 +20,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Comisión', to: '/comision', permission: 'analisis:ver' },
   { label: 'Monitor', to: '/monitor', permission: 'analisis:ver' },
   { label: 'Comunicaciones', to: '/comision/comunicar', permission: 'comunicacion:enviar' },
+  { label: 'Aprobaciones', to: '/comision/aprobaciones', permission: 'comunicacion:aprobar' },
 ];
 
 const LIQUIDACIONES_SECTION: NavSection = {

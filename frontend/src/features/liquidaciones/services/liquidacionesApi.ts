@@ -5,22 +5,19 @@ import type {
   LiquidacionCierreResponse,
   SalarioBase,
   CreateSalarioBaseRequest,
-  UpdateSalarioBaseRequest,
   SalarioPlus,
   CreateSalarioPlusRequest,
-  UpdateSalarioPlusRequest,
 } from '../types/liquidaciones';
 
 export async function fetchLiquidacionPeriodo(
-  cohorteId?: string,
-  mes?: string,
-  docenteId?: string,
+  cohorteId: string,
+  periodo: string, // YYYY-MM format
 ): Promise<LiquidacionPeriodoResponse> {
-  const params: Record<string, string> = {};
-  if (cohorteId) params.cohorte_id = cohorteId;
-  if (mes) params.mes = mes;
-  if (docenteId) params.docente_id = docenteId;
-  const response = await apiClient.get<LiquidacionPeriodoResponse>('/api/liquidaciones', { params });
+  // Backend: POST /api/liquidaciones/calcular with body {cohorte_id, periodo}
+  const response = await apiClient.post<LiquidacionPeriodoResponse>('/api/liquidaciones/calcular', {
+    cohorte_id: cohorteId,
+    periodo,
+  });
   return response.data;
 }
 
@@ -43,46 +40,16 @@ export async function fetchDetalleHistorial(
   return response.data;
 }
 
-export async function fetchSalariosBase(): Promise<SalarioBase[]> {
-  const response = await apiClient.get<SalarioBase[]>('/api/liquidaciones/salarios-base');
-  return response.data;
-}
+// NOTE: GET /salarios/base and GET /salarios/plus do not exist in backend.
+// Only POST /salarios/base (create base) and POST /salarios/plus (create plus) exist.
+// The grilla salarial listing will require a future backend change.
 
 export async function createSalarioBase(data: CreateSalarioBaseRequest): Promise<SalarioBase> {
-  const response = await apiClient.post<SalarioBase>('/api/liquidaciones/salarios-base', data);
-  return response.data;
-}
-
-export async function updateSalarioBase(
-  id: string,
-  data: UpdateSalarioBaseRequest,
-): Promise<SalarioBase> {
-  const response = await apiClient.patch<SalarioBase>(`/api/liquidaciones/salarios-base/${id}`, data);
-  return response.data;
-}
-
-export async function deleteSalarioBase(id: string): Promise<void> {
-  await apiClient.delete(`/api/liquidaciones/salarios-base/${id}`);
-}
-
-export async function fetchSalariosPlus(): Promise<SalarioPlus[]> {
-  const response = await apiClient.get<SalarioPlus[]>('/api/liquidaciones/salarios-plus');
+  const response = await apiClient.post<SalarioBase>('/api/liquidaciones/salarios/base', data);
   return response.data;
 }
 
 export async function createSalarioPlus(data: CreateSalarioPlusRequest): Promise<SalarioPlus> {
-  const response = await apiClient.post<SalarioPlus>('/api/liquidaciones/salarios-plus', data);
+  const response = await apiClient.post<SalarioPlus>('/api/liquidaciones/salarios/plus', data);
   return response.data;
-}
-
-export async function updateSalarioPlus(
-  id: string,
-  data: UpdateSalarioPlusRequest,
-): Promise<SalarioPlus> {
-  const response = await apiClient.patch<SalarioPlus>(`/api/liquidaciones/salarios-plus/${id}`, data);
-  return response.data;
-}
-
-export async function deleteSalarioPlus(id: string): Promise<void> {
-  await apiClient.delete(`/api/liquidaciones/salarios-plus/${id}`);
 }

@@ -57,3 +57,10 @@ export interface PreviewResponse {
   cuerpo: string;
   destinatario: string;
 }
+
+export interface LotePendienteResponse extends LoteStatusResponse {
+  asunto: string;
+  cuerpo: string;
+  solicitado_por_nombre: string;
+  destinatarios: string[];
+}

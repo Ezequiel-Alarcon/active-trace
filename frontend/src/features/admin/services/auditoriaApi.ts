@@ -62,6 +62,11 @@ export async function fetchAuditLog(
   if (filters?.materia_id) params.materia_id = filters.materia_id;
   if (filters?.actor_id) params.actor_id = filters.actor_id;
   if (filters?.estado) params.estado = filters.estado;
+  // TODO: (BUG) El frontend llama /api/audit/log pero el backend mountpea el router en /api/audit
+  // por lo que el endpoint real es /audit/log. Hay inconsistencia en el prefjo.
+  // Ver backend/app/api/v1/main_router.py — audit_router se mountpea directo en /api/audit
+  // pero el path del router es /log, entonces debería ser /audit/log (correcto).
+  // Solo marcar si realmente falla — puede que esté bien si el include_router usa prefix.
   const response = await apiClient.get('/api/audit/log', { params });
   return response.data;
 }

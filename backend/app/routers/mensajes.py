@@ -6,11 +6,9 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-# TODO: (FEAT) Agregar permisos mensajes:enviar y mensajes:ver al catálogo y
-# decorar estos endpoints con require_permission para mantener consistencia
-# con el resto del codebase.
 from app.auth.deps import CurrentUser, get_current_user
 from app.core.dependencies import get_db
+from app.core.permissions import require_permission
 from app.schemas.mensajes import (
     InboxThreadItem,
     MensajeCreate,
@@ -34,6 +32,7 @@ def _get_service(
     response_model=MensajeResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Send a new internal message",
+    dependencies=[Depends(require_permission("mensajes:enviar"))],
 )
 async def send_message(
     data: MensajeCreate,
@@ -48,6 +47,7 @@ async def send_message(
     response_model=MensajeResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Reply to an existing message",
+    dependencies=[Depends(require_permission("mensajes:enviar"))],
 )
 async def reply_message(
     mensaje_id: UUID,
@@ -62,6 +62,7 @@ async def reply_message(
     "/inbox",
     response_model=list[InboxThreadItem],
     summary="List inbox threads",
+    dependencies=[Depends(require_permission("mensajes:ver"))],
 )
 async def list_inbox(
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
@@ -74,6 +75,7 @@ async def list_inbox(
     "/inbox/{hilo_id}",
     response_model=list[MensajeResponse],
     summary="Read thread messages",
+    dependencies=[Depends(require_permission("mensajes:ver"))],
 )
 async def read_thread(
     hilo_id: UUID,

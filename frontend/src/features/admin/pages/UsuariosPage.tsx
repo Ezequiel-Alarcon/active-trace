@@ -11,10 +11,13 @@ export default function UsuariosPage() {
   const [showModal, setShowModal] = useState(false);
   const [editUser, setEditUser] = useState<UsuarioTenant | null>(null);
 
+  // TODO: (BUG) DNI se muestra en texto plano pero es PII sensible (AES-256 en backend).
+  // Según ARQUITECTURA.md §5.4, DNI/CBU deben estar cifrados. El frontend no debe
+  // mostrar DNI sin descifrar — crear un componente DescriptedDNI o enmascarar.
   const columns: Column<UsuarioTenant>[] = [
     { header: 'Email', render: (u) => u.email },
     { header: 'Nombre', render: (u) => `${u.nombre} ${u.apellidos}` },
-    { header: 'DNI', render: (u) => u.dni },
+    { header: 'DNI', render: (u) => u.dni }, // TODO: (BUG) PII expuesta sin descifrar
     { header: 'Roles', render: (u) => (
       <div className="flex gap-1 flex-wrap">
         {u.roles.map((r) => (

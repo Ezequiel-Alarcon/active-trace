@@ -2,6 +2,7 @@ import { apiClient } from '@/shared/services/api';
 import type {
   ComunicacionCreate,
   ComunicacionResponse,
+  LotePendienteResponse,
   LoteStatusResponse,
   PreviewRequest,
   PreviewResponse,
@@ -36,4 +37,32 @@ export async function fetchLoteStatus(loteId: string): Promise<LoteStatusRespons
     `/api/comunicaciones/lotes/${loteId}`,
   );
   return response.data;
+}
+
+/**
+ * GET /api/comunicaciones/lotes?estado=Pendiente
+ * Returns all lotes in Pendiente state for the current tenant.
+ */
+export async function fetchLotesPendientes(): Promise<LotePendienteResponse[]> {
+  const response = await apiClient.get<LotePendienteResponse[]>(
+    '/api/comunicaciones/lotes',
+    { params: { estado: 'Pendiente' } },
+  );
+  return response.data;
+}
+
+/**
+ * POST /api/comunicaciones/lotes/:loteId/aprobar
+ * Approves a pending lote — transitions to Enviando.
+ */
+export async function aprobarLote(loteId: string): Promise<void> {
+  await apiClient.post(`/api/comunicaciones/lotes/${loteId}/aprobar`);
+}
+
+/**
+ * POST /api/comunicaciones/lotes/:loteId/rechazar
+ * Rejects a pending lote — transitions to Cancelado.
+ */
+export async function rechazarLote(loteId: string): Promise<void> {
+  await apiClient.post(`/api/comunicaciones/lotes/${loteId}/rechazar`);
 }

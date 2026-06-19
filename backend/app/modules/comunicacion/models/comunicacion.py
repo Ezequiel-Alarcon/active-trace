@@ -61,7 +61,8 @@ class Comunicacion(Base, TenantScopedMixin):
 
     asunto: Mapped[str] = mapped_column(String(500), nullable=False)
     cuerpo: Mapped[str] = mapped_column(Text, nullable=False)
-    # TODO: (TEST) hash+enc columns added; old `destinatario` remains for backward compat. Needs migration to backfill + remove plaintext column
+    # Plaintext column retained for backward-compat fallback during migration only.
+    # After migration 025 (backfill + drop), this column will be removed.
     destinatario: Mapped[str] = mapped_column(String(255), nullable=False)
     destinatario_hash: Mapped[str] = mapped_column(String(64), nullable=False, default="")
     destinatario_enc: Mapped[str] = mapped_column(String(2048), nullable=False, default="")
@@ -93,15 +94,24 @@ class Comunicacion(Base, TenantScopedMixin):
             self.enviado_at = datetime.now()
 
     def set_destinatario(self, plain: str) -> None:
+        """Encrypt and hash the destinatario email.
+
+        Stores only the encrypted value and hash lookup key.
+        Does NOT store the plaintext email anywhere.
+        """
         plain_lower = plain.strip().lower()
         self.destinatario_hash = hash_email_for_search(plain_lower, self.tenant_id)
         self.destinatario_enc = encrypt(plain_lower, tenant_id=self.tenant_id, aad_suffix="comunicacion.destinatario")
-        self.destinatario = plain
 
     def get_destinatario(self) -> str:
+        """Decrypt the destinatario email.
+
+        Returns the plaintext email by decrypting destinatario_enc.
+        """
         if self.destinatario_enc:
             try:
                 return decrypt(self.destinatario_enc, tenant_id=self.tenant_id, aad_suffix="comunicacion.destinatario")
             except (CryptoError, Exception):
                 pass
+        # Fallback to plaintext column (backward compat during migration)
         return self.destinatario

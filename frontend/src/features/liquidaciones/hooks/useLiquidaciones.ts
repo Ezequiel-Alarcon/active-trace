@@ -9,13 +9,12 @@ import type { LiquidacionPeriodoResponse, LiquidacionHistorialEntry, Liquidacion
 
 export function useLiquidacionPeriodo(
   cohorteId?: string,
-  mes?: string,
-  docenteId?: string,
+  periodo?: string, // YYYY-MM format
 ) {
   return useQuery<LiquidacionPeriodoResponse>({
-    queryKey: ['liquidacion-periodo', cohorteId, mes, docenteId],
-    queryFn: () => fetchLiquidacionPeriodo(cohorteId, mes, docenteId),
-    enabled: Boolean(cohorteId) && Boolean(mes),
+    queryKey: ['liquidacion-periodo', cohorteId, periodo],
+    queryFn: () => fetchLiquidacionPeriodo(cohorteId!, periodo!),
+    enabled: Boolean(cohorteId) && Boolean(periodo),
     staleTime: 1000 * 60,
   });
 }

@@ -43,6 +43,16 @@ C-01 foundation-setup (infra, Docker, FastAPI skel, DB inicial, OTel)
             │       ├── C-22 frontend-academico-docente (importación, atrasados, comunicaciones)
             │       ├── C-23 frontend-coordinacion (equipos, avisos, tareas, monitores)
             │       └── C-24 frontend-finanzas-y-admin (liquidaciones, facturas, estructura, auditoría)
+            │
+            ├── C-25 frontend-design-system (tokens, primitivos UI, barrel exports)
+            ├── C-26 completar-analisis-comisiones-import (GET /api/comisiones, stubs reemplazados)
+            ├── C-27 redis-rate-limiter (Redis sliding window, factory condicional)
+            ├── C-28 fix-authz-runtime-bugs (tareas.py AttributeError + mensajes.py RBAC ausente)
+            ├── C-29 fix-worker-multitenancy (worker sin tenant_id + destinatario plaintext)
+            ├── C-30 fix-frontend-api-paths (liquidaciones, equipos, encuentros API mismatches)
+            ├── C-31 fix-calificacion-logic (escala notas, import Real, umbral default)
+            ├── C-32 feat-comunicacion-approval-ui (página aprobación de comunicaciones F3.3)
+            └── C-33 feat-encuentros-creation-ui (UI creación encuentros F6.1/F6.2)
 ```
 
 ### Paralelismo por fase
@@ -591,20 +601,130 @@ C-01 → C-02 → C-03 → C-04 → C-06 → C-07 → C-09 → C-10 → C-11 →
 
 ---
 
+## FASE 6 — Correcciones Post-Auditoría (2026-06-19)
+
+> Correcciones de bugs críticos encontrados en auditoría + features faltantes. Todos pueden implementarse en paralelo una vez resueltos los CRÍTICOS (C-28, C-29).
+
+### [C-28] `fix-authz-runtime-bugs`
+- **Estado**: `[x]` archivado (2026-06-19) → `openspec/changes/archive/2026-06-19-c-28-fix-authz-runtime-bugs/`
+- **Scope**:
+  - **`tareas.py` AttributeError**: 8 lugares usan `current_user.roles` pero `CurrentUser` (`auth/deps.py`) no tiene atributo `roles`. Crear helper `resolve_user_roles()` y reemplazar todas las ocurrencias.
+  - **`mensajes.py` RBAC ausente**: 4 endpoints (`send_message`, `reply_message`, `list_inbox`, `read_thread`) solo tienen `get_current_user` (autenticación) pero carecen de `require_permission`. Agregar permisos `mensajes:enviar` y `mensajes:ver` al catálogo y decorar los endpoints.
+  - **`guardias.py`**: `require_any_permission` no incluye el bloque de auditoría de impersonación. Agregar consistencia con `require_permission` estándar.
+- **Dependencias**: `C-04`, `C-20`
+- **Governance**: CRITICO
+- **Leer antes**:
+  - `backend/app/routers/tareas.py` (líneas 50, 68, 96, 118, 133, 147, 166, 184)
+  - `backend/app/routers/mensajes.py`
+  - `backend/app/auth/deps.py` (CurrentUser sin `roles`)
+
+### [C-29] `fix-worker-multitenancy`
+- **Estado**: `[x]` archivado (2026-06-19) → `openspec/changes/archive/2026-06-19-c-29-fix-worker-multitenancy/`
+- **Scope**:
+  - **`comunicacion_worker.py`**: Los queries `_recovery_job` y `run_poll_loop` NO filtran por `tenant_id`. En deployments multi-tenant, el worker procesa mensajes de **todos** los tenants. Solución: configurar `COMUNICACION_WORKER_TENANT_ID` y filtrar todos los queries; fail-fast si no está configurado.
+  - **`comunicacion_worker.py`**: Usa `comm.destinatario` (plaintext) en vez de `comm.get_destinatario()` (descifrado) en líneas 63 y 83.
+  - **`comunicacion/router.py`**: `destinatario=item.destinatario` asigna email sin cifrar (línea 89). Debe usar `obj.set_destinatario(item.destinatario)`.
+  - **`models/comunicacion.py`**: `set_destinatario()` actualmente escribe tanto `destinatario` (plaintext) como `destinatario_enc`. Modificar para escribir solo `destinatario_enc`; crear migración Alembic para eliminar columna `destinatario`.
+- **Dependencias**: `C-12`, `C-02`
+- **Governance**: CRITICO
+- **Leer antes**:
+  - `backend/app/workers/comunicacion_worker.py` (líneas 59-66, 124-137, 153-171)
+  - `backend/app/modules/comunicacion/router.py` (línea 86-89)
+  - `backend/app/modules/comunicacion/models/comunicacion.py` (línea 65, 99)
+
+### [C-30] `fix-frontend-api-paths`
+- **Estado**: `[x]` archivado (2026-06-19) → `openspec/changes/archive/2026-06-19-c-30-fix-frontend-api-paths/`
+- **Scope**:
+  - **`liquidacionesApi.ts`**: `GET /api/liquidaciones` no existe — backend tiene `POST /api/liquidaciones/calcular`. Cambiar a POST o crear endpoint GET `/api/liquidaciones/periodo`.
+  - **`liquidacionesApi.ts`**: Paths `/salarios-base` y `/salarios-plus` no matchean con backend (`/salarios/base`, `/salarios/plus`). Los endpoints PATCH y DELETE para salarios no existen en backend.
+  - **`equiposApi.ts`**: `exportarEquipo()` pasa `equipoId` como path param `/exportar/${equipoId}` pero backend espera query params `/exportar?materia_id=...&cohorte_id=...`.
+  - **`encuentrosApi.ts`**: `fetchEncuentros()` llama `GET /api/encuentros` pero el endpoint real está en `GET /api/encuentros/instancias`.
+  - **`UsuarioFormModal.tsx`**: Verificar que DNI/CUIL no se expongan en logs — el cifrado real debe estar en backend (C-29).
+- **Dependencias**: `C-18`, `C-08`, `C-13`
+- **Governance**: MEDIO
+- **Leer antes**:
+  - `frontend/src/features/liquidaciones/services/liquidacionesApi.ts`
+  - `frontend/src/features/equipos/services/equiposApi.ts`
+  - `frontend/src/features/encuentros/services/encuentrosApi.ts`
+
+### [C-31] `fix-calificacion-logic`
+- **Estado**: `[x]` archivado (2026-06-19) → `openspec/changes/archive/2026-06-19-c-31-fix-calificacion-logic/`
+- **Scope**:
+  - **`aprobado.py:33`**: Fórmula `nota * 10 >= umbral_pct` asume escala 0-10. Si la nota es 0-100, falla (70*10=700). Fix: `nota / escala_max * 100 >= umbral_pct` con `escala_max=10` default. O agregar campo `escala_max` a `UmbralMateria`.
+  - **`import_service.py:69-98`**: `_HEADER_ALIASES` tiene `"nota (real)"` como alias exacto. RN-01 dice "columnas que terminan en `(Real)`". Implementar regex `\(real\)$` (case-insensitive) para detectar genéricamente.
+  - **`umbral_materia.py:18` + `analisis_service.py:62,102,137,184`**: Default `conjunto_aprobado` hardcodeado como `["A","B+","C","7","8","9","10"]` pero RN-02 dice que los valores aprobatorios son **"Satisfactorio"** y **"Supera lo esperado"**. Corregir default.
+- **Dependencias**: `C-10`, `C-11`
+- **Governance**: MEDIO
+- **Leer antes**:
+  - `backend/app/domain/calificaciones/services/aprobado.py`
+  - `backend/app/domain/calificaciones/services/import_service.py`
+  - `knowledge-base/05_reglas_de_negocio.md` RN-01, RN-02, RN-03
+
+### [C-32] `feat-comunicacion-approval-ui`
+- **Estado**: `[ ]` pendiente
+- **Scope**:
+  - **Nueva página `AprobacionesPage`** en `features/comunicacion/pages/`:
+    - Tabla de lotes en estado Pendiente (fecha, cantidad destinatarios, asunto preview, estado).
+    - Modal `DetalleLoteModal` con destinatarios, contenido completo, acciones.
+    - Acciones: Aprobar y Rechazar (con confirmación).
+  - **Hooks**: `useLotesPendientes()`, `useAprobarLote()`, `useRechazarLote()`.
+  - **RBAC**: Permiso `comunicacion:aprobar` (COORDINADOR, ADMIN).
+  - Backend ya existe (`POST /api/comunicaciones/lotes/{lote_id}/aprobar`, `/rechazar`, `GET /api/comunicaciones/lotes`).
+- **Dependencias**: `C-12`, `C-21`
+- **Governance**: MEDIO
+- **Leer antes**:
+  - `knowledge-base/06_funcionalidades.md` Épica 3 (F3.3)
+  - `backend/app/modules/comunicacion/router.py` (endpoints de aprobación)
+
+### [C-33] `feat-encuentros-creation-ui`
+- **Estado**: `[ ]` pendiente
+- **Scope**:
+  - **Formulario `SlotForm`** (encuentro recurrente, F6.1):
+    - Wizard de 4 pasos: materia → día/hora → duración → preview/crear.
+    - Campos: materia, día-semana, hora, modalidad (virtual/presencial), link meet/video, duración, cant_semanas.
+    - Hook `useCreateSlot()`.
+  - **Formulario `InstanciaUnicaForm`** (encuentro único, F6.2):
+    - Campos: materia, fecha, hora, modalidad, link, duración.
+    - Hook `useCreateInstanciaUnica()`.
+  - Extender `EncuentrosPage` existente con tabs "Slots", "Únicos", "Crear slot", "Crear único".
+  - Permiso `encuentros:gestionar` (COORDINADOR, ADMIN).
+  - Backend ya existe (`POST /api/encuentros/slots`, `POST /api/encuentros/instancias/unico`).
+- **Dependencias**: `C-13`, `C-21`
+- **Governance**: MEDIO
+- **Leer antes**:
+  - `knowledge-base/06_funcionalidades.md` Épica 6 (F6.1, F6.2)
+  - `backend/app/routers/encuentros.py`
+
+---
+
 ## Resumen
 
 | Métrica | Valor |
 |---------|-------|
-| Total de changes | 27 |
-| Completados | 27 (todos los changes planificados) |
-| Pendientes | 0 — **proyecto completo** 🎉 |
-| Deuda técnica | Ninguna conocida bloqueante |
-| Fases | 6 (FASE 0 a FASE 5) |
-| Camino crítico | 10 changes (`C-01 → C-02 → C-03 → C-04 → C-06 → C-07 → C-09 → C-10 → C-11 → C-12`) |
+| Total de changes | 33 |
+| Completados | 31 |
+| Pendientes | 2 (C-32, C-33) |
+| Deuda técnica | 2 bugs MEDIO (C-30, C-31) |
+| Fases | 7 (FASE 0 a FASE 6) |
+| Camino crítico | 10 changes (`C-01 → … → C-12`) |
 | Gates de paralelismo | 11 (GATE 0 a GATE 10) |
-| Changes CRITICO (governance) | 6 (C-02, C-03, C-04, C-05, C-07, C-18) |
+| Changes CRITICO (governance) | 8 (C-02, C-03, C-04, C-05, C-07, C-18, C-28, C-29) |
 | Primer fork | GATE 4 (tras C-04, seguridad lista) |
 
-**Próximos changes recomendados**: `C-23 frontend-coordinacion` y `C-24 frontend-finanzas-y-admin` (paralelizables).
+### Bugs pendientes de la auditoría 2026-06-19
 
-Para arrancar: `/opsx:propose C-23-frontend-coordinacion` o `/opsx:propose C-24-frontend-finanzas-y-admin`
+| Prioridad | Change | Bug | Impacto |
+|-----------|--------|-----|---------|
+| ✅ | C-28 | `tareas.py`: `current_user.roles` inexistente | AttributeError — FIXED |
+| ✅ | C-28 | `mensajes.py`: sin RBAC | Cualquier usuario puede leer/enviar — FIXED |
+| ✅ | C-29 | `worker.py`: sin `tenant_id` | Worker procesa mensajes de todos los tenants — FIXED |
+| ✅ | C-29 | `destinatario` plaintext | PII de alumnos sin cifrar — FIXED |
+| MEDIO | C-30 | Paths API incorrectos | 404 en liquidaciones, equipos, encuentros — FIXED |
+| MEDIO | C-31 | Escala notas, import, umbral | Lógica de aprobación incorrecta — FIXED |
+| FEATURE | C-32 | Página aprobación | F3.3 sin UI |
+| FEATURE | C-33 | Creación encuentros | F6.1/F6.2 sin UI |
+
+### Orden recomendado de implementación
+
+1. **`C-32`** + **`C-33`** — Features faltantes: pueden implementarse en paralelo
+

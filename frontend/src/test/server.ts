@@ -103,6 +103,21 @@ export const STUB_LOTE_STATUS = {
   cancelados: 0,
 };
 
+export const STUB_LOTE_PENDIENTE = {
+  lote_id: 'lote-1',
+  tenant_id: 't-1',
+  total: 5,
+  pendientes: 5,
+  enviando: 0,
+  enviados: 0,
+  errores: 0,
+  cancelados: 0,
+  asunto: 'Recordatorio de evaluación',
+  cuerpo: 'Te informamos que tienes evaluaciones pendientes.',
+  solicitado_por_nombre: 'Carlos López',
+  destinatarios: ['ana@test.com', 'pedro@test.com', 'juan@test.com'],
+};
+
 export const STUB_MONITOR = {
   datos: [
     { usuario_id: 'u-1', nombre: 'Pedro', email: 'pedro@test.com', comision: 'Matemáticas 2024' },
@@ -306,8 +321,17 @@ export const handlers = [
   http.post('http://localhost:8000/api/comunicaciones', () =>
     HttpResponse.json(STUB_COMUNICACIONES, { status: 201 }),
   ),
+  http.get('http://localhost:8000/api/comunicaciones/lotes', () =>
+    HttpResponse.json([STUB_LOTE_PENDIENTE]),
+  ),
   http.get('http://localhost:8000/api/comunicaciones/lotes/:loteId', () =>
     HttpResponse.json(STUB_LOTE_STATUS),
+  ),
+  http.post('http://localhost:8000/api/comunicaciones/lotes/:loteId/aprobar', () =>
+    HttpResponse.json(null, { status: 200 }),
+  ),
+  http.post('http://localhost:8000/api/comunicaciones/lotes/:loteId/rechazar', () =>
+    HttpResponse.json(null, { status: 200 }),
   ),
 
   // C-23: equipos

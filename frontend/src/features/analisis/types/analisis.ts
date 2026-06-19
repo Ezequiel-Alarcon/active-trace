@@ -1,3 +1,6 @@
+// TODO: (BUG) La KB (06_funcionalidades.md) especifica permiso "atrasados:ver" para F2.2,
+/// pero el backend usa "analisis:ver". El frontend usa "analisis:ver" que matchea el backend
+// pero no la KB. Hay que aclarar cuál es la fuente de verdad y sincronizar.
 /**
  * Types for the analisis feature.
  * Mirrors AtrasadosResponse, RankingResponse, NotasFinalesResponse,

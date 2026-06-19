@@ -12,6 +12,7 @@ def derivar_aprobado(
     nota: Any,
     umbral_pct: int,
     conjunto_aprobado: list[str] | None,
+    escala_max: int = 10,
 ) -> bool:
     """Deriva si una nota aprueba segun el umbral configurado.
 
@@ -19,6 +20,8 @@ def derivar_aprobado(
         nota: El valor de la calificacion (None, int, float, str, list)
         umbral_pct: El umbral de aprobacion porcentual (0-100)
         conjunto_aprobado: Lista de valores textuales que indican aprobacion
+        escala_max: Escala maxima de la nota (default 10). Se usa para convertir
+            la nota a porcentaje: ``nota / escala_max * 100 >= umbral_pct``.
 
     Returns:
         True si la nota aprueba, False en caso contrario
@@ -27,7 +30,7 @@ def derivar_aprobado(
         return False
 
     if isinstance(nota, (int, float)):
-        return nota * 10 >= umbral_pct
+        return nota / escala_max * 100 >= umbral_pct
 
     if isinstance(nota, str):
         if conjunto_aprobado is None:

@@ -6,7 +6,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.deps import CurrentUser, get_current_user
+from app.auth.deps import CurrentUser, get_current_user, resolve_user_roles
 from app.core.dependencies import get_db
 from app.core.permissions import require_permission
 from app.schemas.tareas import (
@@ -42,9 +42,11 @@ def _get_service(
 async def create_tarea(
     data: TareaCreate,
     service: Annotated[TareaService, Depends(_get_service)],
+    db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
 ):
-    return await service.create(data, user_id=current_user.user_id, roles=list(current_user.roles))
+    roles = await resolve_user_roles(db, current_user.user_id, current_user.tenant_id)
+    return await service.create(data, user_id=current_user.user_id, roles=roles)
 
 
 @router.get(
@@ -79,6 +81,7 @@ async def mis_tareas(
 )
 async def list_tareas(
     service: Annotated[TareaService, Depends(_get_service)],
+    db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
@@ -87,9 +90,10 @@ async def list_tareas(
     asignado_a: UUID | None = None,
     q: str | None = None,
 ):
+    roles = await resolve_user_roles(db, current_user.user_id, current_user.tenant_id)
     items, total = await service.list_all(
         user_id=current_user.user_id,
-        roles=list(current_user.roles),
+        roles=roles,
         page=page,
         per_page=per_page,
         estado=estado,
@@ -109,9 +113,11 @@ async def list_tareas(
 async def get_tarea(
     tarea_id: UUID,
     service: Annotated[TareaService, Depends(_get_service)],
+    db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
 ):
-    return await service.get(tarea_id, user_id=current_user.user_id, roles=list(current_user.roles))
+    roles = await resolve_user_roles(db, current_user.user_id, current_user.tenant_id)
+    return await service.get(tarea_id, user_id=current_user.user_id, roles=roles)
 
 
 @router.patch(
@@ -124,9 +130,11 @@ async def update_tarea(
     tarea_id: UUID,
     data: TareaUpdate,
     service: Annotated[TareaService, Depends(_get_service)],
+    db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
 ):
-    return await service.update(tarea_id, data, user_id=current_user.user_id, roles=list(current_user.roles))
+    roles = await resolve_user_roles(db, current_user.user_id, current_user.tenant_id)
+    return await service.update(tarea_id, data, user_id=current_user.user_id, roles=roles)
 
 
 @router.delete(
@@ -138,9 +146,11 @@ async def update_tarea(
 async def delete_tarea(
     tarea_id: UUID,
     service: Annotated[TareaService, Depends(_get_service)],
+    db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
 ):
-    await service.delete(tarea_id, user_id=current_user.user_id, roles=list(current_user.roles))
+    roles = await resolve_user_roles(db, current_user.user_id, current_user.tenant_id)
+    await service.delete(tarea_id, user_id=current_user.user_id, roles=roles)
 
 
 # ── Comentarios ────────────────────────────────────────────────────────
@@ -156,10 +166,12 @@ async def create_comentario(
     tarea_id: UUID,
     data: ComentarioCreate,
     service: Annotated[TareaService, Depends(_get_service)],
+    db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
 ):
+    roles = await resolve_user_roles(db, current_user.user_id, current_user.tenant_id)
     return await service.agregar_comentario(
-        tarea_id, data, user_id=current_user.user_id, roles=list(current_user.roles)
+        tarea_id, data, user_id=current_user.user_id, roles=roles
     )
 
 
@@ -172,11 +184,13 @@ async def create_comentario(
 async def list_comentarios(
     tarea_id: UUID,
     service: Annotated[TareaService, Depends(_get_service)],
+    db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[CurrentUser, Depends(get_current_user)],
     page: int = Query(1, ge=1),
     per_page: int = Query(50, ge=1, le=200),
 ):
+    roles = await resolve_user_roles(db, current_user.user_id, current_user.tenant_id)
     items, total = await service.listar_comentarios(
-        tarea_id, user_id=current_user.user_id, roles=list(current_user.roles), page=page, per_page=per_page
+        tarea_id, user_id=current_user.user_id, roles=roles, page=page, per_page=per_page
     )
     return ComentarioListResponse(items=items, total=total, page=page, per_page=per_page)

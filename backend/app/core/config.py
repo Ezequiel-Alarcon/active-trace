@@ -57,6 +57,10 @@ class Settings(BaseSettings):
     COMUNICACION_WORKER_LOCK_TIMEOUT: int = Field(default=5, ge=1)
     COMUNICACION_DISPATCH_WEBHOOK_URL: str | None = Field(default=None)
     COMUNICACION_APROBACION_THRESHOLD: int = Field(default=10, ge=1)
+    COMUNICACION_WORKER_TENANT_ID: str | None = Field(
+        default=None,
+        description="Tenant ID for the comunicacion worker. Required for multi-tenant deployments. Worker will fail-fast if not set.",
+    )
 
     @field_validator("SECRET_KEY")
     @classmethod

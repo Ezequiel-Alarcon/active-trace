@@ -3,12 +3,12 @@ import type { SlotResponse, InstanciaResponse, GuardiaResponse, EncuentroFilters
 
 export async function fetchEncuentros(filters?: EncuentroFilters): Promise<InstanciaResponse[]> {
   const params: Record<string, string> = {};
-  if (filters?.materia) params.materia = filters.materia;
-  if (filters?.docente) params.docente = filters.docente;
+  if (filters?.materia) params.materia_id = filters.materia;
   if (filters?.estado) params.estado = filters.estado;
   if (filters?.fecha_desde) params.fecha_desde = filters.fecha_desde;
   if (filters?.fecha_hasta) params.fecha_hasta = filters.fecha_hasta;
-  const response = await apiClient.get<InstanciaResponse[]>('/api/encuentros', { params });
+  // Backend: GET /api/encuentros/instancias (not /api/encuentros)
+  const response = await apiClient.get<InstanciaResponse[]>('/api/encuentros/instancias', { params });
   return response.data;
 }
 
