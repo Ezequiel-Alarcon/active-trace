@@ -25,6 +25,7 @@ class PerfilResponse(BaseModel):
     fecha_nacimiento: date | None = None
     genero: str | None = None
     observaciones: str | None = None
+    facturante: bool = False
     created_at: datetime
     updated_at: datetime
 

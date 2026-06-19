@@ -93,22 +93,25 @@ The service MUST NOT include roles or permissions in either token. The `tid` cla
 - If no row is found → respond `401` with `code = "AUTH_TOKEN_REVOKED"`.
 - If the row exists and `revoked_at IS NOT NULL` → **reuse detected**: walk the chain via `rotated_to_id`/`replaced_by_id` from this row forward, set `revoked_at = now()` on every row in the chain that does not already have one, emit `AUTH_REFRESH_REUSE_DETECTED`, respond `401` with `code = "AUTH_TOKEN_REVOKED"`.
 - If the row exists, `revoked_at IS NULL`, and `expires_at < now()` → respond `401` with `code = "AUTH_TOKEN_EXPIRED"`.
-- Otherwise, in a single database transaction: set the current row's `revoked_at = now()` and `last_used_at = now()`, create a new `auth_session` row with a new `jti`, a new `refresh_token_hash`, a new `expires_at`, set `rotated_to_id` on the old row to the new row's id, and set `replaced_by_id` on the new row to the old row's id. Mint a new access token and a new refresh token. Emit `AUTH_REFRESH_ROTATE` with the old and new session ids. Return the new pair.
+- Otherwise, in a single database transaction: set the current row's `revoked_at = now()` and `last_used_at = now()`, create a new `auth_session` row with a new `jti`, a new `refresh_token_hash` (Argon2id of the new refresh token), a new `expires_at`, set `rotated_to_id` on the old row to the new row's id, and set `replaced_by_id` on the new row to the old row's id. Mint a new access token and a new refresh token. Emit `AUTH_REFRESH_ROTATE` with the old and new session ids. Return the new pair.
 
-#### Scenario: A valid refresh token rotates and returns a new pair
+The refresh token rotation SHALL generate a completely new JWT on each rotation (new `jti`, new UUID), store the new token's hash in a new `auth_session` row, and link old and new sessions via `rotated_to_id` / `replaced_by_id`.
 
-- **WHEN** a `POST /api/auth/refresh` is sent with a refresh token whose session row has `revoked_at IS NULL` and `expires_at > now()`
-- **THEN** the response is `200` with a new `access_token`, a new `refresh_token`, `token_type: "Bearer"`, `expires_in: 900`
-- **AND** the old session row has `revoked_at` set to the current time
-- **AND** a new session row exists with the new `jti` and a `replaced_by_id` pointing to the old session
-- **AND** an audit event with action `AUTH_REFRESH_ROTATE` is emitted
+#### Scenario: A valid refresh token rotates to a new session with a new jti
 
-#### Scenario: Reusing a previously rotated refresh token invalidates the entire chain
+- **WHEN** `POST /api/auth/refresh` is called with a valid, non-revoked refresh token
+- **THEN** a new `auth_session` row is created with a new `jti`, new `refresh_token_hash`, new UUID, and `expires_at = now() + REFRESH_TOKEN_EXPIRE_MINUTES`
+- **AND** the old session row has `revoked_at = now()`
+- **AND** `old_session.rotated_to_id` points to the new session's id
+- **AND** `new_session.replaced_by_id` points to the old session's id
+- **AND** the response contains a NEW refresh token (different from the previous one)
 
-- **WHEN** a `POST /api/auth/refresh` is sent with a refresh token whose session row has `revoked_at IS NOT NULL`
-- **THEN** the response is `401` with `code = "AUTH_TOKEN_REVOKED"`
-- **AND** every session reachable from this row's `rotated_to_id` chain (and the row itself) has `revoked_at` set to the current time
-- **AND** an audit event with action `AUTH_REFRESH_REUSE_DETECTED` is emitted with the originating session id
+#### Scenario: Reusing a rotated token triggers chain-wide revocation
+
+- **WHEN** `POST /api/auth/refresh` is called with a refresh token whose session row has `revoked_at IS NOT NULL`
+- **THEN** every session in the rotation chain (follow `rotated_to_id` forward) has `revoked_at = now()` set
+- **AND** the response is `401` with `code = "AUTH_TOKEN_REVOKED"`
+- **AND** an audit event with action `AUTH_REFRESH_REUSE_DETECTED` is emitted
 
 #### Scenario: An expired refresh token returns 401 AUTH_TOKEN_EXPIRED
 

@@ -25,6 +25,7 @@ from app.models.materia import Materia, MateriaEstado
 from app.models.padron import VersionPadron
 from app.models.tenant import Tenant, TenantEstado
 from app.models.usuario import Usuario
+from app.models.asignacion import Asignacion, ContextoTipo
 from app.rbac.models import Permiso, Rol, RolPermiso
 from app.repositories.padron import PadronRepository
 from app.repositories.usuarios import encrypt_usuario_fields
@@ -137,7 +138,7 @@ def _token(user_id: UUID, tenant_id: UUID, session_id: UUID) -> str:
     return encode_access_token(user_id=user_id, tenant_id=tenant_id, session_id=session_id, jti=uuid4())
 
 
-async def _permission(session, tenant_id: UUID, permission: str) -> None:
+async def _permission(session, tenant_id: UUID, permission: str) -> Rol:
     modulo, accion = permission.split(":", 1)
     rol = Rol(tenant_id=tenant_id, nombre=f"ROLE-{permission}")
     permiso = Permiso(tenant_id=tenant_id, modulo=modulo, accion=accion)
@@ -145,6 +146,7 @@ async def _permission(session, tenant_id: UUID, permission: str) -> None:
     await session.flush()
     session.add(RolPermiso(tenant_id=tenant_id, rol_id=rol.id, permiso_id=permiso.id))
     await session.flush()
+    return rol
 
 
 async def _academic_context(session, tenant_id: UUID, suffix: str) -> tuple[Materia, Cohorte]:
@@ -207,7 +209,14 @@ async def _authorized_seed(session, permission: str = "analisis:ver") -> tuple[U
     tenant = await _tenant(session, f"T-{uuid4().hex[:8]}")
     auth = await _auth_user(session, tenant.id, "profesor@test.com")
     await _profile_user(session, tenant.id, "profesor@test.com", auth.id)
-    await _permission(session, tenant.id, permission)
+    rol = await _permission(session, tenant.id, permission)
+    session.add(Asignacion(
+        tenant_id=tenant.id,
+        usuario_id=auth.id,
+        rol_id=rol.id,
+        contexto_tipo=ContextoTipo.GLOBAL,
+        desde=date(2020, 1, 1),
+    ))
     sess = await _auth_session(session, tenant.id, auth.id)
     await session.commit()
     return tenant.id, auth, _token(auth.id, tenant.id, sess.id)

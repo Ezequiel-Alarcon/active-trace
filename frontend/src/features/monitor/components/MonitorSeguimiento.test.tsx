@@ -75,4 +75,26 @@ describe('MonitorSeguimiento', () => {
       expect(screen.getByText('Pedro')).toBeInTheDocument(),
     );
   });
+
+  it('5.7c — date range filter sends fecha_desde and fecha_hasta', async () => {
+    const user = userEvent.setup();
+    const capturedUrls: string[] = [];
+    server.use(
+      http.get('http://localhost:8000/api/monitores/seguimiento', ({ request }) => {
+        capturedUrls.push(request.url);
+        return HttpResponse.json({ datos: [] });
+      }),
+    );
+    render(makeTree());
+    await waitFor(() => screen.getByPlaceholderText('Desde'));
+    const desde = screen.getByPlaceholderText('Desde');
+    const hasta = screen.getByPlaceholderText('Hasta');
+    await user.type(desde, '2024-03-01');
+    await user.type(hasta, '2024-03-31');
+    await user.click(screen.getByText('Filtrar'));
+    await waitFor(() => {
+      const match = capturedUrls.find((u) => u.includes('fecha_desde=2024-03-01') && u.includes('fecha_hasta=2024-03-31'));
+      expect(match).toBeTruthy();
+    });
+  });
 });

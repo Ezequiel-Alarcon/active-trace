@@ -18,7 +18,7 @@ import io
 import logging
 import os
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 from uuid import UUID, uuid4
 
 import openpyxl
@@ -26,11 +26,13 @@ import pytest
 import pytest_asyncio
 import sqlalchemy
 from fastapi import HTTPException, status
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
+from app.audit.models import AuditLog
 from app.core.security.crypto import decrypt
 from app.core.security.hashing import hash_email_for_search
-from app.core.tenancy import TenantContext, reset_tenant_context, set_tenant_context
+
 from app.models.base import Base
 from app.models.padron import EntradaPadron, VersionPadron
 from app.models.tenant import Tenant, TenantEstado
@@ -40,7 +42,7 @@ from app.repositories.padron import (
     encrypt_entrada_fields,
 )
 from app.schemas.padron import EntradaPadronCreate, VersionPadronCreate
-from app.services.padron import PadronService, PadronServiceError, DangerousExtensionError
+from app.services.padron import PadronService, DangerousExtensionError
 
 pytestmark = [pytest.mark.asyncio, pytest.mark.no_db]
 
@@ -232,8 +234,6 @@ async def test_email_hash_matching_deterministic(db_setup) -> None:
     """1.4 TRIANGULATE: email_hash match → usuario_id found; no match → None."""
     async with db_setup() as session:
         tid = await _seed_tenant(session)
-        materia_id = _make_materia_id()
-        cohorte_id = _make_cohorte_id()
         existing_usuario_id = uuid4()
 
         # Build usuario_ids_by_email dict the way the router does
@@ -651,7 +651,6 @@ async def test_aislamiento_multi_tenant_vaciado(db_setup) -> None:
 
 async def test_moodle_ws_sin_config_retorna_502() -> None:
     """3.9 RED→GREEN: sin config de Moodle WS → endpoint responde 502 con sugerencia."""
-    from app.integrations.moodle_ws import MoodleWSError
     from app.core.config import get_settings
 
     # Verify the router checks for missing config and raises 502
@@ -695,7 +694,7 @@ async def test_audit_padron_vaciar_en_action_codes() -> None:
     assert "PADRON_VACIAR" in ACTION_CODES
 
 
-async def test_vaciar_emite_padron_vaciar_y_no_cargar(db_setup, caplog) -> None:
+async def test_vaciar_emite_padron_vaciar_y_no_cargar(db_setup) -> None:
     """4.1 RED → 4.3 GREEN: vaciar_datos emite PADRON_VACIAR (no PADRON_CARGAR)."""
     async with db_setup() as session:
         tid = await _seed_tenant(session)
@@ -714,19 +713,20 @@ async def test_vaciar_emite_padron_vaciar_y_no_cargar(db_setup, caplog) -> None:
 
         svc = PadronService(session, tid)
 
-        with caplog.at_level(logging.WARNING, logger="activia_trace.audit"):
-            with patch.object(svc, "_is_global_vaciar", new=AsyncMock(return_value=True)):
-                await svc.vaciar_datos(materia_id, cohorte_id, _MockUser(user_id))
-                await session.commit()
+        with patch.object(svc, "_is_global_vaciar", new=AsyncMock(return_value=True)):
+            await svc.vaciar_datos(materia_id, cohorte_id, _MockUser(user_id))
+            await session.commit()
 
-        audit_records = [r for r in caplog.records if r.name == "activia_trace.audit"]
-        actions = [getattr(r, "action", None) for r in audit_records]
-
+    async with db_setup() as session:
+        result = await session.execute(
+            select(AuditLog.accion).where(AuditLog.tenant_id == tid)
+        )
+        actions = result.scalars().all()
         assert "PADRON_VACIAR" in actions
         assert "PADRON_CARGAR" not in actions
 
 
-async def test_import_emite_padron_cargar(db_setup, caplog) -> None:
+async def test_import_emite_padron_cargar(db_setup) -> None:
     """4.4 TRIANGULATE: import_padron emite PADRON_CARGAR con filas_afectadas."""
     async with db_setup() as session:
         tid = await _seed_tenant(session)
@@ -740,33 +740,40 @@ async def test_import_emite_padron_cargar(db_setup, caplog) -> None:
             {"nombre": "Row2", "apellidos": "B", "email": "r2@test.com"},
         ])
 
-        with caplog.at_level(logging.WARNING, logger="activia_trace.audit"):
-            await svc.import_padron(data, user_id)
-            await session.commit()
+        await svc.import_padron(data, user_id)
+        await session.commit()
 
-        audit_records = [r for r in caplog.records if r.name == "activia_trace.audit"]
-        actions = [getattr(r, "action", None) for r in audit_records]
-
+    async with db_setup() as session:
+        result = await session.execute(
+            select(AuditLog.accion, AuditLog.detalle).where(AuditLog.tenant_id == tid)
+        )
+        rows = result.all()
+        actions = [r[0] for r in rows]
         assert "PADRON_CARGAR" in actions
         # No PII in audit (verify no email in detalle field of any record)
-        for r in audit_records:
-            if getattr(r, "action", None) == "PADRON_CARGAR":
-                extra = {k: v for k, v in r.__dict__.items() if k not in ("msg", "args")}
-                # detalle should not contain email addresses
-                detalle = extra.get("detalle", {})
-                if isinstance(detalle, dict):
-                    for val in detalle.values():
-                        assert "@" not in str(val), f"PII found in audit detalle: {val}"
+        for _accion, detalle in rows:
+            if _accion == "PADRON_CARGAR" and isinstance(detalle, dict):
+                for val in detalle.values():
+                    assert "@" not in str(val), f"PII found in audit detalle: {val}"
 
 
-async def test_audit_append_only_no_delete(db_setup, caplog) -> None:
-    """4.4 TRIANGULATE: audit_emit writes to logger (append-only seam), never deletes."""
+async def test_audit_append_only_no_delete(caplog) -> None:
+    """4.4 TRIANGULATE: audit_emit falls back to logger.debug on DB failure."""
+    from unittest.mock import AsyncMock, MagicMock
+
     from app.core.audit import audit_emit, PADRON_CARGAR
 
-    with caplog.at_level(logging.WARNING, logger="activia_trace.audit"):
-        audit_emit(PADRON_CARGAR, tenant_id=uuid4(), filas_afectadas=5,
-                   detalle={"materia_id": str(uuid4()), "cohorte_id": str(uuid4())})
+    mock_db = MagicMock()
+    mock_db.add = MagicMock()
+    mock_db.flush = AsyncMock(side_effect=Exception("DB unavailable"))
+
+    with caplog.at_level(logging.DEBUG, logger="activia_trace.audit"):
+        await audit_emit(
+            mock_db, PADRON_CARGAR, tenant_id=uuid4(),
+            filas_afectadas=5,
+            detalle={"materia_id": str(uuid4()), "cohorte_id": str(uuid4())},
+        )
 
     records = [r for r in caplog.records if r.name == "activia_trace.audit"]
     assert len(records) >= 1
-    assert any(getattr(r, "action", None) == "PADRON_CARGAR" for r in records)
+    assert any("PADRON_CARGAR" in r.message for r in records)

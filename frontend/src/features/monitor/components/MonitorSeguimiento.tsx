@@ -13,6 +13,8 @@ const filterSchema = z.object({
   regional: z.string().optional(),
   actividad: z.string().optional(),
   minimo_cumplido: z.coerce.number().min(0).max(100).optional().nullable(),
+  fecha_desde: z.string().optional(),
+  fecha_hasta: z.string().optional(),
 });
 
 type FilterFormValues = z.infer<typeof filterSchema>;
@@ -24,6 +26,8 @@ const EMPTY_FILTERS: FilterFormValues = {
   regional: '',
   actividad: '',
   minimo_cumplido: null,
+  fecha_desde: '',
+  fecha_hasta: '',
 };
 
 const INPUT_CLASS = 'border border-gray-300 rounded px-3 py-1.5 text-sm';
@@ -49,6 +53,8 @@ export default function MonitorSeguimiento() {
     if (values.regional) filters.regional = values.regional;
     if (values.actividad) filters.actividad = values.actividad;
     if (values.minimo_cumplido != null) filters.minimo_cumplido = values.minimo_cumplido;
+    if (values.fecha_desde) filters.fecha_desde = values.fecha_desde;
+    if (values.fecha_hasta) filters.fecha_hasta = values.fecha_hasta;
     setActiveFilters(filters);
   }
 
@@ -79,6 +85,18 @@ export default function MonitorSeguimiento() {
             {...register('minimo_cumplido')}
             type="number"
             placeholder="Mínimo cumplido (%)"
+            className={INPUT_CLASS}
+          />
+          <input
+            {...register('fecha_desde')}
+            type="date"
+            placeholder="Desde"
+            className={INPUT_CLASS}
+          />
+          <input
+            {...register('fecha_hasta')}
+            type="date"
+            placeholder="Hasta"
             className={INPUT_CLASS}
           />
           <Button type="submit">Filtrar</Button>

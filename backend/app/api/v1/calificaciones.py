@@ -74,7 +74,7 @@ async def _get_import_service(
     return svc, usuario_ids_by_email, materia_ids, asignacion_ids
 
 
-@router.get("", response_model=list[CalificacionRead])
+@router.get("", response_model=list[CalificacionRead], dependencies=[Depends(require_permission("calificaciones:ver"))])
 async def list_calificaciones(
     materia_id: Annotated[UUID | None, Query(description="Filtrar por materia")] = None,
     usuario_id: Annotated[UUID | None, Query(description="Filtrar por usuario")] = None,
@@ -85,7 +85,6 @@ async def list_calificaciones(
     current_user: Usuario = Depends(get_current_user),
 ) -> list[CalificacionRead]:
     """Listar calificaciones con filtros opcionales."""
-    require_permission("calificaciones:ver")
     return await svc.list_calificaciones(
         materia_id=materia_id,
         usuario_id=usuario_id,
@@ -99,6 +98,7 @@ async def list_calificaciones(
     "",
     response_model=CalificacionRead,
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(require_permission("calificaciones:importar"))],
 )
 async def create_calificacion(
     data: CalificacionCreate,
@@ -106,7 +106,6 @@ async def create_calificacion(
     current_user: Usuario = Depends(get_current_user),
 ) -> CalificacionRead:
     """Crear una calificacion manual."""
-    require_permission("calificaciones:importar")
     try:
         return await svc.create_calificacion(
             data=data.model_dump(),
@@ -120,6 +119,7 @@ async def create_calificacion(
     "/import/preview",
     response_model=CalificacionPreviewResponse,
     status_code=status.HTTP_200_OK,
+    dependencies=[Depends(require_permission("calificaciones:importar"))],
 )
 async def import_preview(
     file: UploadFile = File(...),
@@ -128,7 +128,6 @@ async def import_preview(
     current_user: Usuario = Depends(get_current_user),
 ) -> CalificacionPreviewResponse:
     """Parsear archivo de calificaciones y retornar preview sin persistir."""
-    require_permission("calificaciones:importar")
     svc = svc_tuple[0]
     is_completion = type == "completion"
     content = await file.read()
@@ -142,6 +141,7 @@ async def import_preview(
     "/import/confirm",
     response_model=CalificacionConfirmResponse,
     status_code=status.HTTP_200_OK,
+    dependencies=[Depends(require_permission("calificaciones:importar"))],
 )
 async def import_confirm(
     data: CalificacionConfirmRequest,
@@ -149,7 +149,6 @@ async def import_confirm(
     current_user: Usuario = Depends(get_current_user),
 ) -> CalificacionConfirmResponse:
     """Persistir las filas validas del preview token."""
-    require_permission("calificaciones:importar")
     svc = svc_tuple[0]
     try:
         persisted, skipped, failed = await svc.confirm_import(
@@ -168,6 +167,7 @@ async def import_confirm(
 @router.get(
     "/{calificacion_id}",
     response_model=CalificacionRead,
+    dependencies=[Depends(require_permission("calificaciones:ver"))],
 )
 async def get_calificacion(
     calificacion_id: UUID,
@@ -175,7 +175,6 @@ async def get_calificacion(
     current_user: Usuario = Depends(get_current_user),
 ) -> CalificacionRead:
     """Obtener una calificacion por ID."""
-    require_permission("calificaciones:ver")
     try:
         return await svc.get_calificacion_by_id(calificacion_id)
     except CalificacionNotFoundError as e:

@@ -11,10 +11,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.audit.constants import AUDIT_COMUNICACION_ENVIAR
 from app.core.audit import audit_emit
 from app.core.config import get_settings
-from app.core.database import create_session_factory
-
-# Build the session factory once at module level using the default engine.
-async_session_maker = create_session_factory()
 from app.modules.comunicacion.models.comunicacion import (
     Comunicacion,
     ComunicacionEstado,
@@ -25,6 +21,10 @@ from app.modules.comunicacion.services.dispatch import (
     NoOpDispatchService,
     WebhookDispatchService,
 )
+from app.core.database import create_session_factory
+
+# Build the session factory once at module level using the default engine.
+async_session_maker = create_session_factory()
 
 logger = logging.getLogger("activia_trace.worker.comunicacion")
 
@@ -47,7 +47,8 @@ async def _process_message(
 
     comm.transition_to(ComunicacionEstado.ENVIANDO)
     await session.flush()
-    audit_emit(
+    await audit_emit(
+        session,
         AUDIT_COMUNICACION_ENVIAR,
         entity="comunicacion",
         entity_id=comm.id,
@@ -64,7 +65,8 @@ async def _process_message(
     if result.success:
         comm.transition_to(ComunicacionEstado.ENVIADO)
         await repo.update_estado(comm, ComunicacionEstado.ENVIADO)
-        audit_emit(
+        await audit_emit(
+            session,
             AUDIT_COMUNICACION_ENVIAR,
             entity="comunicacion",
             entity_id=comm.id,
@@ -78,7 +80,8 @@ async def _process_message(
         result = await dispatch_svc.send(comm.destinatario, comm.asunto, comm.cuerpo)
         if result.success:
             await repo.update_estado(comm, ComunicacionEstado.ENVIADO)
-            audit_emit(
+            await audit_emit(
+                session,
                 AUDIT_COMUNICACION_ENVIAR,
                 entity="comunicacion",
                 entity_id=comm.id,
@@ -89,7 +92,8 @@ async def _process_message(
             await repo.update_estado(
                 comm, ComunicacionEstado.ERROR, error_detail=result.error_detail
             )
-            audit_emit(
+            await audit_emit(
+                session,
                 AUDIT_COMUNICACION_ENVIAR,
                 entity="comunicacion",
                 entity_id=comm.id,
@@ -100,7 +104,8 @@ async def _process_message(
         await repo.update_estado(
             comm, ComunicacionEstado.ERROR, error_detail=result.error_detail
         )
-        audit_emit(
+        await audit_emit(
+            session,
             AUDIT_COMUNICACION_ENVIAR,
             entity="comunicacion",
             entity_id=comm.id,

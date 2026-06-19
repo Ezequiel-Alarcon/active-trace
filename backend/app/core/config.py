@@ -29,11 +29,25 @@ class Settings(BaseSettings):
     LOGIN_RATE_LIMIT_PER_MINUTE: int = Field(
         default=5, ge=1, description="Max login attempts per window per (ip,email)"
     )
+    REDIS_URL: str = Field(
+        default="redis://localhost:6379/0",
+        description="Redis connection URL for shared rate limiting",
+    )
     LOGIN_RATE_LIMIT_WINDOW_SECONDS: int = Field(
         default=60, ge=1, description="Sliding window for login rate limit"
     )
     TOTP_ISSUER: str = Field(default="activia-trace", description="TOTP issuer label")
     PASSWORD_MIN_LENGTH: int = Field(default=12, ge=8, description="Minimum password length")
+
+    ENVIRONMENT: str = Field(
+        default="development",
+        description="Runtime environment (development, staging, production)",
+    )
+    ALLOWED_HOSTS: list[str] = Field(
+        default=["*"],
+        description="Allowed hosts for TrustedHostMiddleware. Set explicit list in production.",
+    )
+    PROJECT_NAME: str = Field(default="activia-trace", description="Application name")
 
     OTEL_SERVICE_NAME: str = Field(default="activia-trace")
     OTEL_EXPORTER_OTLP_ENDPOINT: str | None = Field(default=None)

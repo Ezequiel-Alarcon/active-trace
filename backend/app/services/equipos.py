@@ -212,7 +212,8 @@ class EquipoService:
                 obj = await repo.create(create_dict)
                 resp = await self._build_equipo_response(obj)
                 creadas.append(resp)
-                audit_emit(
+                await audit_emit(
+                    self._session,
                     ASIGNACION_MODIFICAR,
                     entity="asignacion",
                     entity_id=obj.id,
@@ -300,7 +301,8 @@ class EquipoService:
             try:
                 obj = await repo.create(create_dict)
                 creados.append(obj)
-                audit_emit(
+                await audit_emit(
+                    self._session,
                     ASIGNACION_MODIFICAR,
                     entity="asignacion",
                     entity_id=obj.id,
@@ -381,7 +383,8 @@ class EquipoService:
             update_data = {"desde": data.desde, "hasta": data.hasta}
             await repo.update(obj, update_data)
             actualizadas += 1
-            audit_emit(
+            await audit_emit(
+                self._session,
                 ASIGNACION_MODIFICAR,
                 entity="asignacion",
                 entity_id=obj.id,

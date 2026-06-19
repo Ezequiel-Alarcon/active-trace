@@ -245,26 +245,10 @@ class ColoquioService:
         return result
 
     async def _resolve_materia_nombre(self, materia_id: UUID) -> str | None:
-        from app.models.materia import Materia
-        from sqlalchemy import select
-        stmt = select(Materia.nombre).where(
-            Materia.id == materia_id,
-            Materia.tenant_id == self._tenant_id,
-        )
-        result = await self._session.execute(stmt)
-        row = result.one_or_none()
-        return row.nombre if row else None
+        return await self._repo.resolve_materia_nombre(materia_id)
 
     async def _resolve_alumno_nombre(self, alumno_id: UUID) -> str | None:
-        from app.models.usuario import Usuario
-        from sqlalchemy import select
-        stmt = select(Usuario.nombre, Usuario.apellidos).where(
-            Usuario.id == alumno_id,
-            Usuario.tenant_id == self._tenant_id,
-        )
-        result = await self._session.execute(stmt)
-        row = result.one_or_none()
-        return f"{row.nombre} {row.apellidos}" if row else None
+        return await self._repo.resolve_alumno_nombre(alumno_id)
 
     def _to_evaluacion_response(self, ev: Evaluacion) -> EvaluacionResponse:
         dias = [DiaSlotSchema(fecha=d["fecha"], cupos=d["cupos"]) for d in ev.dias]

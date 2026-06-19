@@ -28,6 +28,7 @@ from app.core.config import get_settings
 from app.core.security.passwords import hash_password, verify_password
 from app.integrations.email import dispatch_email
 from app.models.tenant import Tenant
+from sqlalchemy import select
 
 logger = logging.getLogger("activia_trace.auth.password_reset")
 
@@ -43,7 +44,13 @@ def _now_ms() -> int:
 @dataclass
 class PasswordResetService:
     session: AsyncSession
-    tenant_lookup: object  # async (codigo) -> Tenant | None
+
+    async def get_tenant_by_codigo(self, codigo: str) -> Tenant | None:
+        stmt = select(Tenant).where(Tenant.codigo == codigo)
+        row = (await self.session.execute(stmt)).scalar_one_or_none()
+        if row is None or row.estado.value != "Activo" or row.deleted_at is not None:
+            return None
+        return row
 
     async def _find_user(
         self, tenant: Tenant, email_lower: str
@@ -54,7 +61,7 @@ class PasswordResetService:
     async def forgot(self, payload) -> None:
         """Issue a recovery token if the user exists; never reveal whether they do."""
         start = _now_ms()
-        tenant = await self.tenant_lookup(payload.tenant_codigo)
+        tenant = await self.get_tenant_by_codigo(payload.tenant_codigo)
         if tenant is None or tenant.estado.value != "Activo" or tenant.deleted_at is not None:
             # Constant-time wait so the response time is identical for known
             # and unknown tenants.
@@ -87,7 +94,8 @@ class PasswordResetService:
                 f"/reset?selector={selector}&token={token}"
             ),
         )
-        audit_emit(
+        await audit_emit(
+            self.session,
             "AUTH_PASSWORD_RESET_REQUEST",
             entity="auth_user",
             entity_id=user.id,
@@ -98,7 +106,7 @@ class PasswordResetService:
     async def reset(self, payload) -> None:
         settings = get_settings()
         # Resolve the tenant
-        tenant = await self.tenant_lookup(payload.tenant_codigo)
+        tenant = await self.get_tenant_by_codigo(payload.tenant_codigo)
         if tenant is None or tenant.estado.value != "Activo" or tenant.deleted_at is not None:
             raise auth_error(AUTH_PASSWORD_RESET_INVALID, 400)
         if len(payload.new_password) < settings.PASSWORD_MIN_LENGTH:
@@ -126,7 +134,8 @@ class PasswordResetService:
         session_repo = AuthSessionRepository(self.session, AuthSession, tenant.id)
         await session_repo.revoke_active_for_user(user.id)
         await self.session.flush()
-        audit_emit(
+        await audit_emit(
+            self.session,
             "AUTH_PASSWORD_RESET_OK",
             entity="auth_user",
             entity_id=user.id,

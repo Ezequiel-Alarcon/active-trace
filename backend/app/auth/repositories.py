@@ -47,6 +47,18 @@ class AuthUserRepository(TenantScopedRepository[AuthUser]):
 
 
 class AuthSessionRepository(TenantScopedRepository[AuthSession]):
+    async def find_all_active(self) -> list[AuthSession]:
+        """Cross-tenant: returns all non-revoked sessions."""
+        stmt = select(AuthSession).where(AuthSession.revoked_at.is_(None))
+        result = await self._session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def find_all(self) -> list[AuthSession]:
+        """Cross-tenant: returns all sessions (including revoked)."""
+        stmt = select(AuthSession)
+        result = await self._session.execute(stmt)
+        return list(result.scalars().all())
+
     async def find_by_jti(self, jti: UUID) -> AuthSession | None:
         stmt = select(AuthSession).where(AuthSession.jti == jti)
         result = await self._session.execute(stmt)

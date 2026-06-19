@@ -16,6 +16,8 @@ from sqlalchemy.dialects.postgresql import UUID as PgUUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
+from app.core.security.crypto import CryptoError, decrypt, encrypt
+from app.core.security.hashing import hash_email_for_search
 from app.models.mixins import TenantScopedMixin
 
 
@@ -59,7 +61,10 @@ class Comunicacion(Base, TenantScopedMixin):
 
     asunto: Mapped[str] = mapped_column(String(500), nullable=False)
     cuerpo: Mapped[str] = mapped_column(Text, nullable=False)
+    # TODO: (TEST) hash+enc columns added; old `destinatario` remains for backward compat. Needs migration to backfill + remove plaintext column
     destinatario: Mapped[str] = mapped_column(String(255), nullable=False)
+    destinatario_hash: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    destinatario_enc: Mapped[str] = mapped_column(String(2048), nullable=False, default="")
     estado: Mapped[ComunicacionEstado] = mapped_column(
         SAEnum(
             ComunicacionEstado,
@@ -86,3 +91,17 @@ class Comunicacion(Base, TenantScopedMixin):
         self.estado = next_state
         if next_state == ComunicacionEstado.ENVIADO:
             self.enviado_at = datetime.now()
+
+    def set_destinatario(self, plain: str) -> None:
+        plain_lower = plain.strip().lower()
+        self.destinatario_hash = hash_email_for_search(plain_lower, self.tenant_id)
+        self.destinatario_enc = encrypt(plain_lower, tenant_id=self.tenant_id, aad_suffix="comunicacion.destinatario")
+        self.destinatario = plain
+
+    def get_destinatario(self) -> str:
+        if self.destinatario_enc:
+            try:
+                return decrypt(self.destinatario_enc, tenant_id=self.tenant_id, aad_suffix="comunicacion.destinatario")
+            except (CryptoError, Exception):
+                pass
+        return self.destinatario

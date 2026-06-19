@@ -6,7 +6,6 @@ modificar_vigencia, exportar_equipo_data, generate_csv, and audit events.
 
 from __future__ import annotations
 
-import logging
 import os
 from datetime import date, timedelta
 from uuid import UUID, uuid4
@@ -15,8 +14,10 @@ import pytest
 import pytest_asyncio
 import sqlalchemy
 from fastapi import HTTPException
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
+from app.audit.models import AuditLog
 from app.core.security.hashing import hash_email_for_search
 from app.core.tenancy import TenantContext, reset_tenant_context, set_tenant_context
 from app.models.asignacion import Asignacion, ContextoTipo
@@ -847,7 +848,7 @@ async def test_exportar_bom_presente(db_setup) -> None:
 
 # ── 6.7 auditoria ────────────────────────────────────────────────────
 
-async def test_audit_asignacion_masiva(db_setup, caplog) -> None:
+async def test_audit_asignacion_masiva(db_setup) -> None:
     async with db_setup() as session:
         tid = await _seed_tenant(session)
         rol_p = await _create_rol(session, tid, "PROFESOR")
@@ -867,17 +868,20 @@ async def test_audit_asignacion_masiva(db_setup, caplog) -> None:
                 desde=_past,
                 hasta=_future,
             )
-            with caplog.at_level(logging.WARNING, logger="activia_trace.audit"):
-                await svc.asignacion_masiva(req)
-                await session.commit()
-            audit_records = [r for r in caplog.records if r.name == "activia_trace.audit"]
-            actions = [getattr(r, "action", None) for r in audit_records if hasattr(r, "action")]
+            await svc.asignacion_masiva(req)
+            await session.commit()
+
+        async with db_setup() as session:
+            result = await session.execute(
+                select(AuditLog.accion).where(AuditLog.tenant_id == tid)
+            )
+            actions = result.scalars().all()
             assert "ASIGNACION_MODIFICAR" in actions
     finally:
         reset_tenant_context(token)
 
 
-async def test_audit_clonar_equipo(db_setup, caplog) -> None:
+async def test_audit_clonar_equipo(db_setup) -> None:
     async with db_setup() as session:
         tid = await _seed_tenant(session)
         rol_p = await _create_rol(session, tid, "PROFESOR")
@@ -898,17 +902,20 @@ async def test_audit_clonar_equipo(db_setup, caplog) -> None:
                 desde=_future,
                 hasta=None,
             )
-            with caplog.at_level(logging.WARNING, logger="activia_trace.audit"):
-                await svc.clonar_equipo(req)
-                await session.commit()
-            audit_records = [r for r in caplog.records if r.name == "activia_trace.audit"]
-            actions = [getattr(r, "action", None) for r in audit_records if hasattr(r, "action")]
+            await svc.clonar_equipo(req)
+            await session.commit()
+
+        async with db_setup() as session:
+            result = await session.execute(
+                select(AuditLog.accion).where(AuditLog.tenant_id == tid)
+            )
+            actions = result.scalars().all()
             assert "ASIGNACION_MODIFICAR" in actions
     finally:
         reset_tenant_context(token)
 
 
-async def test_audit_modificar_vigencia(db_setup, caplog) -> None:
+async def test_audit_modificar_vigencia(db_setup) -> None:
     async with db_setup() as session:
         tid = await _seed_tenant(session)
         rol_p = await _create_rol(session, tid, "PROFESOR")
@@ -929,11 +936,14 @@ async def test_audit_modificar_vigencia(db_setup, caplog) -> None:
                 desde=_future,
                 hasta=_future + timedelta(days=180),
             )
-            with caplog.at_level(logging.WARNING, logger="activia_trace.audit"):
-                await svc.modificar_vigencia(req)
-                await session.commit()
-            audit_records = [r for r in caplog.records if r.name == "activia_trace.audit"]
-            actions = [getattr(r, "action", None) for r in audit_records if hasattr(r, "action")]
+            await svc.modificar_vigencia(req)
+            await session.commit()
+
+        async with db_setup() as session:
+            result = await session.execute(
+                select(AuditLog.accion).where(AuditLog.tenant_id == tid)
+            )
+            actions = result.scalars().all()
             assert "ASIGNACION_MODIFICAR" in actions
     finally:
         reset_tenant_context(token)

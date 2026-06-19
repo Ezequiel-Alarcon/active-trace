@@ -18,8 +18,8 @@ El umbral mínimo para considerar que un alumno no está en situación de riesgo
 ### RN-04 — Borrado de datos es scope-isolated
 La operación de vaciado de calificaciones de una materia elimina **únicamente los datos del usuario que la ejecuta en esa materia**. No afecta los datos cargados por otros docentes en la misma materia. El scope de los datos importados es siempre `(usuario_id × materia_id)`.
 
-### RN-05 — Importación de padrón es upsert destructivo
-Al importar un nuevo padrón de participantes para una materia, la carga reemplaza completamente el padrón anterior de esa materia. No se conserva historial de versiones del padrón: si un alumno estaba en el padrón anterior y no figura en el nuevo, deja de estar registrado en el sistema para esa materia.
+### RN-05 — Importación de padrón es versionada
+Al importar un nuevo padrón de participantes para una materia, las instancias existentes pasan a inactivo/deleted y las nuevas se crean como activas, conservando el histórico completo del padrón. La operación no destruye datos previos: si un alumno estaba en el padrón anterior y no figura en el nuevo, su registro queda como inactivo (no se elimina).
 
 ---
 

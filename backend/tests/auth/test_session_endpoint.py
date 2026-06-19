@@ -25,6 +25,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from app.auth.models import AuthSession, AuthUser
 from app.auth.routers.auth import router as auth_router
 from app.core.dependencies import get_db
+from app.core.security.crypto import encrypt
 from app.core.security.hashing import hash_email_for_search
 from app.core.security.jwt import encode_access_token
 from app.core.security.passwords import hash_password
@@ -98,7 +99,7 @@ async def _create_tenant(session, codigo: str = "SES-TEST") -> Tenant:
 async def _create_user(session, tenant_id, email: str = "session@test.com") -> AuthUser:
     u = AuthUser(
         tenant_id=tenant_id,
-        email_enc=email,
+        email_enc=encrypt(email, tenant_id=tenant_id, aad_suffix="usuario.email"),
         email_hash=hash_email_for_search(email, tenant_id),
         password_hash=hash_password("Pa55word!"),
     )

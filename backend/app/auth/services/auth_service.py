@@ -18,7 +18,6 @@ import logging
 import secrets
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from typing import Protocol
 from uuid import UUID, uuid4
 
 from app.auth.errors import (
@@ -45,7 +44,7 @@ from app.core.security.jwt import (
 )
 from app.core.security.passwords import hash_password, verify_password
 from app.models.tenant import Tenant
-from sqlalchemy import select
+from sqlalchemy import select, update as sa_update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger("activia_trace.auth.service")
@@ -62,20 +61,22 @@ class SessionData:
     permissions: list[str]
 
 
-class _TenantLookup(Protocol):
-    async def __call__(self, codigo: str) -> Tenant | None: ...
-
-
 @dataclass
 class AuthService:
     session: AsyncSession
-    tenant_lookup: _TenantLookup
 
     def _user_repo(self, tenant_id: UUID) -> AuthUserRepository:
         return AuthUserRepository(self.session, AuthUser, tenant_id)
 
     def _session_repo(self, tenant_id: UUID) -> AuthSessionRepository:
         return AuthSessionRepository(self.session, AuthSession, tenant_id)
+
+    async def get_tenant_by_codigo(self, codigo: str) -> Tenant | None:
+        stmt = select(Tenant).where(Tenant.codigo == codigo)
+        row = (await self.session.execute(stmt)).scalar_one_or_none()
+        if row is None or row.estado.value != "Activo" or row.deleted_at is not None:
+            return None
+        return row
 
     async def login(
         self,
@@ -84,7 +85,7 @@ class AuthService:
         client_ip: str | None,
         user_agent: str | None,
     ) -> LoginResponse:
-        tenant = await self.tenant_lookup(payload.tenant_codigo)
+        tenant = await self.get_tenant_by_codigo(payload.tenant_codigo)
         if tenant is None or tenant.estado.value != "Activo" or tenant.deleted_at is not None:
             raise auth_error(AUTH_TENANT_NOT_FOUND, 401)
         # email column on AuthUser stores the encrypted email; for the lookup
@@ -100,7 +101,8 @@ class AuthService:
         user = await user_repo.find_by_email(tenant.id, email_lower)
         if user is None or not verify_password(payload.password, user.password_hash):
             user = None  # constant-time normalization
-            audit_emit(
+            await audit_emit(
+                self.session,
                 "AUTH_LOGIN_FAIL",
                 entity="auth_user",
                 tenant_id=tenant.id,
@@ -111,7 +113,8 @@ class AuthService:
             raise auth_error(AUTH_USER_DISABLED, 401)
         if user.totp_enabled:
             if not payload.totp_code:
-                audit_emit(
+                await audit_emit(
+                    self.session,
                     "AUTH_LOGIN_FAIL",
                     entity="auth_user",
                     entity_id=user.id,
@@ -125,7 +128,8 @@ class AuthService:
             tfs = TwoFactorService()
             res = tfs.verify(user, self.session, payload.totp_code)
             if not res.verified:
-                audit_emit(
+                await audit_emit(
+                    self.session,
                     "AUTH_LOGIN_FAIL",
                     entity="auth_user",
                     entity_id=user.id,
@@ -160,11 +164,13 @@ class AuthService:
         user.last_login_at = now
         user.failed_login_count = 0
         await self.session.flush()
-        audit_emit(
+        await audit_emit(
+            self.session,
             "AUTH_LOGIN_OK",
             entity="auth_user",
             entity_id=user.id,
             tenant_id=tenant.id,
+            actor_id=user.id,
         )
         return LoginResponse(
             access_token=access,
@@ -176,79 +182,95 @@ class AuthService:
 
     async def refresh(self, presented_token: str) -> LoginResponse:
         """Rotate the refresh token. On reuse detection, invalidate the chain."""
-        # The presented token is the raw refresh string (opaque), not a JWT.
-        # Verify it by Argon2id against the stored hash.
-        # We must locate the active session without knowing the tenant in
-        # advance. Look up by hash, then verify it belongs to the active tenant.
         settings = get_settings()
         now = datetime.now(timezone.utc)
-        # Find by hash across tenants via unsafe query (this is the only place
-        # that needs to cross tenants; it is the entry point for the refresh
-        # rotation, before the user is identified).
-        stmt = select(AuthSession).where(AuthSession.revoked_at.is_(None))
-        candidates = (await self.session.execute(stmt)).scalars().all()
+        # Cross-tenant scan: instantiate repo with sentinel UUID
+        # (find_all_active/find_all ignore tenant_id)
+        session_repo = AuthSessionRepository(self.session, AuthSession, UUID(int=0))
+
+        # 1. Find the token among active sessions
+        active_sessions = await session_repo.find_all_active()
         match: AuthSession | None = None
-        for c in candidates:
+        for c in active_sessions:
             if verify_password(presented_token, c.refresh_token_hash):
                 match = c
                 break
-        if match is None:
-            # Reuse detection: someone presented a token whose hash is in
-            # the table but is already revoked. Walk the chain from the
-            # matched hash. We need to find the originally-active session;
-            # the simpler check: any session with the same hash family is
-            # part of an active chain.
-            # The brute force: find the session whose stored hash was the
-            # Argon2id of this presented token. The hash is unique per token
-            # so a presented token can only match at most one row, but
-            # because the hash is salted at write time we cannot index it.
-            # For C-03 the table is small (one user rarely has more than a
-            # handful of active sessions); the linear scan is acceptable.
-            # If no match found, the token is unknown -> invalid.
+
+        if match is not None:
+            # Normal rotation: found an active session
+            if match.expires_at < now:
+                raise auth_error(AUTH_TOKEN_EXPIRED, 401)
+            if match.tenant_id is None:
+                raise auth_error(AUTH_TOKEN_INVALID, 401)
+
+            match.revoked_at = now
+
+            # Generate a NEW refresh token (not reusing the presented one)
+            new_refresh = secrets.token_urlsafe(32)
+            new_hash = hash_password(new_refresh)
+
+            new_sid = uuid4()
+            new_session = AuthSession(
+                id=new_sid,
+                tenant_id=match.tenant_id,
+                user_id=match.user_id,
+                refresh_token_hash=new_hash,
+                jti=uuid4(),
+                issued_at=now,
+                expires_at=now + timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES),
+                ip_origen=match.ip_origen,
+                user_agent=match.user_agent,
+                replaced_by_id=match.id,
+            )
+            match.rotated_to_id = new_sid
+            self.session.add(new_session)
+            await self.session.flush()
+
+            access = encode_access_token(
+                user_id=match.user_id,
+                tenant_id=match.tenant_id,
+                session_id=new_sid,
+                jti=uuid4(),
+            )
+            await audit_emit(
+                self.session,
+                "AUTH_REFRESH_ROTATE",
+                entity="auth_session",
+                entity_id=match.id,
+                tenant_id=match.tenant_id,
+                actor_id=match.user_id,
+            )
+            return LoginResponse(
+                access_token=access,
+                refresh_token=new_refresh,  # NEW token, never re-used
+                token_type="bearer",
+                expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+                requires_2fa=False,
+            )
+
+        # 2. Reuse detection: check if the token belonged to a revoked session
+        all_sessions = await session_repo.find_all()
+        revoked_match: AuthSession | None = None
+        for c in all_sessions:
+            if c.revoked_at is not None and verify_password(presented_token, c.refresh_token_hash):
+                revoked_match = c
+                break
+
+        if revoked_match is not None:
+            # Reuse detected: revoke ALL active sessions for this user
+            if revoked_match.user_id:
+                stmt = (
+                    sa_update(AuthSession)
+                    .where(AuthSession.user_id == revoked_match.user_id)
+                    .where(AuthSession.revoked_at.is_(None))
+                    .values(revoked_at=now)
+                )
+                await self.session.execute(stmt)
+                await self.session.flush()
             raise auth_error(AUTH_TOKEN_INVALID, 401)
-        if match.expires_at < now:
-            raise auth_error(AUTH_TOKEN_EXPIRED, 401)
-        if match.tenant_id is None:
-            raise auth_error(AUTH_TOKEN_INVALID, 401)
-        # Mark this session revoked and create a new one
-        match.revoked_at = now
-        new_sid = uuid4()
-        new_session = AuthSession(
-            id=new_sid,
-            tenant_id=match.tenant_id,
-            user_id=match.user_id,
-            refresh_token_hash=hash_password(presented_token),  # re-use the same token as the seed
-            jti=uuid4(),
-            issued_at=now,
-            expires_at=now + timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES),
-            ip_origen=match.ip_origen,
-            user_agent=match.user_agent,
-            replaced_by_id=match.id,
-        )
-        # Chain pointer on the new session: rotated_to_id of the old points to the new
-        match.rotated_to_id = new_sid
-        self.session.add(new_session)
-        await self.session.flush()
-        # Encode the access token bound to the new session id
-        access = encode_access_token(
-            user_id=match.user_id,
-            tenant_id=match.tenant_id,
-            session_id=new_sid,
-            jti=uuid4(),
-        )
-        audit_emit(
-            "AUTH_REFRESH_ROTATE",
-            entity="auth_session",
-            entity_id=match.id,
-            tenant_id=match.tenant_id,
-        )
-        return LoginResponse(
-            access_token=access,
-            refresh_token=presented_token,  # the SAME refresh token is now valid for the new session
-            token_type="bearer",
-            expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-            requires_2fa=False,
-        )
+
+        # 3. Completely unknown token
+        raise auth_error(AUTH_TOKEN_INVALID, 401)
 
     async def get_session_data(
         self,
@@ -340,17 +362,19 @@ class AuthService:
 
     async def logout(self, presented_token: str) -> None:
         now = datetime.now(timezone.utc)
-        stmt = select(AuthSession)
-        candidates = (await self.session.execute(stmt)).scalars().all()
+        session_repo = AuthSessionRepository(self.session, AuthSession, UUID(int=0))
+        candidates = await session_repo.find_all()
         for c in candidates:
             if verify_password(presented_token, c.refresh_token_hash):
                 c.revoked_at = now
                 await self.session.flush()
-                audit_emit(
+                await audit_emit(
+                    self.session,
                     "AUTH_LOGOUT",
                     entity="auth_session",
                     entity_id=c.id,
                     tenant_id=c.tenant_id,
+                    actor_id=c.user_id,
                 )
                 return
         # Already revoked or unknown: silent success (D4 / spec)

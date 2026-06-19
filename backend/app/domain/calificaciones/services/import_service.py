@@ -75,6 +75,8 @@ _HEADER_ALIASES: dict[str, str] = {
     "nota": "nota",
     "calificacion": "nota",
     "grade": "nota",
+    "nota (real)": "nota",
+    "calificacion (real)": "nota",
 }
 
 
@@ -364,8 +366,10 @@ class ImportService:
         total = len(valid_rows)
         from app.core.audit import audit_emit
         from app.audit.constants import AUDIT_CALIFICACIONES_IMPORTAR
-        audit_emit(
+        await audit_emit(
+            self._session,
             AUDIT_CALIFICACIONES_IMPORTAR,
+            actor_id=created_by,
             tenant_id=self._tenant_id,
             detalle={
                 "import_batch_id": str(import_batch_id),

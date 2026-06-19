@@ -183,6 +183,26 @@ class ColoquioRepository:
             "nota_final": nota_final,
         })
 
+    async def resolve_materia_nombre(self, materia_id: UUID) -> str | None:
+        stmt = select(Materia.nombre).where(
+            Materia.id == materia_id,
+            Materia.tenant_id == self._tenant_id,
+        )
+        result = await self._session.execute(stmt)
+        row = result.one_or_none()
+        return row.nombre if row else None
+
+    async def resolve_alumno_nombre(self, alumno_id: UUID) -> str | None:
+        from app.models.usuario import Usuario
+
+        stmt = select(Usuario.nombre, Usuario.apellidos).where(
+            Usuario.id == alumno_id,
+            Usuario.tenant_id == self._tenant_id,
+        )
+        result = await self._session.execute(stmt)
+        row = result.one_or_none()
+        return f"{row.nombre} {row.apellidos}" if row else None
+
     async def materia_exists(self, materia_id: UUID) -> bool:
         repo = get_tenant_repository(Materia, self._session)
         obj = await repo.get_by_id(materia_id)

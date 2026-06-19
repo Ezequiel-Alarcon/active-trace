@@ -167,7 +167,8 @@ class TenantScopedRepository(Generic[T], ABC):
             )
         obj.deleted_at = datetime.now(timezone.utc)  # type: ignore[attr-defined]
         await self._session.flush()
-        audit_emit(
+        await audit_emit(
+            self._session,
             ROW_SOFT_DELETE,
             entity=self._model.__tablename__,
             entity_id=obj_id,
@@ -183,7 +184,8 @@ class TenantScopedRepository(Generic[T], ABC):
             )
         obj.deleted_at = None  # type: ignore[attr-defined]
         await self._session.flush()
-        audit_emit(
+        await audit_emit(
+            self._session,
             ROW_RESTORE,
             entity=self._model.__tablename__,
             entity_id=obj_id,
@@ -194,7 +196,8 @@ class TenantScopedRepository(Generic[T], ABC):
 
     async def unsafe_get(self, id: UUID) -> T | None:
         """Get a row by id, ignoring both tenant and soft-delete filters."""
-        audit_emit(
+        await audit_emit(
+            self._session,
             TENANT_CROSS_QUERY,
             entity=self._model.__tablename__,
             entity_id=id,
@@ -213,7 +216,8 @@ class TenantScopedRepository(Generic[T], ABC):
         offset: int = 0,
     ) -> Sequence[T]:
         """List rows across all tenants, optionally including soft-deleted."""
-        audit_emit(
+        await audit_emit(
+            self._session,
             TENANT_CROSS_QUERY,
             entity=self._model.__tablename__,
             tenant_id=self._tenant_id,
@@ -224,7 +228,8 @@ class TenantScopedRepository(Generic[T], ABC):
         if not include_deleted:
             stmt = stmt.where(self._model.deleted_at.is_(None))  # type: ignore[attr-defined]
         else:
-            audit_emit(
+            await audit_emit(
+                self._session,
                 ROW_INCLUDE_DELETED,
                 entity=self._model.__tablename__,
                 tenant_id=self._tenant_id,
@@ -235,7 +240,8 @@ class TenantScopedRepository(Generic[T], ABC):
         return list(result.scalars().all())
 
     async def unsafe_count(self, *, include_deleted: bool = True) -> int:
-        audit_emit(
+        await audit_emit(
+            self._session,
             TENANT_CROSS_QUERY,
             entity=self._model.__tablename__,
             tenant_id=self._tenant_id,
@@ -253,7 +259,8 @@ class TenantScopedRepository(Generic[T], ABC):
         obj_tenant = getattr(obj, "tenant_id", None)
         obj.deleted_at = datetime.now(timezone.utc)  # type: ignore[attr-defined]
         await self._session.flush()
-        audit_emit(
+        await audit_emit(
+            self._session,
             TENANT_CROSS_QUERY,
             entity=self._model.__tablename__,
             entity_id=obj_id,
@@ -267,7 +274,8 @@ class TenantScopedRepository(Generic[T], ABC):
         obj_tenant = getattr(obj, "tenant_id", None)
         obj.deleted_at = None  # type: ignore[attr-defined]
         await self._session.flush()
-        audit_emit(
+        await audit_emit(
+            self._session,
             TENANT_CROSS_QUERY,
             entity=self._model.__tablename__,
             entity_id=obj_id,
@@ -284,7 +292,8 @@ class TenantScopedRepository(Generic[T], ABC):
         obj_tenant = getattr(obj, "tenant_id", None)
         await self._session.delete(obj)
         await self._session.flush()
-        audit_emit(
+        await audit_emit(
+            self._session,
             ROW_HARD_DELETE,
             entity=self._model.__tablename__,
             entity_id=obj_id,
