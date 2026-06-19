@@ -11,7 +11,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.deps import get_current_user
+from app.auth.deps import CurrentUser, get_current_user
 from app.core.dependencies import get_db
 from app.core.permissions import require_permission
 from app.domain.analisis.services.analisis_service import (
@@ -50,14 +50,16 @@ async def get_atrasados(
     limit: Annotated[int, Query(ge=1, le=200)] = 50,
     offset: Annotated[int, Query(ge=0)] = 0,
     svc: AnalisisService = Depends(_get_service),
-    current_user: Usuario = Depends(get_current_user),
+    _authorized: CurrentUser = Depends(require_permission("analisis:ver")),
 ) -> AtrasadosResponse:
     """Alumnos con actividades faltantes o no aprobadas."""
-    require_permission("analisis:ver")
-    # TODO: (FIX) Stub: ignora la DB y devuelve vacío hardcodeado — Atrasados NUNCA muestra datos.
-    #   El router no llama a svc/AnalisisRepository.get_alumnos_atrasados (que además es otro stub).
-    #   C-11 quedó incompleto pese a estar archivado (ver openspec/changes/archive/...-c-11-...).
-    return AtrasadosResponse(total=0, limit=limit, offset=offset, alumnos=[])
+    data = await svc.get_alumnos_atrasados(
+        materia_id=materia_id,
+        cohorte_id=cohorte_id,
+        limit=limit,
+        offset=offset,
+    )
+    return AtrasadosResponse(**data)
 
 
 @router.get(
@@ -68,16 +70,17 @@ async def get_ranking(
     materia_id: Annotated[UUID, Query(description="Materia a consultar")],
     limit: Annotated[int, Query(ge=1, le=200)] = 50,
     svc: AnalisisService = Depends(_get_service),
-    current_user: Usuario = Depends(get_current_user),
-) -> RankingResponse:
+    _authorized: CurrentUser = Depends(require_permission("analisis:ver")),
+    ) -> RankingResponse:
     """Ranking de alumnos por cantidad de actividades aprobadas."""
-    require_permission("analisis:ver")
-    # TODO: (FIX) Stub: devuelve rankings=[] hardcodeado; no llama a svc.get_ranking.
-    #   Además el repo get_ranking tiene un bug conocido de conteo (ver CHANGES.md §C-11). Ranking nunca muestra datos.
+    rankings = await svc.get_ranking(materia_id, limit)
+    materia_nombre = rankings[0].pop("materia_nombre") if rankings else ""
+    for ranking in rankings:
+        ranking.pop("materia_nombre", None)
     return RankingResponse(
         materia_id=materia_id,
-        materia_nombre="",
-        rankings=[],
+        materia_nombre=materia_nombre,
+        rankings=rankings,
     )
 
 
@@ -93,20 +96,17 @@ async def get_ranking(
 async def get_reporte_materia(
     materia_id: UUID,
     svc: AnalisisService = Depends(_get_service),
-    current_user: Usuario = Depends(get_current_user),
+    _authorized: CurrentUser = Depends(require_permission("reportes:ver")),
 ) -> ReporteMateriaResponse:
     """Reporte completo del estado de una materia."""
-    require_permission("reportes:ver")
     reporte = await svc.get_reporte_materia(materia_id)
-    # TODO: (FIX) Parcial: trae el conteo del service pero devuelve alumnos=[] y nombres vacíos.
-    #   La vista de Reportes del frontend queda como placeholder informativo permanente.
     return ReporteMateriaResponse(
         materia_id=materia_id,
-        materia_nombre="",
-        cohorte_id=UUID("00000000-0000-0000-0000-000000000000"),
-        cohorte_nombre="",
-        total_alumnos=reporte["alumnos_con_actividad"],
-        alumnos=[],
+        materia_nombre=reporte["materia_nombre"],
+        cohorte_id=reporte["cohorte_id"] or UUID("00000000-0000-0000-0000-000000000000"),
+        cohorte_nombre=reporte["cohorte_nombre"],
+        total_alumnos=reporte["total_alumnos"],
+        alumnos=reporte["alumnos"],
     )
 
 
@@ -118,14 +118,12 @@ async def get_notas_finales(
     limit: Annotated[int, Query(ge=1, le=200)] = 50,
     offset: Annotated[int, Query(ge=0)] = 0,
     svc: AnalisisService = Depends(_get_service),
-    current_user: Usuario = Depends(get_current_user),
+    _authorized: CurrentUser = Depends(require_permission("reportes:ver")),
 ) -> NotasFinalesResponse:
     """Notas finales agrupadas por materia."""
-    require_permission("reportes:ver")
     notas = await svc.get_notas_finales()
-    # TODO: (FIX) Trae notas del service pero las DESCARTA (notas=[]); total=len(notas) queda inconsistente
-    #   con una lista vacía. Notas finales nunca muestra filas.
-    return NotasFinalesResponse(total=len(notas), limit=limit, offset=offset, notas=[])
+    paginated = notas[offset : offset + limit]
+    return NotasFinalesResponse(total=len(notas), limit=limit, offset=offset, notas=paginated)
 
 
 # =============================================================================

@@ -30,6 +30,7 @@ from app.routers.guardias import router as guardias_router
 from app.routers.programas_fechas import router as programas_fechas_router
 from app.routers.padrones import router as padrones_router
 from app.api.v1.calificaciones import router as calificaciones_router
+from app.api.v1.comisiones import router as comisiones_router
 from app.api.v1.umbral_materia import router as umbral_materia_router
 from app.api.v1.analisis import router as analisis_router
 from app.modules.comunicacion.router import router as comunicacion_router
@@ -55,10 +56,8 @@ main_router.include_router(guardias_router)
 main_router.include_router(programas_fechas_router)
 main_router.include_router(padrones_router)
 main_router.include_router(calificaciones_router)
+main_router.include_router(comisiones_router)
 main_router.include_router(umbral_materia_router)
-# TODO: (FEAT) Falta el router /api/comisiones que el frontend (useComisionesDisponibles)
-#   consume para poblar el selector del workspace de Comisión. Sin él, no se puede seleccionar
-#   comisión ni arrancar el flujo de importación en la UI. Hoy solo existe mockeado en tests (STUB_COMISIONES).
 main_router.include_router(analisis_router)
 main_router.include_router(audit_router)
 main_router.include_router(impersonation_router)

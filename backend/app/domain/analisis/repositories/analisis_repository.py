@@ -11,7 +11,11 @@ from sqlalchemy import and_, case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.calificaciones.models.calificacion import Calificacion
+from app.domain.calificaciones.models.umbral_materia import UmbralMateria
 from app.models.asignacion import Asignacion, ContextoTipo
+from app.models.cohorte import Cohorte
+from app.models.materia import Materia
+from app.models.padron import EntradaPadron, VersionPadron
 from app.models.usuario import Usuario
 
 
@@ -32,57 +36,79 @@ class AnalisisRepository:
         limit: int = 50,
         offset: int = 0,
     ) -> list[dict]:
-        """Alumnos con al menos una actividad faltante o no aprobada.
-
-        Un alumno esta atrasado cuando alguna actividad de la lista esperada
-        no tiene Calificacion o su nota no pasa el umbral.
-        """
-        # Subquery: todas las entradas de padron activas para el tenant
-        entradas_stmt = (
+        """Load active-roster rows and related grades for delayed-student analysis."""
+        stmt = (
             select(
-                Calificacion.materia_id,
-                Calificacion.usuario_id,
-                func.count(Calificacion.id).label("total_calif"),
-                func.sum(
-                    case(
-                        (Calificacion.nota.isnot(None), 1),
-                        else_=0,
-                    )
-                ).label("con_nota"),
+                EntradaPadron,
+                VersionPadron.materia_id,
+                VersionPadron.cohorte_id,
+                VersionPadron.actividades,
+                Materia.nombre.label("materia_nombre"),
+                Cohorte.nombre.label("cohorte_nombre"),
+                UmbralMateria.umbral_pct,
+                UmbralMateria.conjunto_aprobado,
+            )
+            .join(
+                VersionPadron,
+                (VersionPadron.id == EntradaPadron.version_id)
+                & (VersionPadron.tenant_id == self._tenant_id)
+                & (VersionPadron.activa.is_(True))
+                & (VersionPadron.deleted_at.is_(None)),
+            )
+            .join(
+                Materia,
+                (Materia.id == VersionPadron.materia_id)
+                & (Materia.tenant_id == self._tenant_id)
+                & (Materia.deleted_at.is_(None)),
+            )
+            .join(
+                Cohorte,
+                (Cohorte.id == VersionPadron.cohorte_id)
+                & (Cohorte.tenant_id == self._tenant_id)
+                & (Cohorte.deleted_at.is_(None)),
+            )
+            .outerjoin(
+                UmbralMateria,
+                (UmbralMateria.materia_id == VersionPadron.materia_id)
+                & (UmbralMateria.tenant_id == self._tenant_id)
+                & (UmbralMateria.asignacion_id.is_(None))
+                & (UmbralMateria.deleted_at.is_(None)),
             )
             .where(
+                EntradaPadron.tenant_id == self._tenant_id,
+                EntradaPadron.deleted_at.is_(None),
+            )
+            .order_by(EntradaPadron.apellidos, EntradaPadron.nombre)
+        )
+        if materia_id:
+            stmt = stmt.where(VersionPadron.materia_id == materia_id)
+        if cohorte_id:
+            stmt = stmt.where(VersionPadron.cohorte_id == cohorte_id)
+
+        result = await self._session.execute(stmt.offset(offset).limit(limit))
+        rows = [dict(row._mapping) for row in result.all()]
+        for row in rows:
+            usuario_id = row["EntradaPadron"].usuario_id
+            calif_stmt = select(Calificacion).where(
                 Calificacion.tenant_id == self._tenant_id,
+                Calificacion.materia_id == row["materia_id"],
                 Calificacion.deleted_at.is_(None),
             )
-            .group_by(Calificacion.materia_id, Calificacion.usuario_id)
-        )
-
-        if materia_id:
-            entradas_stmt = entradas_stmt.where(Calificacion.materia_id == materia_id)
-        if cohorte_id:
-            # Need cohorte filter - use VersionPadron join
-            pass
-
-        # TODO: (FIX) Stub: construye entradas_stmt pero nunca lo ejecuta — retorna [] siempre.
-        #   Falta ejecutar la query, derivar la lista esperada de actividades por alumno y comparar
-        #   contra el umbral de la materia para determinar "atrasado". C-11 incompleto.
-        return []
+            if usuario_id is None:
+                calificaciones = []
+            else:
+                calif_result = await self._session.execute(calif_stmt.where(Calificacion.usuario_id == usuario_id))
+                calificaciones = list(calif_result.scalars().all())
+            row["calificaciones"] = calificaciones
+        return rows
 
     async def get_ranking(
         self,
         materia_id: UUID,
         limit: int = 50,
     ) -> list[dict]:
-        """Ranking de alumnos por cantidad de actividades aprobadas."""
-        # TODO: (REVIEW) Bug conocido (CHANGES.md §C-11): "aprobadas" cuenta calificaciones con nota,
-        #   no necesariamente APROBADAS según el umbral de la materia. Además el router get_ranking
-        #   ni siquiera invoca este método (devuelve [] hardcodeado). Verificar semántica al completar C-11.
-        # Subquery: solo calificaciones con nota (filtra antes de contar)
-        calif_aprobadas = (
-            select(
-                Calificacion.usuario_id,
-                func.count(Calificacion.id).label("aprobadas_count"),
-            )
+        stmt = (
+            select(Calificacion.usuario_id, func.count(Calificacion.id).label("aprobadas_count"))
             .where(
                 Calificacion.materia_id == materia_id,
                 Calificacion.tenant_id == self._tenant_id,
@@ -90,77 +116,103 @@ class AnalisisRepository:
                 Calificacion.nota.isnot(None),
             )
             .group_by(Calificacion.usuario_id)
-        ).subquery()
-
-        stmt = (
-            select(
-                calif_aprobadas.c.usuario_id,
-                calif_aprobadas.c.aprobadas_count,
-            )
-            .order_by(calif_aprobadas.c.aprobadas_count.desc())
+            .order_by(func.count(Calificacion.id).desc())
             .limit(limit)
         )
         result = await self._session.execute(stmt)
-        rows = result.all()
+        return [dict(row._mapping) for row in result.all()]
 
-        ranking = []
-        for i, row in enumerate(rows, 1):
-            r = dict(row._mapping)
-            r["ranking"] = i
-            ranking.append(r)
-        return ranking
-
-    async def get_reporte_materia(self, materia_id: UUID) -> dict:
-        """Reporte agregado del estado de una materia."""
-        total_calif = (
-            select(func.count(func.distinct(Calificacion.usuario_id)))
+    async def get_ranking_rows(self, materia_id: UUID) -> list[dict]:
+        stmt = (
+            select(
+                Calificacion,
+                Usuario.nombre,
+                Usuario.apellidos,
+                Usuario.email_enc,
+                Materia.nombre.label("materia_nombre"),
+                UmbralMateria.umbral_pct,
+                UmbralMateria.conjunto_aprobado,
+            )
+            .outerjoin(
+                Usuario,
+                (Usuario.id == Calificacion.usuario_id)
+                & (Usuario.tenant_id == self._tenant_id)
+                & (Usuario.deleted_at.is_(None)),
+            )
+            .join(
+                Materia,
+                (Materia.id == Calificacion.materia_id)
+                & (Materia.tenant_id == self._tenant_id)
+                & (Materia.deleted_at.is_(None)),
+            )
+            .outerjoin(
+                UmbralMateria,
+                (UmbralMateria.materia_id == Calificacion.materia_id)
+                & (UmbralMateria.tenant_id == self._tenant_id)
+                & (UmbralMateria.asignacion_id.is_(None))
+                & (UmbralMateria.deleted_at.is_(None)),
+            )
             .where(
                 Calificacion.materia_id == materia_id,
                 Calificacion.tenant_id == self._tenant_id,
                 Calificacion.deleted_at.is_(None),
             )
         )
-        con_nota = (
-            select(func.count(func.distinct(Calificacion.usuario_id)))
-            .where(
+        result = await self._session.execute(stmt)
+        rows = [dict(row._mapping) for row in result.all()]
+        return rows
+
+    async def get_reporte_materia(self, materia_id: UUID) -> dict:
+        """Reporte agregado del estado de una materia."""
+        rows = await self.get_alumnos_atrasados(materia_id=materia_id, limit=10000)
+        total_calif = await self._session.scalar(
+            select(func.count(func.distinct(Calificacion.usuario_id))).where(
+                Calificacion.materia_id == materia_id,
+                Calificacion.tenant_id == self._tenant_id,
+                Calificacion.deleted_at.is_(None),
+            )
+        )
+        con_nota = await self._session.scalar(
+            select(func.count(func.distinct(Calificacion.usuario_id))).where(
                 Calificacion.materia_id == materia_id,
                 Calificacion.tenant_id == self._tenant_id,
                 Calificacion.nota.isnot(None),
                 Calificacion.deleted_at.is_(None),
             )
         )
-        total_res = await self._session.scalar(total_calif)
-        con_nota_res = await self._session.scalar(con_nota)
         return {
             "materia_id": str(materia_id),
-            "alumnos_con_actividad": total_res or 0,
-            "alumnos_con_nota": con_nota_res or 0,
+            "alumnos_con_actividad": total_calif or len(rows),
+            "alumnos_con_nota": con_nota or sum(1 for row in rows if row["calificaciones"]),
+            "rows": rows,
         }
 
     async def get_notas_finales(self) -> list[dict]:
-        """Notas finales agrupadas por materia (promedio de notas numéricas)."""
+        """Load rows for final-grade aggregation by materia."""
         stmt = (
             select(
-                Calificacion.materia_id,
-                func.count(Calificacion.id).label("total_actividades"),
-                func.avg(
-                    case(
-                        (
-                            and_(
-                                Calificacion.nota.isnot(None),
-                                Calificacion.origen == "Importado",
-                            ),
-                            Calificacion.nota.cast(float),
-                        ),
-                        else_=None,
-                    )
-                ).label("promedio"),
+                Calificacion,
+                Materia.nombre.label("materia_nombre"),
+                UmbralMateria.umbral_pct,
+                UmbralMateria.conjunto_aprobado,
+            )
+            .join(
+                Materia,
+                (Materia.id == Calificacion.materia_id)
+                & (Materia.tenant_id == self._tenant_id)
+                & (Materia.deleted_at.is_(None)),
+            )
+            .outerjoin(
+                UmbralMateria,
+                (UmbralMateria.materia_id == Calificacion.materia_id)
+                & (UmbralMateria.tenant_id == self._tenant_id)
+                & (UmbralMateria.asignacion_id.is_(None))
+                & (UmbralMateria.deleted_at.is_(None)),
             )
             .where(
                 Calificacion.tenant_id == self._tenant_id,
                 Calificacion.deleted_at.is_(None),
             )
-            .group_by(Calificacion.materia_id)
         )
         result = await self._session.execute(stmt)
         return [dict(r._mapping) for r in result.all()]

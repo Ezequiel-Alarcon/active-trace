@@ -30,7 +30,7 @@ from app.domain.calificaciones.services.import_service import (
     ImportServiceError,
 )
 from app.models.usuario import Usuario
-from app.repositories.usuarios import UsuarioRepository
+from app.repositories.usuarios import UsuarioRepository, decrypt_usuario_fields
 
 router = APIRouter(prefix="/api/calificaciones", tags=["calificaciones"])
 
@@ -47,8 +47,10 @@ async def _get_import_service(
     current_user: Usuario = Depends(get_current_user),
 ) -> tuple[ImportService, dict[str, UUID], set[UUID], set[UUID]]:
     usuario_repo = UsuarioRepository(session, current_user.tenant_id)
-    usuarios = await usuario_repo.list_all()
-    usuario_ids_by_email = {u.email.lower(): u.id for u in usuarios if u.email}
+    usuarios = await usuario_repo.list(limit=10000)
+    usuario_ids_by_email = {
+        decrypt_usuario_fields(u)["email"].lower(): u.id for u in usuarios if u.email_enc
+    }
 
     from app.models.materia import Materia
     from app.repositories.base import get_tenant_repository
@@ -143,20 +145,16 @@ async def import_preview(
 )
 async def import_confirm(
     data: CalificacionConfirmRequest,
-    session: AsyncSession = Depends(get_db),
+    svc_tuple: tuple[ImportService, dict[str, UUID], set[UUID], set[UUID]] = Depends(_get_import_service),
     current_user: Usuario = Depends(get_current_user),
 ) -> CalificacionConfirmResponse:
     """Persistir las filas validas del preview token."""
     require_permission("calificaciones:importar")
-    # TODO: (FIX) Bug: Depends() se usa en el cuerpo de la función, no como parámetro. No resuelve la
-    #   dependencia → svc_tuple es un objeto Depends, y svc_tuple[0] rompe en runtime. import/confirm NO persiste.
-    #   Debe inyectarse como parámetro del endpoint (igual que en import_preview).
-    svc_tuple: tuple[ImportService, dict[str, UUID], set[UUID], set[UUID]] = Depends(_get_import_service)
     svc = svc_tuple[0]
     try:
         persisted, skipped, failed = await svc.confirm_import(
             preview_token=data.preview_token,
-            created_by=current_user.id,
+            created_by=current_user.user_id,
         )
         return CalificacionConfirmResponse(
             persisted=persisted,
