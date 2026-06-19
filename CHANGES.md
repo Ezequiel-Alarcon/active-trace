@@ -419,7 +419,7 @@ C-01 → C-02 → C-03 → C-04 → C-06 → C-07 → C-09 → C-10 → C-11 →
   - `knowledge-base/07_flujos_principales.md` FL-05 (workflow de tareas)
 
 ### [C-18] `liquidaciones-y-honorarios`
-- **Estado**: `[ ]` deuda técnica — bloques PA-22 y PA-23 pendientes de resolver en sesión futura
+- **Estado**: `[ ]` pendiente — PA-22/PA-23 cerradas; listo para `/opsx:propose` con governance CRITICO
 - **Scope**:
   - Modelos `SalarioBase` (por rol, vigencia), `SalarioPlus` (grupo × rol, vigencia), `Liquidacion` (base + plus = total, es_nexo, excluido_por_factura, estado Abierta/Cerrada), `Factura`.
   - Cálculo de liquidación del período (FL-08, RN-21): base por rol vigente + plus por grupos. Vista (F10.1), cerrar (F10.2, inmutable RN-22), historial (F10.3).
@@ -433,7 +433,7 @@ C-01 → C-02 → C-03 → C-04 → C-06 → C-07 → C-09 → C-10 → C-11 →
   - `knowledge-base/04_modelo_de_datos.md` §E17–E20 (Salario, Liquidación, Factura)
   - `knowledge-base/06_funcionalidades.md` Épica 10 (F10.1–F10.6)
   - `knowledge-base/07_flujos_principales.md` FL-08 (liquidación)
-  - `knowledge-base/10_preguntas_abiertas.md` PA-22, PA-23 (mapeo y acumulación de Plus — confirmar antes)
+  - `knowledge-base/05_reglas_de_negocio.md` RN-31 a RN-38 (Base + Plus, claves fijas del programa y acumulación por comisión)
 
 ### [C-19] `panel-auditoria-metricas`
 - **Estado**: `[x]` archivado (2026-06-13) → `openspec/changes/archive/2026-06-13-c-19-panel-auditoria-metricas/`
@@ -541,7 +541,7 @@ C-01 → C-02 → C-03 → C-04 → C-06 → C-07 → C-09 → C-10 → C-11 →
 | Total de changes | 24 + 1 transversal |
 | Completados | 20 + fix-test-errors-pending (C-21 frontend-shell-y-auth, C-22 frontend-academico-docente) |
 | Pendientes | 5 (C-18, C-23, C-24) |
-| Deuda técnica | C-18 (PA-22/PA-23 sin resolver) |
+| Deuda técnica | C-18 pendiente de proponer/implementar; PA-22/PA-23 ya cerradas |
 | Fases | 6 (FASE 0 a FASE 5) |
 | Camino crítico | 10 changes (`C-01 → C-02 → C-03 → C-04 → C-06 → C-07 → C-09 → C-10 → C-11 → C-12`) |
 | Gates de paralelismo | 11 (GATE 0 a GATE 10) |
