@@ -46,7 +46,7 @@ function RoleTag() {
 export default function DashboardPage() {
   const { hasPermission } = useAuth();
   const { data: perfil } = usePerfil();
-  const nombre = perfil ? perfil.nombre : '…';
+  const nombre = perfil?.nombre ?? null;
 
   const links = ALL_QUICK_LINKS.filter(
     (l) => !l.permission || hasPermission(l.permission),
@@ -55,10 +55,10 @@ export default function DashboardPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold text-gray-800">
-          Bienvenido, {nombre}
+        <h1 className="text-2xl font-semibold text-slate-900">
+          {nombre ? `Bienvenido, ${nombre}` : 'Bienvenido'}
         </h1>
-        <p className="text-sm text-gray-500 mt-1">
+        <p className="text-sm text-slate-500 mt-1">
           Rol activo: <RoleTag />
         </p>
       </div>
