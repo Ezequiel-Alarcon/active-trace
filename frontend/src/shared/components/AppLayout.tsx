@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
 import { useAuth } from '@/features/auth/components/AuthProvider';
 import { useLogout } from '@/features/auth/hooks/useLogout';
+import { usePerfil } from '@/features/perfil/hooks/usePerfil';
 
 interface NavItem {
   label: string;
@@ -89,8 +90,13 @@ const COORDINACION_SECTION: NavSection = {
 };
 
 export default function AppLayout() {
-  const { hasPermission, session } = useAuth();
+  const { hasPermission } = useAuth();
   const logout = useLogout();
+  const { data: perfil } = usePerfil();
+
+  const displayName = perfil
+    ? `${perfil.nombre} ${perfil.apellidos}`.trim()
+    : null;
 
   const visibleItems = NAV_ITEMS.filter(
     (item) => !item.permission || hasPermission(item.permission),
@@ -162,8 +168,8 @@ export default function AppLayout() {
           <span className="font-semibold text-white tracking-tight text-[15px]">active trace</span>
         </div>
         <div className="flex items-center gap-5">
-          {session && (
-            <span className="text-sm text-slate-400 font-mono">{session.user.email}</span>
+          {displayName && (
+            <span className="text-sm text-slate-400">{displayName}</span>
           )}
           <button
             type="button"

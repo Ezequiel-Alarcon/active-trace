@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/features/auth/components/AuthProvider';
+import { usePerfil } from '@/features/perfil/hooks/usePerfil';
 
 interface QuickLink {
   label: string;
@@ -43,8 +44,9 @@ function RoleTag() {
 }
 
 export default function DashboardPage() {
-  const { hasPermission, session } = useAuth();
-  const nombre = session?.user?.email ?? 'usuario';
+  const { hasPermission } = useAuth();
+  const { data: perfil } = usePerfil();
+  const nombre = perfil ? perfil.nombre : '…';
 
   const links = ALL_QUICK_LINKS.filter(
     (l) => !l.permission || hasPermission(l.permission),
