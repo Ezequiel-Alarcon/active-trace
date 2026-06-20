@@ -22,6 +22,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Monitor', to: '/monitor', permission: 'analisis:ver' },
   { label: 'Comunicaciones', to: '/comision/comunicar', permission: 'comunicacion:enviar' },
   { label: 'Aprobaciones', to: '/comision/aprobaciones', permission: 'comunicacion:aprobar' },
+  { label: 'Mi Perfil', to: '/perfil' },
 ];
 
 const LIQUIDACIONES_SECTION: NavSection = {
@@ -44,14 +45,23 @@ const ADMIN_SECTION: NavSection = {
   ],
 };
 
+const PROFESOR_SECTION: NavSection = {
+  label: 'Profesor',
+  items: [
+    { label: 'Mis Guardias', to: '/profesor/guardias', permission: 'encuentros:registrar_guardia' },
+    { label: 'Mensajes', to: '/profesor/mensajes', permission: 'mensajes:ver' },
+    { label: 'Mis Equipos', to: '/profesor/equipos', permission: 'equipos:ver' },
+  ],
+};
+
 const COORDINACION_SECTION: NavSection = {
   label: 'Coordinación',
   items: [
     { label: 'Equipos', to: '/coordinacion/equipos', permission: 'equipos:asignar' },
     { label: 'Avisos', to: '/coordinacion/avisos', permission: 'avisos:publicar' },
-    { label: 'Tareas', to: '/coordinacion/tareas', permission: 'tareas:ver' },
-    { label: 'Monitor', to: '/coordinacion/monitor', permission: 'analisis:ver' },
-    { label: 'Encuentros', to: '/coordinacion/encuentros', permission: 'encuentros:ver' },
+    { label: 'Tareas', to: '/coordinacion/tareas', permission: 'tareas:gestionar' },
+    { label: 'Monitor', to: '/coordinacion/monitor', permission: 'equipos:asignar' },
+    { label: 'Encuentros', to: '/coordinacion/encuentros', permission: 'encuentros:gestionar' },
     { label: 'Coloquios', to: '/coordinacion/coloquios', permission: 'coloquios:ver' },
     { label: 'Setup Cuatrimestre', to: '/coordinacion/setup', permission: 'estructura:gestionar' },
   ],
@@ -62,6 +72,10 @@ export default function AppLayout() {
   const logout = useLogout();
 
   const visibleItems = NAV_ITEMS.filter(
+    (item) => !item.permission || hasPermission(item.permission),
+  );
+
+  const visibleProfesorItems = PROFESOR_SECTION.items.filter(
     (item) => !item.permission || hasPermission(item.permission),
   );
 
@@ -79,6 +93,7 @@ export default function AppLayout() {
   const showLiquidaciones = visibleLiquidacionesItems.length > 0;
   const showAdmin = visibleAdminItems.length > 0;
   const showCoordinacion = visibleCoordinacionItems.length > 0;
+  const showProfesor = visibleProfesorItems.length > 0;
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -124,6 +139,32 @@ export default function AppLayout() {
               {item.label}
             </NavLink>
           ))}
+
+          {showProfesor && (
+            <div className="mt-4">
+              <span className="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                {PROFESOR_SECTION.label}
+              </span>
+              <div className="mt-1 flex flex-col gap-1">
+                {visibleProfesorItems.map((item) => (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    end
+                    className={({ isActive }) =>
+                      `px-4 py-2 text-sm rounded mx-2 transition-colors ${
+                        isActive
+                          ? 'bg-blue-100 text-blue-700 font-medium'
+                          : 'text-gray-700 hover:bg-gray-100'
+                      }`
+                    }
+                  >
+                    {item.label}
+                  </NavLink>
+                ))}
+              </div>
+            </div>
+          )}
 
           {showLiquidaciones && (
             <div className="mt-4">

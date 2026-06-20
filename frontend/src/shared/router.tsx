@@ -18,6 +18,12 @@ import AprobacionesPage from '@/features/comunicacion/pages/AprobacionesPage';
 import ComunicarPage from '@/features/comunicacion/pages/ComunicarPage';
 import MonitorPage from '@/features/monitor/pages/MonitorPage';
 
+// ── Profesor pages (lazy-loaded) ──────────────────────────────────────────
+const GuardiasPage = lazy(() => import('@/features/guardias/pages/GuardiasPage'));
+const MensajesPage = lazy(() => import('@/features/mensajes/pages/MensajesPage'));
+const PerfilPage = lazy(() => import('@/features/perfil/pages/PerfilPage'));
+const MisEquiposProfesorPage = lazy(() => import('@/features/equipos/pages/MisEquiposProfesorPage'));
+
 // ── Coordinación pages (lazy-loaded) ──────────────────────────────────────
 const EquiposPage = lazy(() => import('@/features/equipos/pages/EquiposPage'));
 const AvisosPage = lazy(() => import('@/features/avisos/pages/AvisosPage'));
@@ -260,7 +266,7 @@ export const router = createBrowserRouter([
           {
             path: '/coordinacion/tareas',
             element: (
-              <RequirePermission permission="tareas:ver">
+              <RequirePermission permission="tareas:gestionar">
                 <TareasPage />
               </RequirePermission>
             ),
@@ -268,7 +274,7 @@ export const router = createBrowserRouter([
           {
             path: '/coordinacion/monitor',
             element: (
-              <RequirePermission permission="analisis:ver">
+              <RequirePermission permission="equipos:asignar">
                 <MonitorGeneralPage />
               </RequirePermission>
             ),
@@ -276,7 +282,7 @@ export const router = createBrowserRouter([
           {
             path: '/coordinacion/encuentros',
             element: (
-              <RequirePermission permission="encuentros:ver">
+              <RequirePermission permission="encuentros:gestionar">
                 <EncuentrosPage />
               </RequirePermission>
             ),
@@ -296,6 +302,38 @@ export const router = createBrowserRouter([
                 <SetupPage />
               </RequirePermission>
             ),
+          },
+
+          // ── Profesor ──────────────────────────────────────────────────────
+          {
+            path: '/profesor/guardias',
+            element: (
+              <RequirePermission permission="encuentros:registrar_guardia">
+                <GuardiasPage />
+              </RequirePermission>
+            ),
+          },
+          {
+            path: '/profesor/mensajes',
+            element: (
+              <RequirePermission permission="mensajes:ver">
+                <MensajesPage />
+              </RequirePermission>
+            ),
+          },
+          {
+            path: '/profesor/equipos',
+            element: (
+              <RequirePermission permission="equipos:ver">
+                <MisEquiposProfesorPage />
+              </RequirePermission>
+            ),
+          },
+
+          // ── Perfil (todos los roles) ───────────────────────────────────
+          {
+            path: '/perfil',
+            element: <PerfilPage />,
           },
 
           {

@@ -33,6 +33,10 @@ class PerfilResponse(BaseModel):
 class PerfilUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
+    # TODO: (FEAT) Auditoría backend/frontend 2026-06-19: F11.1 / C-20 piden
+    # editar modalidad de cobro (factura/liquidación). El modelo `Usuario`
+    # tiene `facturante`, pero el payload de update no permite modificarlo.
+
     nombre: str | None = None
     apellidos: str | None = None
     email: str | None = None

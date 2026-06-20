@@ -38,6 +38,12 @@ class GuardiaUpdate(BaseModel):
 class GuardiaResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
+    # TODO: (REVIEW) Auditoría backend/frontend 2026-06-19: la pantalla de
+    # historial de guardias espera responsable, materia, carrera/cohorte,
+    # horario, estado, comentarios y fecha de registro. Este DTO solo expone
+    # IDs + `tutor_nombre`; faltan `estado` y datos expandidos para renderizar
+    # la tabla sin round-trips adicionales.
+
     id: UUID
     tenant_id: UUID
     tutor_id: UUID

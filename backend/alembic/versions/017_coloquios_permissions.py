@@ -3,6 +3,11 @@
 Adds coloquios:gestionar, coloquios:ver, coloquios:reservar
 and assigns them to COORDINADOR, ADMIN, and ALUMNO roles.
 
+# TODO: (REVIEW) Auditoría backend/frontend 2026-06-19: si se toma como fuente
+# HU-30/HU-31 o FL-07, falta definir si PROFESOR debe recibir
+# `coloquios:gestionar`/`coloquios:ver`. Hoy esta migración lo deja afuera y el
+# backend bloquea esa pantalla para ese rol.
+
 Run order:
     alembic upgrade head
     alembic downgrade -1

@@ -8,6 +8,11 @@
 #   app/modules/comunicacion/router.py
 #   app/rbac/router.py + public_router.py
 # Unificar bajo un criterio único.
+# TODO: (REVIEW) Auditoría backend/frontend 2026-06-19: las features auditadas
+# para nuevas pantallas no siguen la convención objetivo
+# `backend/app/modules/<modulo>/...` descrita para el proyecto. Hay mezcla de
+# `app/routers`, `app/modules`, `app/api/v1` y otros namespaces, lo que vuelve
+# menos predecible la integración frontend↔backend.
 """
 
 from __future__ import annotations
