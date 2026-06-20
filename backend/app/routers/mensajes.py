@@ -19,6 +19,10 @@ from app.services.mensajes import MensajeService
 
 router = APIRouter(prefix="/api/mensajes", tags=["mensajes"])
 
+# TODO: (REVIEW) Auditoría backend/frontend 2026-06-19: C-20/CHANGES documenta
+# `/api/inbox/*`, pero el backend expone `/api/mensajes/inbox*`. La
+# funcionalidad existe, pero el contrato documentado no coincide.
+
 
 def _get_service(
     db: Annotated[AsyncSession, Depends(get_db)],

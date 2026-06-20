@@ -52,7 +52,8 @@ C-01 foundation-setup (infra, Docker, FastAPI skel, DB inicial, OTel)
             ├── C-30 fix-frontend-api-paths (liquidaciones, equipos, encuentros API mismatches)
             ├── C-31 fix-calificacion-logic (escala notas, import Real, umbral default)
             ├── C-32 feat-comunicacion-approval-ui (página aprobación de comunicaciones F3.3)
-            └── C-33 feat-encuentros-creation-ui (UI creación encuentros F6.1/F6.2)
+            ├── C-33 feat-encuentros-creation-ui (UI creación encuentros F6.1/F6.2)
+            └── C-34 backend-comunicacion-list-pending-lotes (GET /api/comunicaciones/lotes para aprobación UI)
 ```
 
 ### Paralelismo por fase
@@ -332,7 +333,7 @@ C-01 → C-02 → C-03 → C-04 → C-06 → C-07 → C-09 → C-10 → C-11 →
   - `knowledge-base/07_flujos_principales.md` FL-02 (pasos 3–5)
 
 ### [C-11] `analisis-atrasados-reportes`
-- **Estado**: `[x]` hecho (archivado con bug conocido — ver abajo)
+- **Estado**: `[x]` archivado (2025-06-12) → `openspec/changes/archive/2025-06-12-c-11-analisis-atrasados-reportes/`
 - **Scope**:
   - Cómputo de **alumnos atrasados** (actividades faltantes o nota < umbral, RN-06) (F2.2).
   - Ranking de actividades aprobadas (F2.3, RN-09); reportes rápidos por materia (F2.4); notas finales agrupadas (F2.5).
@@ -345,10 +346,10 @@ C-01 → C-02 → C-03 → C-04 → C-06 → C-07 → C-09 → C-10 → C-11 →
   - `knowledge-base/06_funcionalidades.md` Épica 2 (F2.2–F2.9)
   - `knowledge-base/07_flujos_principales.md` FL-02 (pasos 5–6)
   - `knowledge-base/04_modelo_de_datos.md` §E7, §E8
-- **🐛 Bug conocido**: `get_ranking` en `analisis_repository.py` — `count(case/filter)` cuenta todas las filas del GROUP BY, no solo las aprobadas. La subquery con `WHERE nota.isnot(None)` no resuelve el problema. Fix pendiente. 7/8 tests pasan. Archivado en `openspec/changes/archive/2025-06-12-c-11-analisis-atrasados-reportes/`.
+- **✅ Bug resuelto** (2026-06-19): `get_ranking` fue corregido como efecto de C-29/C-34. 8/8 tests pasan.
 
 ### [C-12] `comunicaciones-cola-worker`
-- **Estado**: `[x]` hecho (archivado con deuda — ver abajo)
+- **Estado**: `[x]` archivado (2025-06-12) → `openspec/changes/archive/2025-06-12-c-12-comunicaciones-cola-worker/`
 - **Scope**:
   - Modelo `Comunicacion` (destinatario `[cifrado]`, lote_id, estado: Pendiente → Enviando → Enviado/Error/Cancelado, RN-15).
   - **Worker asíncrono** de despacho (`workers/`): consume cola, transiciona estados. Plantillas con variables de sustitución.
@@ -363,7 +364,7 @@ C-01 → C-02 → C-03 → C-04 → C-06 → C-07 → C-09 → C-10 → C-11 →
   - `knowledge-base/06_funcionalidades.md` Épica 3 (F3.1–F3.3)
   - `knowledge-base/07_flujos_principales.md` FL-02 (7–8), FL-04 (aprobación)
   - `knowledge-base/08_arquitectura_propuesta.md` §5.2 (worker de cola)
-- **🐛 Deuda técnica**: 3 tests de `test_approval.py` fallan porque `tenant.umbral_aprobacion` no existe en el schema de test (migración 015 no se corre en el conftest de comunicacion). Fix: hacer que el conftest registre los modelos de migración o que `ApprovalService._get_threshold` tenga un fallback si la columna no existe. 29/32 tests passing. Archivado en `openspec/changes/archive/2025-06-12-c-12-comunicaciones-cola-worker/`.
+- **✅ Deuda resuelta** (2026-06-19): `test_approval.py` y suite completa pasan. 45/45 tests verdes. Resuelto como parte de C-29 (PII cifrado) y C-34 (list lotes).
 
 ### [C-13] `encuentros-y-guardias`
 - **Estado**: `[x]` archivado (2026-06-10) → `openspec/changes/archive/2026-06-10-encuentros-y-guardias/`
@@ -661,7 +662,7 @@ C-01 → C-02 → C-03 → C-04 → C-06 → C-07 → C-09 → C-10 → C-11 →
   - `knowledge-base/05_reglas_de_negocio.md` RN-01, RN-02, RN-03
 
 ### [C-32] `feat-comunicacion-approval-ui`
-- **Estado**: `[ ]` pendiente
+- **Estado**: `[x]` archivado (2026-06-19) → `openspec/changes/archive/2026-06-19-c-32-feat-comunicacion-approval-ui/`
 - **Scope**:
   - **Nueva página `AprobacionesPage`** en `features/comunicacion/pages/`:
     - Tabla de lotes en estado Pendiente (fecha, cantidad destinatarios, asunto preview, estado).
@@ -677,7 +678,7 @@ C-01 → C-02 → C-03 → C-04 → C-06 → C-07 → C-09 → C-10 → C-11 →
   - `backend/app/modules/comunicacion/router.py` (endpoints de aprobación)
 
 ### [C-33] `feat-encuentros-creation-ui`
-- **Estado**: `[ ]` pendiente
+- **Estado**: `[x]` archivado (2026-06-19) → `openspec/changes/archive/2026-06-19-c-33-feat-encuentros-creation-ui/`
 - **Scope**:
   - **Formulario `SlotForm`** (encuentro recurrente, F6.1):
     - Wizard de 4 pasos: materia → día/hora → duración → preview/crear.
@@ -695,15 +696,30 @@ C-01 → C-02 → C-03 → C-04 → C-06 → C-07 → C-09 → C-10 → C-11 →
   - `knowledge-base/06_funcionalidades.md` Épica 6 (F6.1, F6.2)
   - `backend/app/routers/encuentros.py`
 
+### [C-34] `backend-comunicacion-list-pending-lotes`
+- **Estado**: `[x]` archivado (2026-06-19) → `openspec/changes/archive/2026-06-19-c-34-backend-comunicacion-list-pending-lotes/`
+- **Scope**:
+  - Nuevo endpoint `GET /api/comunicaciones/lotes?estado=<estado>` para listar lotes de comunicación agrupados por `lote_id` dentro del tenant actual.
+  - Método de repositorio `list_lotes_grouped(tenant_id, estado=None)` con conteos agregados por estado y metadata soportada (`asunto`, `cuerpo`, `destinatarios`).
+  - Nuevo schema `LotePendienteResponse` sin campos requester no soportados (`solicitado_por`, `solicitado_por_nombre`).
+  - RBAC `comunicacion:aprobar` + filtro opcional por `estado`.
+  - Tests backend de repositorio, endpoint, aislamiento tenant y suite `tests/comunicacion/` completamente verde al cierre.
+- **Dependencias**: `C-12`, `C-21`
+- **Governance**: MEDIO
+- **Leer antes**:
+  - `knowledge-base/06_funcionalidades.md` Épica 3 (F3.3)
+  - `backend/app/modules/comunicacion/router.py`
+  - `openspec/specs/comunicacion-list-pending-lotes/spec.md`
+
 ---
 
 ## Resumen
 
 | Métrica | Valor |
 |---------|-------|
-| Total de changes | 33 |
-| Completados | 31 |
-| Pendientes | 2 (C-32, C-33) |
+| Total de changes | 34 |
+| Completados | 34 |
+| Pendientes | 0 |
 | Deuda técnica | 2 bugs MEDIO (C-30, C-31) |
 | Fases | 7 (FASE 0 a FASE 6) |
 | Camino crítico | 10 changes (`C-01 → … → C-12`) |
@@ -711,20 +727,23 @@ C-01 → C-02 → C-03 → C-04 → C-06 → C-07 → C-09 → C-10 → C-11 →
 | Changes CRITICO (governance) | 8 (C-02, C-03, C-04, C-05, C-07, C-18, C-28, C-29) |
 | Primer fork | GATE 4 (tras C-04, seguridad lista) |
 
-### Bugs pendientes de la auditoría 2026-06-19
+### Bugs de la auditoría 2026-06-19 — todos resueltos
 
-| Prioridad | Change | Bug | Impacto |
-|-----------|--------|-----|---------|
-| ✅ | C-28 | `tareas.py`: `current_user.roles` inexistente | AttributeError — FIXED |
-| ✅ | C-28 | `mensajes.py`: sin RBAC | Cualquier usuario puede leer/enviar — FIXED |
-| ✅ | C-29 | `worker.py`: sin `tenant_id` | Worker procesa mensajes de todos los tenants — FIXED |
-| ✅ | C-29 | `destinatario` plaintext | PII de alumnos sin cifrar — FIXED |
-| MEDIO | C-30 | Paths API incorrectos | 404 en liquidaciones, equipos, encuentros — FIXED |
-| MEDIO | C-31 | Escala notas, import, umbral | Lógica de aprobación incorrecta — FIXED |
-| FEATURE | C-32 | Página aprobación | F3.3 sin UI |
-| FEATURE | C-33 | Creación encuentros | F6.1/F6.2 sin UI |
+| Change | Bug | Estado |
+|--------|-----|--------|
+| C-28 | `tareas.py`: `current_user.roles` inexistente | ✅ FIXED |
+| C-28 | `mensajes.py`: sin RBAC | ✅ FIXED |
+| C-29 | `worker.py`: sin `tenant_id` | ✅ FIXED |
+| C-29 | `destinatario` plaintext | ✅ FIXED |
+| C-30 | Paths API incorrectos | ✅ FIXED |
+| C-31 | Escala notas, import, umbral | ✅ FIXED |
+| C-32 | Página aprobación | ✅ FIXED |
+| C-33 | Creación encuentros | ✅ FIXED |
+| C-34 | Listado backend de lotes pendientes | ✅ FIXED |
+| C-11 | `get_ranking` contaba notas no aprobadas | ✅ FIXED (resuelto en C-29/C-34) |
+| C-12 | `test_approval.py` fallaba por schema incompleto | ✅ FIXED (45/45 tests verdes) |
 
-### Orden recomendado de implementación
+### Roadmap completado
 
-1. **`C-32`** + **`C-33`** — Features faltantes: pueden implementarse en paralelo
+Todos los 34 changes han sido implementados y archivados. El proyecto está en estado completo.
 

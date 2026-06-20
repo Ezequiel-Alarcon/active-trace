@@ -43,6 +43,11 @@ class GuardiaService:
 
     @property
     def _is_tutor_only(self) -> bool:
+        # TODO: (REVIEW) Auditoría backend/frontend 2026-06-19: esta lógica
+        # vuelve global la vista para cualquier usuario con
+        # `encuentros:gestionar`. En `004_rbac_tables.py` PROFESOR tiene ese
+        # permiso, así que ve todas las guardias del tenant en vez de solo las
+        # propias, contradiciendo HU-29 / pantalla "mis guardias".
         return "encuentros:gestionar" not in self._current_user_permissions
 
     # ── CRUD ──────────────────────────────────────────────────────────

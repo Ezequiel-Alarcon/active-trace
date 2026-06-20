@@ -7,12 +7,14 @@ Tests cover:
 """
 
 import pytest
+import time
+from datetime import datetime, timezone
 from uuid import uuid4
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from app.modules.comunicacion.models.comunicacion import Comunicacion
 from app.modules.comunicacion.router import enqueue_mensajes
-from app.modules.comunicacion.schemas import ComunicacionCreate
+from app.modules.comunicacion.schemas.comunicacion import ComunicacionCreate
 
 
 class TestSetDestinatarioDoesNotStorePlaintext:
@@ -108,7 +110,6 @@ class TestWorkerTenantIsolation:
             .where(Comunicacion.tenant_id == worker_tenant_id, ...)
         If this filter is missing, messages from other tenants would be processed.
         """
-        from app.workers.comunicacion_worker import run_poll_loop
         from sqlalchemy import select
 
         worker_tenant_id = uuid4()
@@ -145,11 +146,9 @@ class TestWorkerTenantIsolation:
             .with_for_update(skip_locked=True)
         )
 
-        # Compile to string to inspect the WHERE clause
-        from sqlalchemy import inspect
-        compiled = stmt.compile()
-
-        compiled_sql = str(compiled.compile(compile_kwargs={"literal_binds": True}))
+        # Compile to SQL text with bound values rendered inline so we can inspect the
+        # final WHERE clause without executing the query.
+        compiled_sql = str(stmt.compile(compile_kwargs={"literal_binds": True}))
 
         # Verify the tenant_id filter is present
         assert str(worker_tenant_id) in compiled_sql or "tenant_id" in compiled_sql.lower()
@@ -185,9 +184,16 @@ class TestRouterEnqueueUsesSetDestinatario:
             "app.modules.comunicacion.router.ComunicacionRepository"
         ) as MockRepo:
             mock_repo_instance = MagicMock()
-            mock_repo_instance.create = AsyncMock(
-                side_effect=lambda obj: obj
-            )
+
+            async def _create_persisted(obj: Comunicacion) -> Comunicacion:
+                now = datetime.now(timezone.utc)
+                obj.id = uuid4()
+                obj.retry_count = 0
+                obj.created_at = now
+                obj.updated_at = now
+                return obj
+
+            mock_repo_instance.create = AsyncMock(side_effect=_create_persisted)
             MockRepo.return_value = mock_repo_instance
 
             # Create a minimal user
@@ -196,39 +202,47 @@ class TestRouterEnqueueUsesSetDestinatario:
             mock_user.id = uuid4()
             mock_user.roles = []
 
-            # Mock the approval service
-            with patch(
-                "app.modules.comunicacion.router.ApprovalService"
-            ) as MockApproval:
-                mock_approval_instance = MagicMock()
-                mock_approval_instance.requires_approval = AsyncMock(
-                    return_value=False
-                )
-                MockApproval.return_value = mock_approval_instance
+            # RN-16 requires a recent preview before enqueueing. Seed the
+            # in-memory marker so this test stays focused on destinatario handling.
+            with patch.dict(
+                "app.modules.comunicacion.router._user_preview_at",
+                {str(mock_user.id): time.time()},
+                clear=False,
+            ):
 
-                # Create request data
-                data = [
-                    ComunicacionCreate(
-                        destinatario=email,
-                        asunto="Test",
-                        cuerpo="Body",
+                # Mock the approval service
+                with patch(
+                    "app.modules.comunicacion.router.ApprovalService"
+                ) as MockApproval:
+                    mock_approval_instance = MagicMock()
+                    mock_approval_instance.requires_approval = AsyncMock(
+                        return_value=False
                     )
-                ]
+                    MockApproval.return_value = mock_approval_instance
 
-                # Call enqueue_mensajes
-                await enqueue_mensajes(
-                    session=mock_session,
-                    current_user=mock_user,
-                    data=data,
-                )
+                    # Create request data
+                    data = [
+                        ComunicacionCreate(
+                            destinatario=email,
+                            asunto="Test",
+                            cuerpo="Body",
+                        )
+                    ]
 
-                # Verify create was called with a Comunicacion object
-                mock_repo_instance.create.assert_called_once()
-                created_obj = mock_repo_instance.create.call_args[0][0]
+                    # Call enqueue_mensajes
+                    await enqueue_mensajes(
+                        session=mock_session,
+                        current_user=mock_user,
+                        data=data,
+                    )
 
-                # Verify the object has encrypted/hash values set
-                assert created_obj.destinatario_enc != ""
-                assert created_obj.destinatario_hash != ""
-                # The plaintext column should NOT have been overwritten
-                # (it was set at construction time)
-                # After set_destinatario, self.destinatario stays at construction value
+                    # Verify create was called with a Comunicacion object
+                    mock_repo_instance.create.assert_called_once()
+                    created_obj = mock_repo_instance.create.call_args[0][0]
+
+                    # Verify the object has encrypted/hash values set
+                    assert created_obj.destinatario_enc != ""
+                    assert created_obj.destinatario_hash != ""
+                    # The plaintext column should NOT have been overwritten
+                    # (it was set at construction time)
+                    # After set_destinatario, self.destinatario stays at construction value

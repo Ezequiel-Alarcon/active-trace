@@ -21,6 +21,11 @@ from app.models.mixins import TenantScopedMixin
 class Guardia(Base, TenantScopedMixin):
     __tablename__ = "guardia"
 
+    # TODO: (FEAT) Auditoría backend/frontend 2026-06-19: HU-29 / F6.6 piden
+    # exponer `estado` de la guardia (mínimo "finalizado") y el modelo no lo
+    # persiste. La pantalla de historial no puede mostrar ese dato con el
+    # backend actual.
+
     tutor_id: Mapped[UUID] = mapped_column(
         PgUUID(as_uuid=True),
         ForeignKey("usuario.id", ondelete="RESTRICT"),

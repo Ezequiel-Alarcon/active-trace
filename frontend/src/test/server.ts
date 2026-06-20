@@ -398,12 +398,63 @@ export const handlers = [
       { id: 'en-2', materia_id: 'm-2', materia_nombre: 'Física', docente_id: 'u-2', docente_nombre: 'María Pérez', dia: 'Miércoles', horario: '08:00 — 12:00', enlace: '', estado: 'Realizada', grabacion: '' },
     ]),
   ),
+  http.get('http://localhost:8000/api/encuentros/instancias', () =>
+    HttpResponse.json([
+      { id: 'en-1', materia_id: 'm-1', materia_nombre: 'Matemáticas', docente_id: 'u-1', docente_nombre: 'Carlos López', dia: 'Lunes', horario: '18:00 — 20:00', enlace: '', estado: 'Pendiente', grabacion: '' },
+      { id: 'en-2', materia_id: 'm-2', materia_nombre: 'Física', docente_id: 'u-2', docente_nombre: 'María Pérez', dia: 'Miércoles', horario: '08:00 — 12:00', enlace: '', estado: 'Realizada', grabacion: '' },
+    ]),
+  ),
   http.get('http://localhost:8000/api/encuentros/slots', () =>
     HttpResponse.json([
       { id: 'sl-1', materia_id: 'm-1', materia_nombre: 'Matemáticas', dia: 'Lunes', horario: '18:00 — 20:00', fecha_inicio: '2024-03-01', cantidad_semanas: 16, titulo: 'Teórica', enlace: '' },
       { id: 'sl-2', materia_id: 'm-2', materia_nombre: 'Física', dia: 'Miércoles', horario: '08:00 — 12:00', fecha_inicio: '2024-03-01', cantidad_semanas: 16, titulo: 'Laboratorio', enlace: '' },
     ]),
   ),
+  http.post('http://localhost:8000/api/encuentros/slots', async ({ request }) => {
+    const body = (await request.json()) as Record<string, unknown>;
+    return HttpResponse.json(
+      {
+        id: 'sl-new',
+        tenant_id: 't-1',
+        materia_id: body.materia_id,
+        cohorte_id: body.cohorte_id,
+        titulo: body.titulo,
+        dia_semana: body.dia_semana,
+        hora_inicio: body.hora_inicio,
+        hora_fin: body.hora_fin,
+        fecha_inicio: body.fecha_inicio,
+        cant_semanas: body.cant_semanas,
+        meet_url: body.meet_url ?? null,
+        video_url: body.video_url ?? null,
+        created_at: '2024-06-01T00:00:00Z',
+        updated_at: '2024-06-01T00:00:00Z',
+      },
+      { status: 201 },
+    );
+  }),
+  http.post('http://localhost:8000/api/encuentros/instancias/unico', async ({ request }) => {
+    const body = (await request.json()) as Record<string, unknown>;
+    return HttpResponse.json(
+      {
+        id: 'inst-new',
+        tenant_id: 't-1',
+        slot_id: null,
+        materia_id: body.materia_id,
+        cohorte_id: body.cohorte_id,
+        fecha: body.fecha,
+        hora_inicio: body.hora_inicio,
+        hora_fin: body.hora_fin,
+        titulo: body.titulo,
+        estado: 'pendiente',
+        meet_url: body.meet_url ?? null,
+        video_url: body.video_url ?? null,
+        comentario: body.comentario ?? null,
+        created_at: '2024-06-01T00:00:00Z',
+        updated_at: '2024-06-01T00:00:00Z',
+      },
+      { status: 201 },
+    );
+  }),
   http.get('http://localhost:8000/api/guardias', () =>
     HttpResponse.json([
       { id: 'gu-1', tutor_id: 'u-1', tutor_nombre: 'Carlos López', materia_id: 'm-1', materia_nombre: 'Matemáticas', dia: 'Lunes', horario: '18:00 — 20:00', estado: 'Pendiente', comentarios: '' },

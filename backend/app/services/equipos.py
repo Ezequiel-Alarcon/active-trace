@@ -87,6 +87,11 @@ class EquipoService:
             asignacion.contexto_tipo, asignacion.contexto_id
         )
 
+        # TODO: (REVIEW) Auditoría backend/frontend 2026-06-19: la respuesta
+        # para `mis-equipos` no expone los datos expandidos que pide la KB/UI
+        # (`nombre_materia`, `codigo_materia`, `nombre_carrera`,
+        # `nombre_cohorte`, `comisiones`). Solo devuelve `nombre_contexto`.
+
         usuario_fields = decrypt_usuario_fields(usuario) if usuario else {}
         return EquipoAsignacionResponse(
             id=asignacion.id,
@@ -120,6 +125,11 @@ class EquipoService:
     ) -> list[EquipoAsignacionResponse]:
         repo = self._asignacion_repo()
         filters = [Asignacion.usuario_id == usuario_id]
+        # TODO: (REVIEW) Auditoría backend/frontend 2026-06-19: el filtro por
+        # `cohorte_id` no cumple `openspec/specs/equipos-mis-equipos/spec.md`.
+        # Hoy solo devuelve asignaciones con `contexto_tipo == Cohorte`, pero el
+        # spec también exige incluir asignaciones de Materia que pertenezcan a la
+        # cohorte filtrada.
         if materia_id is not None:
             filters.append(Asignacion.contexto_tipo == ContextoTipo.MATERIA)
             filters.append(Asignacion.contexto_id == materia_id)

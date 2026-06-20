@@ -41,6 +41,11 @@ class MensajeResponse(BaseModel):
 class InboxThreadItem(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
+    # TODO: (REVIEW) Auditoría backend/frontend 2026-06-19: la bandeja de
+    # mensajes documentada para frontend necesita mostrar remitente visible,
+    # asunto, fecha y estado leído/no leído. Hoy el DTO no trae nombre del
+    # remitente; solo IDs y el último asunto/cuerpo.
+
     hilo_id: UUID
     remitente_id: UUID
     destinatario_id: UUID

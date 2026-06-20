@@ -7,6 +7,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 # TODO: (FEAT) Agregar permiso perfil:ver al catálogo y decorar estos
 # endpoints con require_permission para mantener consistencia.
+# TODO: (REVIEW) Auditoría backend/frontend 2026-06-19: la pantalla de perfil
+# funciona solo por autenticación, no por RBAC explícito. Para un proyecto
+# fail-closed esto queda incompleto: no existe `perfil:ver`/`perfil:editar` en
+# migraciones ni guards en router.
+# TODO: (REVIEW) Auditoría backend/frontend 2026-06-19: el contrato real es
+# `/api/perfil/` para GET/PATCH. Si el frontend nuevo espera `/api/auth/me` o
+# `/api/usuarios/me`, hay desalineación de rutas aunque la funcionalidad exista.
 from app.auth.deps import CurrentUser, get_current_user
 from app.core.dependencies import get_db
 from app.schemas.perfil import PerfilResponse, PerfilUpdate

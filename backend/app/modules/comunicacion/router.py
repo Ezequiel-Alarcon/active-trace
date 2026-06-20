@@ -22,6 +22,7 @@ from app.modules.comunicacion.repositories.comunicacion import ComunicacionRepos
 from app.modules.comunicacion.schemas.comunicacion import (
     ComunicacionCreate,
     ComunicacionResponse,
+    LotePendienteResponse,
     LoteStatusResponse,
 )
 from app.modules.comunicacion.schemas.lote import LoteAprobarRequest, LoteRechazarRequest
@@ -45,6 +46,21 @@ def _check_preview_done(current_user_id: UUID) -> None:
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Debe realizar una vista previa (/preview) antes de enviar mensajes",
         )
+
+
+def _parse_comunicacion_estado(estado: str | None) -> ComunicacionEstado | None:
+    if estado is None:
+        return None
+
+    estado_normalizado = estado.strip().lower()
+    for item in ComunicacionEstado:
+        if item.value.lower() == estado_normalizado:
+            return item
+
+    raise HTTPException(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        detail=f"Estado invalido: {estado}",
+    )
 
 
 @router.post("/preview", response_model=PreviewResponse, dependencies=[Depends(require_permission("comunicacion:enviar"))])
@@ -123,6 +139,24 @@ async def enqueue_mensajes(
         )
         for c in created
     ]
+
+
+@router.get(
+    "/lotes",
+    response_model=list[LotePendienteResponse],
+    status_code=status.HTTP_200_OK,
+    description="Lista lotes agrupados por estado para el tenant actual.",
+    dependencies=[Depends(require_permission("comunicacion:aprobar"))],
+)
+async def list_lotes(
+    estado: str | None = None,
+    session: AsyncSession = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
+) -> list[LotePendienteResponse]:
+    repo = ComunicacionRepository(session, current_user.tenant_id)
+    estado_enum = _parse_comunicacion_estado(estado)
+    lotes = await repo.list_lotes_grouped(current_user.tenant_id, estado_enum)
+    return [LotePendienteResponse(**lote) for lote in lotes]
 
 
 @router.get("/lotes/{lote_id}", response_model=LoteStatusResponse, dependencies=[Depends(require_permission("comunicacion:enviar"))])

@@ -205,6 +205,10 @@ async def delete_guardia(
 
 # ── Export CSV ────────────────────────────────────────────────────────
 
+# TODO: (REVIEW) Auditoría backend/frontend 2026-06-19: el backend expone
+# `/api/guardias/export`, pero el spec frontend archivado espera
+# `/api/guardias/exportar`. Alinear contrato antes de integrar la pantalla.
+
 @router.get(
     "/export",
     response_class=StreamingResponse,

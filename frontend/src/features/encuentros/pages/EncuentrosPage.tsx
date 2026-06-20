@@ -1,15 +1,23 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { PageHeader, Button, DataTable, FilterBar, StatusBadge, type Column } from '@/shared/ui';
+import { useAuth } from '@/features/auth/components/AuthProvider';
+import InstanciaUnicaForm from '../components/InstanciaUnicaForm';
+import SlotFormWizard from '../components/SlotFormWizard';
 import { useEncuentros, useSlots, useGuardias, downloadGuardiasExport } from '../hooks/useEncuentros';
 import type { InstanciaResponse, SlotResponse, GuardiaResponse, EncuentroFilters } from '../types/encuentros';
 
-type Tab = 'encuentros' | 'slots' | 'guardias';
+type Tab = 'encuentros' | 'slots' | 'guardias' | 'crear-slot' | 'crear-unico';
 
-const TABS: { id: Tab; label: string }[] = [
+const BASE_TABS: { id: Tab; label: string }[] = [
   { id: 'encuentros', label: 'Encuentros' },
   { id: 'slots', label: 'Slots' },
   { id: 'guardias', label: 'Guardias' },
+];
+
+const MANAGEMENT_TABS: { id: Tab; label: string }[] = [
+  { id: 'crear-slot', label: 'Crear slot' },
+  { id: 'crear-unico', label: 'Crear único' },
 ];
 
 const INPUT_CLASS = 'border border-gray-300 rounded px-3 py-1.5 text-sm';
@@ -21,12 +29,25 @@ function mapEstado(estado: string) {
 }
 
 export default function EncuentrosPage() {
+  const { hasPermission } = useAuth();
+  const canManageEncuentros = hasPermission('encuentros:gestionar');
   const [tab, setTab] = useState<Tab>('encuentros');
   const [filters, setFilters] = useState<EncuentroFilters>({});
   const { data: encuentros, isLoading: loadEnc, isError: errEnc } = useEncuentros(filters);
   const { data: slots, isLoading: loadSlots } = useSlots();
   const { data: guardias, isLoading: loadGuard } = useGuardias(filters);
   const { register, handleSubmit, reset } = useForm<EncuentroFilters>();
+
+  const tabs = useMemo(
+    () => (canManageEncuentros ? [...BASE_TABS, ...MANAGEMENT_TABS] : BASE_TABS),
+    [canManageEncuentros],
+  );
+
+  useEffect(() => {
+    if (!tabs.some((currentTab) => currentTab.id === tab)) {
+      setTab('encuentros');
+    }
+  }, [tab, tabs]);
 
   function onSubmit(values: EncuentroFilters) {
     const f: EncuentroFilters = {};
@@ -68,8 +89,8 @@ export default function EncuentrosPage() {
     <div className="flex flex-col gap-4">
       <PageHeader title="Encuentros" />
 
-      <div className="flex gap-1 border-b border-gray-200 mb-2">
-        {TABS.map((t) => (
+        <div className="flex gap-1 border-b border-gray-200 mb-2">
+        {tabs.map((t) => (
           <button
             key={t.id}
             type="button"
@@ -138,6 +159,14 @@ export default function EncuentrosPage() {
             <DataTable rows={guardias ?? []} columns={guardColumns} rowKey={(g) => g.id} emptyMessage="No hay guardias registradas." />
           )}
         </div>
+      )}
+
+      {tab === 'crear-slot' && canManageEncuentros && (
+        <SlotFormWizard onSuccess={() => setTab('slots')} />
+      )}
+
+      {tab === 'crear-unico' && canManageEncuentros && (
+        <InstanciaUnicaForm onSuccess={() => setTab('encuentros')} />
       )}
     </div>
   );

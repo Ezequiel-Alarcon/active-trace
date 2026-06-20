@@ -27,6 +27,11 @@ class Usuario(Base, TenantScopedMixin):
     email_hash: Mapped[str] = mapped_column(String(64), nullable=False)
     email_enc: Mapped[str] = mapped_column(String(2048), nullable=False)
     dni_enc: Mapped[str] = mapped_column(String(2048), nullable=False)
+    # TODO: (REVIEW) Auditoría backend/frontend 2026-06-19: la KB
+    # `09_decisiones_y_supuestos.md` (S6) describe el CUIL como derivado y de
+    # solo lectura, no almacenado de forma independiente. El backend hoy sí lo
+    # persiste en `cuil_enc`; resolver la inconsistencia documental o ajustar el
+    # modelo/flujo.
     cuil_enc: Mapped[str] = mapped_column(String(2048), nullable=False)
     cbu_enc: Mapped[str] = mapped_column(String(2048), nullable=False)
     alias_cbu_enc: Mapped[str | None] = mapped_column(String(2048), nullable=True)

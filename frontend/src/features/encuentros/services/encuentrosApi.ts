@@ -1,5 +1,14 @@
 import { apiClient } from '@/shared/services/api';
-import type { SlotResponse, InstanciaResponse, GuardiaResponse, EncuentroFilters } from '../types/encuentros';
+import type {
+  SlotResponse,
+  InstanciaResponse,
+  GuardiaResponse,
+  EncuentroFilters,
+  CreateSlotRequest,
+  CreateInstanciaUnicaRequest,
+  CreatedSlotResponse,
+  CreatedInstanciaUnicaResponse,
+} from '../types/encuentros';
 
 export async function fetchEncuentros(filters?: EncuentroFilters): Promise<InstanciaResponse[]> {
   const params: Record<string, string> = {};
@@ -27,5 +36,20 @@ export async function fetchGuardias(filters?: EncuentroFilters): Promise<Guardia
 
 export async function exportarGuardias(): Promise<Blob> {
   const response = await apiClient.get('/api/guardias/exportar', { responseType: 'blob' });
+  return response.data;
+}
+
+export async function createSlot(data: CreateSlotRequest): Promise<CreatedSlotResponse> {
+  const response = await apiClient.post<CreatedSlotResponse>('/api/encuentros/slots', data);
+  return response.data;
+}
+
+export async function createInstanciaUnica(
+  data: CreateInstanciaUnicaRequest,
+): Promise<CreatedInstanciaUnicaResponse> {
+  const response = await apiClient.post<CreatedInstanciaUnicaResponse>(
+    '/api/encuentros/instancias/unico',
+    data,
+  );
   return response.data;
 }

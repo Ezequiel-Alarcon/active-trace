@@ -37,6 +37,15 @@ from app.services.evaluaciones import ColoquioService
 
 router = APIRouter(prefix="/api/coloquios", tags=["coloquios"])
 
+# TODO: (REVIEW) Auditoría backend/frontend 2026-06-19: la KB está
+# inconsistente sobre PROFESOR en coloquios. HU-30/HU-31 y FL-07 hablan de
+# crear convocatorias/importar alumnos, pero este router solo habilita gestión
+# a `coloquios:gestionar` y la migración `017_coloquios_permissions.py` no se lo
+# asigna a PROFESOR.
+# TODO: (REVIEW) Auditoría backend/frontend 2026-06-19: el frontend archivado
+# espera `/api/coloquios/convocatorias` y `/api/coloquios/reservas`, mientras
+# aquí el contrato es `/api/coloquios/` y `/{evaluacion_id}/reservas`.
+
 PERM_GESTIONAR = "coloquios:gestionar"
 PERM_VER = "coloquios:ver"
 PERM_RESERVAR = "coloquios:reservar"

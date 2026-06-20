@@ -18,6 +18,11 @@ from pydantic import BaseModel, ConfigDict
 class EquipoAsignacionResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
+    # TODO: (REVIEW) Auditoría backend/frontend 2026-06-19: este DTO no cubre
+    # la grilla documentada para "Mis Equipos". Faltan campos explícitos para
+    # carrera, cohorte, materia/código y comisiones; hoy el frontend tendría
+    # que inferir demasiado desde `nombre_contexto`.
+
     id: UUID
     tenant_id: UUID
     usuario_id: UUID

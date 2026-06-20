@@ -69,3 +69,19 @@ class LoteStatusResponse(BaseModel):
     enviados: int
     errores: int
     cancelados: int
+
+
+class LotePendienteResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    lote_id: UUID
+    tenant_id: UUID
+    total: int
+    pendientes: int
+    enviando: int
+    enviados: int
+    errores: int
+    cancelados: int
+    asunto: str
+    cuerpo: str
+    destinatarios: list[str]

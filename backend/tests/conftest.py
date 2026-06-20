@@ -14,11 +14,23 @@ from sqlalchemy.ext.asyncio import (
 from app.core.database import Base
 
 
+def _host_test_database_url() -> str:
+    """Return the host-reachable Postgres URL for test runs.
+
+    `docker-compose.yml` publishes the test database container on host port
+    5433. Keeping the fallback here avoids the asyncpg handshake failures that
+    happen when the suite hits an unrelated local service on 5432.
+    """
+
+    return os.environ.get(
+        "DATABASE_URL_TEST",
+        "postgresql+asyncpg://postgres:postgres@127.0.0.1:5433/activia_trace_test",
+    )
+
+
 os.environ.setdefault("SECRET_KEY", "test-secret-key-at-least-32-chars-long")
 os.environ.setdefault("ENCRYPTION_KEY", "12345678901234567890123456789012")
-os.environ.setdefault(
-    "DATABASE_URL", "postgresql+asyncpg://postgres:postgres@localhost:5432/activia_trace_test"
-)
+os.environ.setdefault("DATABASE_URL", _host_test_database_url())
 
 
 _schema_applied = False
