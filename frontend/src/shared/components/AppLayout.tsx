@@ -55,6 +55,26 @@ const PROFESOR_SECTION: NavSection = {
   ],
 };
 
+const TUTOR_SECTION: NavSection = {
+  label: 'Tutor',
+  items: [
+    { label: 'Atrasados', to: '/comision/atrasados', permission: 'atrasados:ver' },
+    { label: 'Entregas', to: '/comision/entregas', permission: 'entregas:ver_sin_corregir' },
+    { label: 'Mis Guardias', to: '/profesor/guardias', permission: 'encuentros:registrar_guardia' },
+    { label: 'Mensajes', to: '/profesor/mensajes', permission: 'mensajes:ver' },
+    { label: 'Mis Equipos', to: '/profesor/equipos', permission: 'equipos:ver' },
+  ],
+};
+
+const ALUMNO_SECTION: NavSection = {
+  label: 'Mi Espacio',
+  items: [
+    { label: 'Mi Academia', to: '/alumno/academia', permission: 'academico:ver_estado_propio' },
+    { label: 'Mis Reservas', to: '/alumno/reservas', permission: 'coloquios:reservar' },
+    { label: 'Mensajes', to: '/profesor/mensajes', permission: 'mensajes:ver' },
+  ],
+};
+
 const COORDINACION_SECTION: NavSection = {
   label: 'Coordinación',
   items: [
@@ -80,6 +100,14 @@ export default function AppLayout() {
     (item) => !item.permission || hasPermission(item.permission),
   );
 
+  const visibleTutorItems = TUTOR_SECTION.items.filter(
+    (item) => !item.permission || hasPermission(item.permission),
+  );
+
+  const visibleAlumnoItems = ALUMNO_SECTION.items.filter(
+    (item) => !item.permission || hasPermission(item.permission),
+  );
+
   const visibleCoordinacionItems = COORDINACION_SECTION.items.filter(
     (item) => !item.permission || hasPermission(item.permission),
   );
@@ -94,7 +122,12 @@ export default function AppLayout() {
   const showLiquidaciones = visibleLiquidacionesItems.length > 0;
   const showAdmin = visibleAdminItems.length > 0;
   const showCoordinacion = visibleCoordinacionItems.length > 0;
-  const showProfesor = visibleProfesorItems.length > 0;
+  // PROFESOR: tiene calificaciones:ver pero no es ADMIN (estructura:gestionar)
+  const showProfesor = hasPermission('calificaciones:ver') && !hasPermission('estructura:gestionar');
+  // TUTOR: tiene atrasados:ver pero no calificaciones:ver (PROFESOR) ni equipos:asignar (COORDINADOR)
+  const showTutor = hasPermission('atrasados:ver') && !hasPermission('calificaciones:ver') && !hasPermission('equipos:asignar');
+  // ALUMNO: único con academico:ver_estado_propio
+  const showAlumno = hasPermission('academico:ver_estado_propio');
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -148,6 +181,58 @@ export default function AppLayout() {
               </span>
               <div className="mt-1 flex flex-col gap-1">
                 {visibleProfesorItems.map((item) => (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    end
+                    className={({ isActive }) =>
+                      `px-4 py-2 text-sm rounded mx-2 transition-colors ${
+                        isActive
+                          ? 'bg-blue-100 text-blue-700 font-medium'
+                          : 'text-gray-700 hover:bg-gray-100'
+                      }`
+                    }
+                  >
+                    {item.label}
+                  </NavLink>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {showTutor && (
+            <div className="mt-4">
+              <span className="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                {TUTOR_SECTION.label}
+              </span>
+              <div className="mt-1 flex flex-col gap-1">
+                {visibleTutorItems.map((item) => (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    end
+                    className={({ isActive }) =>
+                      `px-4 py-2 text-sm rounded mx-2 transition-colors ${
+                        isActive
+                          ? 'bg-blue-100 text-blue-700 font-medium'
+                          : 'text-gray-700 hover:bg-gray-100'
+                      }`
+                    }
+                  >
+                    {item.label}
+                  </NavLink>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {showAlumno && (
+            <div className="mt-4">
+              <span className="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                {ALUMNO_SECTION.label}
+              </span>
+              <div className="mt-1 flex flex-col gap-1">
+                {visibleAlumnoItems.map((item) => (
                   <NavLink
                     key={item.to}
                     to={item.to}
