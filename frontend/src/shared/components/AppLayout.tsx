@@ -51,6 +51,7 @@ const PROFESOR_SECTION: NavSection = {
     { label: 'Mis Guardias', to: '/profesor/guardias', permission: 'encuentros:registrar_guardia' },
     { label: 'Mensajes', to: '/profesor/mensajes', permission: 'mensajes:ver' },
     { label: 'Mis Equipos', to: '/profesor/equipos', permission: 'equipos:ver' },
+    { label: 'Coloquios', to: '/coordinacion/coloquios', permission: 'coloquios:ver' },
   ],
 };
 
