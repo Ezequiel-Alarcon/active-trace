@@ -22,7 +22,7 @@ from __future__ import annotations
 import asyncio
 import os
 import sys
-from datetime import date, time
+from datetime import date, datetime, time, timezone
 from pathlib import Path
 from uuid import UUID, uuid4
 
@@ -109,10 +109,19 @@ _SLOT     = UUID("55555555-0001-0000-0000-000000000000")
 _INS_SLOT = [UUID(f"55555555-0002-0000-0000-{i:012d}") for i in range(1, 5)]
 _INS_UNICA = UUID("55555555-0003-0000-0000-000000000001")
 _GUARDIA   = UUID("55555555-0004-0000-0000-000000000001")
+_GUARDIAS_PROFESOR = [
+    UUID("55555555-0005-0000-0000-000000000001"),
+    UUID("55555555-0005-0000-0000-000000000002"),
+]
 
 # Comunicaciones
 _LOTE_ID = UUID("22222222-0051-0000-0000-000000000000")
 _COM_IDS  = [UUID(f"66666666-0001-0000-0000-{i:012d}") for i in range(1, 4)]
+
+# Inbox interna PROFESOR
+_HILO_COORDINACION = UUID("77777777-0001-0000-0000-000000000001")
+_HILO_TUTORIA = UUID("77777777-0001-0000-0000-000000000002")
+_MSG_INTERNO_IDS = [UUID(f"77777777-0002-0000-0000-{i:012d}") for i in range(1, 5)]
 
 # Fechas fijas (seed idempotente)
 _HOY         = date(2026, 6, 19)
@@ -129,6 +138,90 @@ def _enc(plaintext: str, aad: str) -> str:
 
 def _ehash(email: str) -> str:
     return hash_email_for_search(email.lower(), _T)
+
+
+def _build_professor_guardias(profesor_id: UUID) -> list[dict[str, object]]:
+    return [
+        {
+            "id": _GUARDIAS_PROFESOR[0],
+            "tutor_id": profesor_id,
+            "materia_id": _MAT_AED,
+            "cohorte_id": _COHORTE,
+            "fecha": date(2026, 7, 10),
+            "hora_inicio": time(18, 30),
+            "hora_fin": time(20, 0),
+            "titulo": "Consultorio AED - recuperacion TP2",
+            "observaciones": "Repaso de estructuras enlazadas y criterio de evaluacion.",
+        },
+        {
+            "id": _GUARDIAS_PROFESOR[1],
+            "tutor_id": profesor_id,
+            "materia_id": _MAT_POO,
+            "cohorte_id": _COHORTE,
+            "fecha": date(2026, 7, 16),
+            "hora_inicio": time(19, 0),
+            "hora_fin": time(20, 30),
+            "titulo": "Consultorio POO - UML y entregables",
+            "observaciones": "Guardia previa al coloquio con foco en herencia y modelado.",
+        },
+    ]
+
+
+def _build_professor_inbox_messages(
+    profesor_id: UUID,
+    coordinador_id: UUID,
+    tutor_id: UUID,
+) -> list[dict[str, object]]:
+    return [
+        {
+            "id": _MSG_INTERNO_IDS[0],
+            "hilo_id": _HILO_COORDINACION,
+            "padre_id": None,
+            "asunto": "Seguimiento de alumnos AED",
+            "cuerpo": "Necesito que revises a Carlos Martinez y Pedro Sanchez antes del cierre semanal.",
+            "remitente_id": coordinador_id,
+            "destinatario_id": profesor_id,
+            "created_at": datetime(2026, 6, 17, 14, 0, tzinfo=timezone.utc),
+            "updated_at": datetime(2026, 6, 17, 14, 0, tzinfo=timezone.utc),
+            "leido_at": datetime(2026, 6, 17, 14, 5, tzinfo=timezone.utc),
+        },
+        {
+            "id": _MSG_INTERNO_IDS[1],
+            "hilo_id": _HILO_COORDINACION,
+            "padre_id": _MSG_INTERNO_IDS[0],
+            "asunto": "Re: Seguimiento de alumnos AED",
+            "cuerpo": "Ya revise ambos casos. Carlos necesita recuperatorio y Pedro sigue sin nota cargada.",
+            "remitente_id": profesor_id,
+            "destinatario_id": coordinador_id,
+            "created_at": datetime(2026, 6, 17, 15, 0, tzinfo=timezone.utc),
+            "updated_at": datetime(2026, 6, 17, 15, 0, tzinfo=timezone.utc),
+            "leido_at": datetime(2026, 6, 17, 15, 10, tzinfo=timezone.utc),
+        },
+        {
+            "id": _MSG_INTERNO_IDS[2],
+            "hilo_id": _HILO_COORDINACION,
+            "padre_id": _MSG_INTERNO_IDS[1],
+            "asunto": "Re: Seguimiento de alumnos AED",
+            "cuerpo": "Perfecto. Dejemos trazado ese seguimiento para la demo con coordinacion.",
+            "remitente_id": coordinador_id,
+            "destinatario_id": profesor_id,
+            "created_at": datetime(2026, 6, 17, 16, 0, tzinfo=timezone.utc),
+            "updated_at": datetime(2026, 6, 17, 16, 0, tzinfo=timezone.utc),
+            "leido_at": None,
+        },
+        {
+            "id": _MSG_INTERNO_IDS[3],
+            "hilo_id": _HILO_TUTORIA,
+            "padre_id": None,
+            "asunto": "Material de apoyo POO",
+            "cuerpo": "Te comparto la guia de polimorfismo para que la uses en la proxima guardia.",
+            "remitente_id": tutor_id,
+            "destinatario_id": profesor_id,
+            "created_at": datetime(2026, 6, 18, 11, 30, tzinfo=timezone.utc),
+            "updated_at": datetime(2026, 6, 18, 11, 30, tzinfo=timezone.utc),
+            "leido_at": datetime(2026, 6, 18, 12, 0, tzinfo=timezone.utc),
+        },
+    ]
 
 
 async def _get_user_id(conn: sa.ext.asyncio.AsyncConnection, email: str) -> UUID | None:
@@ -266,6 +359,7 @@ async def _ensure_asignaciones_contextuales(
     conn: sa.ext.asyncio.AsyncConnection,
     profesor_id: UUID,
     tutor_id: UUID,
+    coordinador_id: UUID,
 ) -> None:
     print("\n=== Asignaciones contextuales ===")
 
@@ -287,13 +381,38 @@ async def _ensure_asignaciones_contextuales(
                 VALUES
                     (:id, :t, :uid, :rid,
                      'Materia', :mid, :mid, :cohid,
-                     NULL, :desde, NULL, now(), now(), NULL)
+                     :responsable_id, :desde, :hasta, now(), now(), NULL)
             """), {"id": str(uuid4()), "t": str(_T), "uid": str(profesor_id),
-                   "rid": str(_ROL_IDS["PROFESOR"]), "mid": str(mat_id),
-                   "cohid": str(_COHORTE), "desde": _HOY})
+                    "rid": str(_ROL_IDS["PROFESOR"]), "mid": str(mat_id),
+                    "cohid": str(_COHORTE), "responsable_id": str(coordinador_id),
+                    "desde": _HOY, "hasta": None})
             print(f"  [ok]  PROFESOR -> {label} (Materia)")
         else:
             print(f"  [skip] PROFESOR -> {label} ya existe")
+
+    exists = (await conn.execute(
+        sa.text("""SELECT id FROM asignacion
+                   WHERE tenant_id=:t AND usuario_id=:uid AND rol_id=:rid
+                     AND contexto_tipo='Materia' AND materia_id=:mid AND deleted_at IS NULL"""),
+        {"t": str(_T), "uid": str(profesor_id), "rid": str(_ROL_IDS["PROFESOR"]), "mid": str(_MAT_BD)},
+    )).fetchone()
+    if not exists:
+        await conn.execute(sa.text("""
+            INSERT INTO asignacion
+                (id, tenant_id, usuario_id, rol_id,
+                 contexto_tipo, contexto_id, materia_id, cohorte_id,
+                 responsable_id, desde, hasta, created_at, updated_at, deleted_at)
+            VALUES
+                (:id, :t, :uid, :rid,
+                 'Materia', :mid, :mid, :cohid,
+                 :responsable_id, :desde, :hasta, now(), now(), NULL)
+        """), {"id": str(uuid4()), "t": str(_T), "uid": str(profesor_id),
+               "rid": str(_ROL_IDS["PROFESOR"]), "mid": str(_MAT_BD),
+               "cohid": str(_COHORTE), "responsable_id": str(coordinador_id),
+               "desde": date(2026, 3, 1), "hasta": date(2026, 5, 31)})
+        print("  [ok]  PROFESOR -> BD (Materia, historica)")
+    else:
+        print("  [skip] PROFESOR -> BD ya existe")
 
     # TUTOR -> AED (Materia scope)
     exists = (await conn.execute(
@@ -428,6 +547,7 @@ async def _ensure_calificaciones(conn: sa.ext.asyncio.AsyncConnection) -> None:
 async def _ensure_encuentros(
     conn: sa.ext.asyncio.AsyncConnection,
     tutor_id: UUID,
+    profesor_id: UUID,
 ) -> None:
     print("\n=== Encuentros ===")
 
@@ -491,6 +611,30 @@ async def _ensure_encuentros(
            "mid": str(_MAT_AED), "cohid": str(_COHORTE)})
     print("  [ok]  Guardia TUTOR en AED (2026-07-08 16-18hs)")
 
+    for guardia in _build_professor_guardias(profesor_id):
+        await conn.execute(sa.text("""
+            INSERT INTO guardia
+                (id, tenant_id, tutor_id, materia_id, cohorte_id,
+                 fecha, hora_inicio, hora_fin, titulo, observaciones,
+                 created_at, updated_at, deleted_at)
+            VALUES (:id, :t, :tid, :mid, :cohid,
+                    :fecha, :hora_inicio, :hora_fin, :titulo, :observaciones,
+                    now(), now(), NULL)
+            ON CONFLICT (id) DO NOTHING
+        """), {
+            "id": str(guardia["id"]),
+            "t": str(_T),
+            "tid": str(guardia["tutor_id"]),
+            "mid": str(guardia["materia_id"]),
+            "cohid": str(guardia["cohorte_id"]),
+            "fecha": guardia["fecha"],
+            "hora_inicio": guardia["hora_inicio"],
+            "hora_fin": guardia["hora_fin"],
+            "titulo": guardia["titulo"],
+            "observaciones": guardia["observaciones"],
+        })
+        print(f"  [ok]  Guardia PROFESOR {guardia['titulo']}")
+
 
 async def _ensure_comunicaciones(conn: sa.ext.asyncio.AsyncConnection) -> None:
     print("\n=== Comunicaciones ===")
@@ -543,6 +687,49 @@ async def _ensure_comunicaciones(conn: sa.ext.asyncio.AsyncConnection) -> None:
         print(f"  [ok]  Comunicación [{estado}] -> {email}")
 
 
+async def _ensure_mensajes_internos(
+    conn: sa.ext.asyncio.AsyncConnection,
+    profesor_id: UUID,
+    coordinador_id: UUID,
+    tutor_id: UUID,
+) -> None:
+    print("\n=== Mensajes internos PROFESOR ===")
+
+    for mensaje in _build_professor_inbox_messages(profesor_id, coordinador_id, tutor_id):
+        row = await conn.execute(
+            sa.text("SELECT 1 FROM mensaje_interno WHERE id=:id"),
+            {"id": str(mensaje["id"])},
+        )
+        if row.fetchone():
+            print(f"  [skip] Mensaje interno {mensaje['id']}")
+            continue
+
+        await conn.execute(sa.text("""
+            INSERT INTO mensaje_interno
+                (id, tenant_id, asunto, cuerpo, remitente_id, destinatario_id,
+                 hilo_id, padre_id, leido_at, created_at, updated_at, deleted_at)
+            VALUES
+                (:id, :t, :asunto, :cuerpo, :remitente_id, :destinatario_id,
+                 :hilo_id, :padre_id, :leido_at, :created_at, :updated_at, NULL)
+        """), {
+            "id": str(mensaje["id"]),
+            "t": str(_T),
+            "asunto": mensaje["asunto"],
+            "cuerpo": mensaje["cuerpo"],
+            "remitente_id": str(mensaje["remitente_id"]),
+            "destinatario_id": str(mensaje["destinatario_id"]),
+            "hilo_id": str(mensaje["hilo_id"]),
+            "padre_id": str(mensaje["padre_id"]) if mensaje["padre_id"] else None,
+            "leido_at": mensaje["leido_at"],
+            "created_at": mensaje["created_at"],
+            "updated_at": mensaje["updated_at"],
+        })
+        print(
+            f"  [ok]  Hilo {mensaje['hilo_id']} | "
+            f"{mensaje['remitente_id']} -> {mensaje['destinatario_id']}"
+        )
+
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
@@ -565,6 +752,7 @@ async def main() -> None:
         # Obtener usuarios base
         profesor_id = await _get_user_id(conn, "profesor@dev.com")
         tutor_id    = await _get_user_id(conn, "tutor@dev.com")
+        coordinador_id = await _get_user_id(conn, "coordinador@dev.com")
 
         if not profesor_id:
             print("ERROR: profesor@dev.com no encontrado. Ejecutá seed_dev.py primero.")
@@ -572,18 +760,23 @@ async def main() -> None:
         if not tutor_id:
             print("ERROR: tutor@dev.com no encontrado. Ejecutá seed_dev.py primero.")
             return
+        if not coordinador_id:
+            print("ERROR: coordinador@dev.com no encontrado. Ejecutá seed_dev.py primero.")
+            return
 
         print(f"  profesor_id = {profesor_id}")
         print(f"  tutor_id    = {tutor_id}")
+        print(f"  coordinador_id = {coordinador_id}")
 
         await _ensure_alumnos(conn)
         await _ensure_estructura(conn)
-        await _ensure_asignaciones_contextuales(conn, profesor_id, tutor_id)
+        await _ensure_asignaciones_contextuales(conn, profesor_id, tutor_id, coordinador_id)
         await _ensure_padron(conn, profesor_id)
         await _ensure_umbrales(conn)
         await _ensure_calificaciones(conn)
-        await _ensure_encuentros(conn, tutor_id)
+        await _ensure_encuentros(conn, tutor_id, profesor_id)
         await _ensure_comunicaciones(conn)
+        await _ensure_mensajes_internos(conn, profesor_id, coordinador_id, tutor_id)
 
     await engine.dispose()
 
@@ -604,10 +797,16 @@ async def main() -> None:
     print("    - SlotEncuentro AED: Lunes 18-20hs (07/07, 14/07, 21/07, 28/07)")
     print("    - Encuentro unico POO: Jueves 09/07 19-21hs")
     print("    - Guardia TUTOR AED: Martes 08/07 16-18hs")
+    print("    - Guardias PROFESOR: AED 10/07 18:30hs | POO 16/07 19:00hs")
     print()
     print("  Comunicaciones:")
     print("    - 2 Pendiente en lote (Carlos y Pedro, alumnos atrasados AED)")
     print("    - 1 Enviado (historial)")
+    print()
+    print("  Inbox PROFESOR:")
+    print(f"    - Hilo coordinacion: {_HILO_COORDINACION}")
+    print(f"    - Hilo tutoria: {_HILO_TUTORIA}")
+    print("    - Destinatarios utiles para redactar mensajes manuales: coordinador@dev.com y tutor@dev.com")
     print()
 
 
