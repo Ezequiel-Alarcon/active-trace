@@ -13,8 +13,9 @@ const VARIANTES: Record<ButtonVariant, string> = {
 };
 
 const BASE =
-  'inline-flex items-center justify-center rounded px-3 py-1.5 text-sm font-medium ' +
-  'transition-colors disabled:opacity-50 disabled:cursor-not-allowed';
+  'inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium ' +
+  'transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none ' +
+  'focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2';
 
 /** Botón del design system. Variantes: primary (azul), secondary (gris), danger (rojo). */
 export default function Button({
