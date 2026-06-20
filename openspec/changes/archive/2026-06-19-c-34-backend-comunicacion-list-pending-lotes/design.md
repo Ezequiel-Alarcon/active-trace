@@ -8,7 +8,7 @@ Current state:
 - `POST /api/comunicaciones/lotes/{lote_id}/rechazar` ✅
 - `GET /api/comunicaciones/lotes` (list with filter) ❌ MISSING
 
-The `ComunicacionRepository` has `count_by_lote_and_estado(lote_id)` but lacks a method to list all lotes grouped by `lote_id` with aggregated counts and metadata (asunto, cuerpo, solicitado_por_nombre, destinatarios).
+The `ComunicacionRepository` has `count_by_lote_and_estado(lote_id)` but lacks a method to list all lotes grouped by `lote_id` with aggregated counts and supported metadata (`asunto`, `cuerpo`, `destinatarios`).
 
 ## Goals / Non-Goals
 
@@ -27,21 +27,21 @@ The `ComunicacionRepository` has `count_by_lote_and_estado(lote_id)` but lacks a
 
 ### 1. New repository method: `list_lotes_grouped(tenant_id, estado=None)`
 
-Uses a single SQL query with `GROUP BY lote_id` to aggregate counts per status and collect metadata (asunto, cuerpo, solicitados_por, destinatarios). Returns a list of aggregated lote rows.
+Uses a single SQL query with `GROUP BY lote_id` to aggregate counts per status and collect metadata available in the current model (`asunto`, `cuerpo`, `destinatarios`). Returns a list of aggregated lote rows.
 
 **Alternative considered**: Fetch all `Comunicacion` records for tenant, then group in Python. Rejected — O(n) memory, no DB-level aggregation.
 
 ### 2. New Pydantic schema: `LotePendienteResponse`
 
-Fields match frontend expectations: `lote_id`, `tenant_id`, `total`, `pendientes`, `enviando`, `enviados`, `errores`, `cancelados`, `asunto`, `cuerpo`, `solicitado_por_nombre`, `destinatarios: list[str]`.
+Fields match the reduced backend contract: `lote_id`, `tenant_id`, `total`, `pendientes`, `enviando`, `enviados`, `errores`, `cancelados`, `asunto`, `cuerpo`, `destinatarios: list[str]`.
 
 ### 3. Router endpoint: `GET /api/comunicaciones/lotes`
 
 Registered at `prefix="/api/comunicaciones"` as `/lotes`. Query param `estado` is optional — maps `Pendiente` → `ComunicacionEstado.PENDIENTE`. When omitted, returns all lotes regardless of estado.
 
-### 4. `solicitado_por_nombre` aggregation
+### 4. Scope reduction: no requester-name field in this change
 
-Collected from `solicitado_por` field on `Comunicacion` — using the first non-null value found within the group.
+The current `Comunicacion` model does not persist a `solicitado_por` field, so this change does not expose `solicitado_por_nombre`. The list endpoint is intentionally limited to fields supportable from current data, avoiding a schema or persistence expansion.
 
 ## Risks / Trade-offs
 

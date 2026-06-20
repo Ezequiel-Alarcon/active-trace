@@ -52,7 +52,8 @@ C-01 foundation-setup (infra, Docker, FastAPI skel, DB inicial, OTel)
             ├── C-30 fix-frontend-api-paths (liquidaciones, equipos, encuentros API mismatches)
             ├── C-31 fix-calificacion-logic (escala notas, import Real, umbral default)
             ├── C-32 feat-comunicacion-approval-ui (página aprobación de comunicaciones F3.3)
-            └── C-33 feat-encuentros-creation-ui (UI creación encuentros F6.1/F6.2)
+            ├── C-33 feat-encuentros-creation-ui (UI creación encuentros F6.1/F6.2)
+            └── C-34 backend-comunicacion-list-pending-lotes (GET /api/comunicaciones/lotes para aprobación UI)
 ```
 
 ### Paralelismo por fase
@@ -661,7 +662,7 @@ C-01 → C-02 → C-03 → C-04 → C-06 → C-07 → C-09 → C-10 → C-11 →
   - `knowledge-base/05_reglas_de_negocio.md` RN-01, RN-02, RN-03
 
 ### [C-32] `feat-comunicacion-approval-ui`
-- **Estado**: `[ ]` pendiente
+- **Estado**: `[x]` archivado (2026-06-19) → `openspec/changes/archive/2026-06-19-c-32-feat-comunicacion-approval-ui/`
 - **Scope**:
   - **Nueva página `AprobacionesPage`** en `features/comunicacion/pages/`:
     - Tabla de lotes en estado Pendiente (fecha, cantidad destinatarios, asunto preview, estado).
@@ -677,7 +678,7 @@ C-01 → C-02 → C-03 → C-04 → C-06 → C-07 → C-09 → C-10 → C-11 →
   - `backend/app/modules/comunicacion/router.py` (endpoints de aprobación)
 
 ### [C-33] `feat-encuentros-creation-ui`
-- **Estado**: `[ ]` pendiente
+- **Estado**: `[x]` archivado (2026-06-19) → `openspec/changes/archive/2026-06-19-c-33-feat-encuentros-creation-ui/`
 - **Scope**:
   - **Formulario `SlotForm`** (encuentro recurrente, F6.1):
     - Wizard de 4 pasos: materia → día/hora → duración → preview/crear.
@@ -695,15 +696,30 @@ C-01 → C-02 → C-03 → C-04 → C-06 → C-07 → C-09 → C-10 → C-11 →
   - `knowledge-base/06_funcionalidades.md` Épica 6 (F6.1, F6.2)
   - `backend/app/routers/encuentros.py`
 
+### [C-34] `backend-comunicacion-list-pending-lotes`
+- **Estado**: `[x]` archivado (2026-06-19) → `openspec/changes/archive/2026-06-19-c-34-backend-comunicacion-list-pending-lotes/`
+- **Scope**:
+  - Nuevo endpoint `GET /api/comunicaciones/lotes?estado=<estado>` para listar lotes de comunicación agrupados por `lote_id` dentro del tenant actual.
+  - Método de repositorio `list_lotes_grouped(tenant_id, estado=None)` con conteos agregados por estado y metadata soportada (`asunto`, `cuerpo`, `destinatarios`).
+  - Nuevo schema `LotePendienteResponse` sin campos requester no soportados (`solicitado_por`, `solicitado_por_nombre`).
+  - RBAC `comunicacion:aprobar` + filtro opcional por `estado`.
+  - Tests backend de repositorio, endpoint, aislamiento tenant y suite `tests/comunicacion/` completamente verde al cierre.
+- **Dependencias**: `C-12`, `C-21`
+- **Governance**: MEDIO
+- **Leer antes**:
+  - `knowledge-base/06_funcionalidades.md` Épica 3 (F3.3)
+  - `backend/app/modules/comunicacion/router.py`
+  - `openspec/specs/comunicacion-list-pending-lotes/spec.md`
+
 ---
 
 ## Resumen
 
 | Métrica | Valor |
 |---------|-------|
-| Total de changes | 33 |
-| Completados | 31 |
-| Pendientes | 2 (C-32, C-33) |
+| Total de changes | 34 |
+| Completados | 34 |
+| Pendientes | 0 |
 | Deuda técnica | 2 bugs MEDIO (C-30, C-31) |
 | Fases | 7 (FASE 0 a FASE 6) |
 | Camino crítico | 10 changes (`C-01 → … → C-12`) |
@@ -721,10 +737,11 @@ C-01 → C-02 → C-03 → C-04 → C-06 → C-07 → C-09 → C-10 → C-11 →
 | ✅ | C-29 | `destinatario` plaintext | PII de alumnos sin cifrar — FIXED |
 | MEDIO | C-30 | Paths API incorrectos | 404 en liquidaciones, equipos, encuentros — FIXED |
 | MEDIO | C-31 | Escala notas, import, umbral | Lógica de aprobación incorrecta — FIXED |
-| FEATURE | C-32 | Página aprobación | F3.3 sin UI |
-| FEATURE | C-33 | Creación encuentros | F6.1/F6.2 sin UI |
+| ✅ | C-32 | Página aprobación | F3.3 UI implementada — FIXED |
+| ✅ | C-33 | Creación encuentros | F6.1/F6.2 implementada — FIXED |
+| ✅ | C-34 | Listado backend de lotes pendientes | Soporte backend para aprobación UI — FIXED |
 
-### Orden recomendado de implementación
+### Roadmap completado
 
-1. **`C-32`** + **`C-33`** — Features faltantes: pueden implementarse en paralelo
+Todos los 34 changes han sido implementados y archivados. El proyecto está en estado completo.
 

@@ -8,14 +8,15 @@ Formularios frontend para crear slots de encuentro recurrente (F6.1) y encuentro
 
 ### Requirement: SlotForm — Wizard de 4 pasos para crear slot recurrente
 
-El sistema SHALL ofrecer un wizard de creación de slot de encuentro recurrente con 4 pasos: materia → día/hora → duración → preview/crear.
+El sistema SHALL ofrecer un wizard de creación de slot de encuentro recurrente con 4 pasos: materia/cohorte → día/hora → duración → preview/crear.
 
 #### Scenario: Usuario completa wizard y crea slot exitosamente
 
-- **WHEN** usuario selecciona materia, día de semana, hora inicio, hora fin, modalidad, link, fecha inicio, cantidad de semanas
+- **WHEN** usuario selecciona materia, cohorte, día de semana, hora inicio, hora fin, modalidad, link, fecha inicio, cantidad de semanas
 - **AND** hace clic en "Siguiente" en cada paso
 - **AND** en el paso 4 (preview) hace clic en "Crear slot"
 - **THEN** el sistema envía `POST /api/encuentros/slots` con todos los datos
+- **AND** el payload incluye `materia_id` y `cohorte_id`
 - **AND** tras respuesta 201, invalida la query `['slots']` de TanStack Query
 - **AND** muestra mensaje de éxito y retorna a la lista de slots
 
@@ -31,25 +32,35 @@ El sistema SHALL ofrecer un wizard de creación de slot de encuentro recurrente 
 - **THEN** el sistema muestra una tabla con las N fechas calculadas client-side (fecha_inicio + N semanas)
 - **AND** la tabla incluye: fecha, hora inicio, hora fin, título
 
-### Requirement: SlotForm — Selector de materia
+### Requirement: SlotForm — Selectores explícitos de materia y cohorte
 
-El sistema SHALL incluir un selector de materia en el paso 1 del wizard.
+El sistema SHALL incluir un selector de materia y un selector de cohorte en el paso 1 del wizard.
 
-#### Scenario: Usuario busca y selecciona materia
+#### Scenario: Usuario busca y selecciona materia y cohorte
 
 - **WHEN** usuario escribe en el campo de materia
 - **THEN** el sistema muestra lista filtrada de materias del tenant
 - **AND** al seleccionar, guarda `materia_id`
+- **AND** el sistema muestra un selector de cohorte con opciones provenientes de datos existentes del tenant/dominio
+- **AND** al seleccionar una cohorte, guarda `cohorte_id`
+
+#### Scenario: Falta cohorte y el usuario no puede avanzar
+
+- **WHEN** usuario completa materia pero no selecciona cohorte en el paso 1
+- **AND** intenta avanzar al paso 2
+- **THEN** el sistema muestra un error inline sobre el campo cohorte
+- **AND** permanece en el paso actual
 
 ### Requirement: InstanciaUnicaForm — Formulario de encuentro único
 
-El sistema SHALL ofrecer un formulario de creación de encuentro único con campos: materia, fecha, hora inicio, hora fin, modalidad, link, título.
+El sistema SHALL ofrecer un formulario de creación de encuentro único con campos: materia, cohorte, fecha, hora inicio, hora fin, modalidad, link, título.
 
 #### Scenario: Usuario crea encuentro único exitosamente
 
 - **WHEN** usuario completa todos los campos requeridos del formulario
 - **AND** hace clic en "Crear"
 - **THEN** el sistema envía `POST /api/encuentros/instancias/unico` con los datos
+- **AND** el payload incluye `materia_id` y `cohorte_id`
 - **AND** tras respuesta 201, invalida la query `['encuentros']`
 - **AND** muestra mensaje de éxito y resetea el formulario
 
@@ -72,6 +83,8 @@ El sistema SHALL verificar el permiso `encuentros:gestionar` antes de mostrar lo
 
 El sistema SHALL exponer un hook `useCreateSlot()` que ejecuta `POST /api/encuentros/slots` y retorna el resultado de la mutación.
 
+El request type usado por este hook SHALL incluir `cohorte_id` como campo requerido.
+
 #### Scenario: Mutación exitosa
 
 - **WHEN** `useCreateSlot().mutateAsync(data)` se resuelve con 201
@@ -85,6 +98,8 @@ El sistema SHALL exponer un hook `useCreateSlot()` que ejecuta `POST /api/encuen
 ### Requirement: Hook useCreateInstanciaUnica mutation
 
 El sistema SHALL exponer un hook `useCreateInstanciaUnica()` que ejecuta `POST /api/encuentros/instancias/unico` y retorna el resultado de la mutación.
+
+El request type usado por este hook SHALL incluir `cohorte_id` como campo requerido.
 
 #### Scenario: Mutación exitosa
 

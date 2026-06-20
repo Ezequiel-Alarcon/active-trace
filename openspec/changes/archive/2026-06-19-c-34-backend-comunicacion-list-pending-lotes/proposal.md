@@ -5,8 +5,8 @@ The frontend `AprobacionesPage` (C-32 archived) requires `GET /api/comunicacione
 ## What Changes
 
 - **New endpoint**: `GET /api/comunicaciones/lotes?estado=<estado>` — lists all batches for the tenant, optionally filtered by estado (Pendiente, Enviando, etc.)
-- **New repository method**: `get_lotes_pendientes(tenant_id)` — aggregatesComunicacion records grouped by `lote_id`, returning counts per status and metadata
-- **New Pydantic schema**: `LotePendienteResponse` with fields: `lote_id`, `tenant_id`, `total`, `pendientes`, `enviando`, `enviados`, `errores`, `cancelados`, `asunto`, `cuerpo`, `solicitado_por_nombre`, `destinatarios: string[]`
+- **New repository method**: `list_lotes_grouped(tenant_id, estado=None)` — aggregates `Comunicacion` records grouped by `lote_id`, returning counts per status and supported metadata
+- **New Pydantic schema**: `LotePendienteResponse` with fields: `lote_id`, `tenant_id`, `total`, `pendientes`, `enviando`, `enviados`, `errores`, `cancelados`, `asunto`, `cuerpo`, `destinatarios: string[]`
 - **New permission check**: `comunicacion:aprobar` required on the list endpoint
 
 ## Capabilities

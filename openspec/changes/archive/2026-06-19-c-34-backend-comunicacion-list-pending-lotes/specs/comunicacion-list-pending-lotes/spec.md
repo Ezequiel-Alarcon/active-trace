@@ -2,12 +2,12 @@
 
 ### Requirement: List pending communication batches
 
-The system SHALL provide an endpoint `GET /api/comunicaciones/lotes?estado=<estado>` that returns all communication batches for the current tenant, optionally filtered by estado. Each batch SHALL be represented as a `LotePendienteResponse` with aggregated status counts and metadata grouped by `lote_id`.
+The system SHALL provide an endpoint `GET /api/comunicaciones/lotes?estado=<estado>` that returns all communication batches for the current tenant, optionally filtered by estado. Each batch SHALL be represented as a `LotePendienteResponse` with aggregated status counts and supported metadata grouped by `lote_id`.
 
 #### Scenario: List all pending batches without filter
 
 - **WHEN** a user with `comunicacion:aprobar` permission calls `GET /api/comunicaciones/lotes`
-- **THEN** the system returns all unique `lote_id` groups for the tenant, each with `total`, `pendientes`, `enviando`, `enviados`, `errores`, `cancelados`, `asunto`, `cuerpo`, `solicitado_por_nombre`, and `destinatarios`
+- **THEN** the system returns all unique `lote_id` groups for the tenant, each with `total`, `pendientes`, `enviando`, `enviados`, `errores`, `cancelados`, `asunto`, `cuerpo`, and `destinatarios`
 
 #### Scenario: List pending batches filtered by estado
 
@@ -40,5 +40,10 @@ The `LotePendienteResponse` schema SHALL contain:
 - `cancelados: int` — count of CANCELADO messages
 - `asunto: str` — message subject (from first message in batch)
 - `cuerpo: str` — message body (from first message in batch)
-- `solicitado_por_nombre: str` — creator name (from first message in batch)
 - `destinatarios: list[str]` — list of unique recipient emails in the batch
+
+#### Scenario: Returns only supported batch metadata fields
+
+- **WHEN** the system serializes a `LotePendienteResponse` for `GET /api/comunicaciones/lotes`
+- **THEN** the response includes only `lote_id`, `tenant_id`, `total`, `pendientes`, `enviando`, `enviados`, `errores`, `cancelados`, `asunto`, `cuerpo`, and `destinatarios`
+- **AND** the response excludes unsupported requester fields such as `solicitado_por` and `solicitado_por_nombre`
