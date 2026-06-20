@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
 import { useAuth } from '@/features/auth/components/AuthProvider';
 import { useLogout } from '@/features/auth/hooks/useLogout';
@@ -204,7 +205,9 @@ export default function AppLayout() {
         </nav>
 
         <main className="flex-1 p-6">
-          <Outlet />
+          <Suspense fallback={<p className="text-sm text-gray-500">Cargando…</p>}>
+            <Outlet />
+          </Suspense>
         </main>
       </div>
     </div>
